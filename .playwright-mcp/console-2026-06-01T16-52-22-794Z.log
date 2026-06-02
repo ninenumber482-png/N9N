@@ -1,0 +1,4 @@
+[     158ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/chunk-AIJGJ7NI.js?v=83241eeb:13930
+[     229ms] [LOG] Access granted: Login panel initialization @ http://localhost:4200/auth.module-7TF4UKGX.js:106
+[     230ms] [LOG] Gateway access granted. Threat level: low @ http://localhost:4200/auth.module-7TF4UKGX.js:172
+[     340ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4200/auth/sign-in:0

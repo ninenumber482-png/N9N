@@ -1,0 +1,8 @@
+[     165ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/chunk-AIJGJ7NI.js?v=83241eeb:13930
+[     238ms] [LOG] Access granted: Login panel initialization @ http://localhost:4200/auth.module-4DWODUK6.js:102
+[     239ms] [LOG] Gateway access granted. Threat level: low @ http://localhost:4200/auth.module-4DWODUK6.js:168
+[     349ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4200/auth/sign-in:0
+[   41273ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4200/assets/icons/heroicons/outline/arrow-left-on-rectangle.svg:0
+[   41275ms] [ERROR] HttpErrorResponse @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/angular-svg-icon.js?v=83241eeb:110
+[   41288ms] HttpErrorResponse
+[   41289ms] HttpErrorResponse

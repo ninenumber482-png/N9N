@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Black background -->
+  <rect width="100" height="100" fill="#000000"/>
+
+  <!-- Large yellow "9" -->
+  <text x="50" y="70" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#FFD700" text-anchor="middle" dominant-baseline="central">
+    9
+  </text>
+</svg>

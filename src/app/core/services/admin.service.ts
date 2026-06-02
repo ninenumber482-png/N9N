@@ -1,0 +1,302 @@
+import { Injectable } from '@angular/core';
+import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
+
+@Injectable({ providedIn: 'root' })
+export class AdminService {
+  private proxyUrl = `${environment.supabaseUrl}/functions/v1/admin-proxy`;
+
+  constructor(private auth: AuthService) {}
+
+  private getToken(): string {
+    return this.auth.getCurrentUser()?.token || environment.supabaseKey;
+  }
+
+  private async proxy<T>(method: string, path: string, body?: any, prefer?: string): Promise<T> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      apikey: environment.supabaseKey,
+      Authorization: `Bearer ${environment.supabaseKey}`,
+      'x-session-token': this.getToken(),
+    };
+    if (prefer) headers['Prefer'] = prefer;
+
+    const res = await fetch(this.proxyUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ method, path, body, prefer }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`${method} ${path}: ${res.status} ${text}`);
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : (undefined as any);
+  }
+
+  private async get<T>(table: string, query = ''): Promise<T[]> {
+    const sep = table.includes('?') ? '&' : '?';
+    const path = query ? `/${table}${sep}${query}` : `/${table}`;
+    return this.proxy<T[]>('GET', path);
+  }
+
+  async count(table: string, query = ''): Promise<number> {
+    const path = `/${table}?${query}&select=count`;
+    const res = await fetch(this.proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: environment.supabaseKey,
+        Authorization: `Bearer ${environment.supabaseKey}`,
+        'x-session-token': this.getToken(),
+      },
+      body: JSON.stringify({ method: 'GET', path, prefer: 'count=exact' }),
+    });
+    if (!res.ok) return 0;
+    return Number(res.headers.get('content-range')?.split('/')[1] || 0);
+  }
+
+  private async updateRow<T>(table: string, id: string, data: Partial<T>): Promise<T[]> {
+    return this.proxy<T[]>('PATCH', `/${table}?id=eq.${id}`, data);
+  }
+
+  async insertRow<T>(table: string, data: Partial<T>): Promise<T[]> {
+    return this.proxy<T[]>('POST', `/${table}`, data);
+  }
+
+  private async deleteRow(table: string, id: string): Promise<void> {
+    await this.proxy<void>('DELETE', `/${table}?id=eq.${id}`);
+  }
+
+  private adminIdCache: Record<string, string> = {};
+  private async resolveAdminId(usernameOrId: string): Promise<string> {
+    if (this.adminIdCache[usernameOrId]) return this.adminIdCache[usernameOrId];
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(usernameOrId)) {
+      return usernameOrId;
+    }
+    const rows = await this.get<any>(`users?username=eq.${usernameOrId}&select=id&limit=1`);
+    const id = rows[0]?.id;
+    if (!id) throw new Error(`Admin not found: ${usernameOrId}`);
+    this.adminIdCache[usernameOrId] = id;
+    return id;
+  }
+
+  async rpc(name: string, params: Record<string, any> = {}): Promise<any> {
+    return this.proxy<any>('POST', `/rpc/${name}`, params);
+  }
+
+  // ── USERS ──
+  getUsers() { return this.get<any>('users', 'order=created_at.desc'); }
+  getUser(id: string) { return this.get<any>(`users?id=eq.${id}`, 'limit=1'); }
+  updateUser(id: string, data: any) { return this.updateRow('users', id, data); }
+  deleteUser(id: string) { return this.deleteRow('users', id); }
+  countUsers() { return this.count('users'); }
+  getUserSessionsForUser(userId: string, limit = 5) {
+    return this.get<any>(`sessions?user_id=eq.${userId}&order=last_activity.desc&limit=${limit}`);
+  }
+  getAuditLogsByResource(resourceId: string, limit = 10) {
+    return this.get<any>(`audit_log?resource_id=eq.${resourceId}&order=created_at.desc&limit=${limit}`);
+  }
+  getKycDocsByUser(userId: string) {
+    return this.get<any>(`kyc_documents?user_id=eq.${userId}&order=created_at.desc`);
+  }
+
+  // ── WALLET ──
+  getWallets() { return this.get<any>('wallet', 'select=*,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc'); }
+  getWallet(userId: string) { return this.get<any>(`wallet?user_id=eq.${userId}`, 'limit=1'); }
+  updateWalletRow(userId: string, data: any) {
+    return this.proxy<any>('PATCH', `/wallet?user_id=eq.${userId}`, data);
+  }
+
+  // ── PLATFORM ACCOUNTS ──
+  getPlatformAccounts() { return this.get<any>('platform_accounts', 'order=created_at.asc'); }
+  createPlatformAccount(data: any) { return this.insertRow<any>('platform_accounts', data); }
+  updatePlatformAccount(id: string, data: any) {
+    return this.updateRow('platform_accounts', id, { ...data, updated_at: new Date().toISOString() });
+  }
+
+  // ── TRANSACTIONS (used for deposits, withdrawals, all tx) ──
+  getTransactions(type?: string, limit = 100) {
+    const typeFilter = type ? `&type=eq.${type}` : '';
+    return this.get<any>('transactions', `select=*,user:users!transactions_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}${typeFilter}`);
+  }
+  getDeposits() { return this.getTransactions('DEPOSIT'); }
+  getWithdrawals() { return this.getTransactions('WITHDRAWAL'); }
+  updateTransaction(id: string, data: any) { return this.updateRow('transactions', id, data); }
+  countTransactions() { return this.count('transactions'); }
+  countPending(type: string) { return this.count('transactions', `type=eq.${type}&status=eq.PENDING`); }
+  async resolveUserId(usernameOrId: string): Promise<string> {
+    return this.resolveAdminId(usernameOrId);
+  }
+  async approveDeposit(txId: string, usernameOrId: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('approve_deposit', { p_tx_id: txId, p_admin_id: adminId });
+  }
+  async rejectDeposit(txId: string, usernameOrId: string, reason?: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('reject_deposit', { p_tx_id: txId, p_admin_id: adminId, p_reason: reason || null });
+  }
+  async approveWithdrawal(txId: string, usernameOrId: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('approve_withdrawal', { p_tx_id: txId, p_admin_id: adminId });
+  }
+  async rejectWithdrawal(txId: string, usernameOrId: string, reason?: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('reject_withdrawal', { p_tx_id: txId, p_admin_id: adminId, p_reason: reason || null });
+  }
+
+  // ── BETS ──
+  getBets(limit = 100) { return this.get<any>(`bets?select=*,user:users!bets_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}`); }
+  getBetsBySession(sessionCode: string) {
+    return this.get<any>(`bets?session_code=eq.${sessionCode}&order=created_at.desc`);
+  }
+  updateBet(id: string, data: any) { return this.updateRow('bets', id, data); }
+  countBets() { return this.count('bets'); }
+
+  // ── 3D KING ENGINE ──
+  getKingResults(limit = 50) {
+    return this.get<any>(`king_results?order=session_code.desc&limit=${limit}`);
+  }
+  settleSession(code: string, d1: number, d2: number, d3: number) {
+    return this.rpc('settle_session', { p_code: code, p_d1: d1, p_d2: d2, p_d3: d3 });
+  }
+  getPlanned(limit = 100) {
+    return this.get<any>(`king_planned?order=session_code.desc&limit=${limit}`);
+  }
+  setPlanned(code: string, d1: number, d2: number, d3: number) {
+    return this.proxy<any>('POST', '/king_planned?on_conflict=session_code', {
+      session_code: code, d1, d2, d3, updated_at: new Date().toISOString(),
+    }, 'resolution=merge-duplicates,return=representation');
+  }
+  getDepositLocks() {
+    return this.get<any>('deposit_locks', 'select=user_id,turnover_required,turnover_applied');
+  }
+  getEngineStatus() {
+    return this.proxy<any>('GET', '/engine_status?limit=1');
+  }
+
+  // ── KYC DOCUMENTS ──
+  getKycDocuments() { return this.get<any>('kyc_documents', 'select=*,user:users!kyc_documents_user_id_fkey(username,display_name)&order=created_at.desc'); }
+  updateKycStatus(id: string, status: string, rejectionReason?: string) {
+    return this.updateRow('kyc_documents', id, {
+      status, rejection_reason: rejectionReason || null, reviewed_at: new Date().toISOString(),
+    });
+  }
+
+  // ── REFERRALS ──
+  getReferrals() { return this.get<any>('referrals', 'select=*,creator:users!referrals_created_by_fkey(username,display_name)&order=created_at.desc'); }
+  getReferralStats() { return this.rpc('get_referral_stats'); }
+  async generateReferralCode(usernameOrId: string): Promise<string> {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    const result = await this.rpc('generate_referral_code', { p_admin_id: adminId });
+    if (Array.isArray(result) && result.length > 0) {
+      return result[0]?.generate_referral_code || String(result[0]);
+    }
+    return String(result);
+  }
+  updateReferral(id: string, data: any) {
+    return this.updateRow('referrals', id, { ...data, updated_at: new Date().toISOString() });
+  }
+  getUsersByReferral(referralId: string) {
+    return this.get<any>(`users?referred_by=eq.${referralId}&order=created_at.desc`);
+  }
+  async updateReferralStatus(id: string, status: string) {
+    return this.updateRow('referrals', id, { status, updated_at: new Date().toISOString() });
+  }
+
+  // ── USER APPROVAL ──
+  async approveUser(userId: string, usernameOrId: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('approve_user', { p_user_id: userId, p_admin_id: adminId });
+  }
+  async rejectUser(userId: string, usernameOrId: string, reason?: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('reject_user', { p_user_id: userId, p_admin_id: adminId, p_reason: reason || null });
+  }
+  lockUser(userId: string) {
+    return this.updateRow('users', userId, { login_status: 'LOCKED' });
+  }
+  unlockUser(userId: string) {
+    return this.updateRow('users', userId, { login_status: 'ACTIVE' });
+  }
+
+  // ── USER SESSIONS (login sessions) ──
+  getUserSessions(limit = 50) { return this.get<any>(`sessions?order=last_activity.desc&limit=${limit}`); }
+  endUserSession(sessionId: string) {
+    return this.updateRow('sessions', sessionId, { logged_out_at: new Date().toISOString(), logout_reason: 'Admin terminated' });
+  }
+
+  // ── AUDIT LOGS ──
+  getAuditLogs(limit = 50) { return this.get<any>(`audit_log?order=created_at.desc&limit=${limit}`); }
+  async logAction(usernameOrId: string, action: string, resourceType: string, resourceId?: string, oldValue?: string, newValue?: string) {
+    const adminId = await this.resolveAdminId(usernameOrId);
+    return this.rpc('log_admin_action', {
+      p_admin_id: adminId,
+      p_action: action,
+      p_resource_type: resourceType,
+      p_resource_id: resourceId || null,
+      p_old_value: oldValue || null,
+      p_new_value: newValue || null,
+    });
+  }
+
+  // ── TRANSACTION AUDIT ──
+  getTransactionAudit(limit = 100) { return this.get<any>(`transaction_audit?order=created_at.desc&limit=${limit}`); }
+  getUserAudit(limit = 50) { return this.get<any>(`user_audit?order=created_at.desc&limit=${limit}`); }
+  getSecurityAlerts(limit = 50) { return this.get<any>(`security_alerts?order=created_at.desc&limit=${limit}`); }
+  getFailedLogins(limit = 50) { return this.get<any>(`failed_logins?order=attempted_at.desc&limit=${limit}`); }
+
+  // ── METRICS ──
+  getMetrics() { return this.get<any>('metrics', 'order=recorded_at.desc'); }
+
+  // ── GAME SESSIONS (grouped from bets table by session_code) ──
+  async getGameSessions(): Promise<any[]> {
+    const bets = await this.getBets(1000);
+    const grouped: Record<string, any[]> = {};
+    bets.forEach((b: any) => {
+      if (!b.session_code) return;
+      if (!grouped[b.session_code]) grouped[b.session_code] = [];
+      grouped[b.session_code].push(b);
+    });
+    return Object.entries(grouped).map(([code, sessionBets]: [string, any]) => {
+      const totalStake = sessionBets.reduce((s: number, b: any) => s + Number(b.stake), 0);
+      const totalPayout = sessionBets.reduce((s: number, b: any) => s + Number(b.actual_payout || 0), 0);
+      const settled = sessionBets.every((b: any) => b.status === 'SETTLED');
+      return {
+        session_code: code,
+        status: settled ? 'SETTLED' : 'OPEN',
+        bet_count: sessionBets.length,
+        total_stake: totalStake,
+        total_payout: totalPayout,
+        created_at: sessionBets[0]?.created_at,
+      };
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  // ── PLATFORM CONFIG (CS Contact, etc.) ──
+  async getConfigs(query = '') {
+    const path = query ? `/platform_config?${query}` : '/platform_config';
+    return this.proxy<any[]>('GET', path);
+  }
+  async getConfig(key: string): Promise<any> {
+    const rows = await this.get<any>('platform_config', `key=eq.${key}&limit=1`);
+    return rows[0] || null;
+  }
+  async updateConfig(key: string, value: string): Promise<void> {
+    await this.proxy<void>('PATCH', `/platform_config?key=eq.${key}`, { value, updated_at: new Date().toISOString() });
+  }
+  async insertConfig(data: { key: string; value: string }): Promise<any[]> {
+    return this.insertRow('platform_config', data);
+  }
+
+  // ── DASHBOARD STATS ──
+  async getDashboardStats() {
+    const [users, totalTx, pendingBets, pendingKyc] = await Promise.all([
+      this.count('users'),
+      this.count('transactions'),
+      this.count('bets', 'status=eq.PENDING'),
+      this.count('kyc_documents', 'status=eq.PENDING'),
+    ]);
+    return { totalUsers: users, totalTransactions: totalTx, pendingBets, pendingKyc };
+  }
+}

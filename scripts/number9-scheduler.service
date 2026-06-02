@@ -1,0 +1,14 @@
+[Unit]
+Description=NUMBER9 Scheduler Service (APScheduler)
+After=network.target
+
+[Service]
+Type=simple
+User=hemo
+WorkingDirectory=/home/hemo/WEBSITE/N9NY-tailwind-N9
+ExecStart=/usr/bin/python3 /home/hemo/WEBSITE/N9NY-tailwind-N9/scripts/scheduler.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

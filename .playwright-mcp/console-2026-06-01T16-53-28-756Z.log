@@ -1,0 +1,7 @@
+[      83ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/chunk-AIJGJ7NI.js?v=83241eeb:13930
+[     471ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/kyc_documents?order=created_at.desc?:0
+[     472ms] Error: GET kyc_documents?order=created_at.desc: 400 {"code":"PGRST100","details":"unexpected '?' expecting delimiter (.), \",\" or end of input","hint":null,"message":"\"failed to parse order (created_at.desc?)\" (line 1, column 16)"}
+    at _AdminService.<anonymous> (http://localhost:4200/dashboard.module-BVSFLIFL.js:487:15)
+    at Generator.next (<anonymous>)
+    at fulfilled (http://localhost:4200/chunk-WKBOE7HX.js:28:24)
+[  105810ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/chunk-AIJGJ7NI.js?v=83241eeb:13930

@@ -1,0 +1,7 @@
+[    5699ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/chunk-AIJGJ7NI.js?v=83241eeb:13930
+[    5778ms] [LOG] Access granted: Login panel initialization @ http://localhost:4200/auth.module-4DWODUK6.js:102
+[    5778ms] [LOG] Gateway access granted. Threat level: low @ http://localhost:4200/auth.module-4DWODUK6.js:168
+[    5893ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4200/auth/sign-in:0
+[   29327ms] [ERROR] Access to fetch at 'https://dqsmpdetiqsqfnidekik.supabase.co/functions/v1/auth-login' from origin 'http://localhost:4200' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:4200/auth/sign-in:0
+[   29328ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://dqsmpdetiqsqfnidekik.supabase.co/functions/v1/auth-login:0
+[   29328ms] [WARNING] Login failed: Failed to fetch @ http://localhost:4200/chunk-M3XEZU6N.js:211

@@ -1,0 +1,31 @@
+/* Sonner Toaster Styling */
+:host ::ng-deep {
+  .sonner-toaster {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+  }
+
+  .sonner-toast {
+    border-radius: 8px;
+    padding: 1rem;
+    min-width: 300px;
+    max-width: 500px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .sonner-toast.success {
+    background-color: var(--color-primary);
+    color: white;
+  }
+
+  .sonner-toast.error {
+    background-color: var(--color-destructive);
+    color: white;
+  }
+
+  .sonner-close-button {
+    color: inherit;
+  }
+}

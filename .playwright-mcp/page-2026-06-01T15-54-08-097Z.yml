@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - contentinfo [ref=e6]:
+        - generic [ref=e7]:
+          - paragraph [ref=e8]: © 2026 Number9 System D. All rights reserved.
+          - generic [ref=e9]:
+            - button "Privacy Policy" [ref=e10] [cursor=pointer]
+            - button "Terms of Service" [ref=e11] [cursor=pointer]
+            - button "Support" [ref=e12] [cursor=pointer]
+      - paragraph [ref=e14]: Access the central command core built to monitor, control, and dominate every operation with absolute precision.
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - img [ref=e23]
+          - generic [ref=e38]:
+            - heading "Sign In" [level=1] [ref=e39]
+            - paragraph [ref=e40]: Enter your credentials
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - generic [ref=e44]:
+              - textbox "Username" [ref=e45]:
+                - /placeholder: " "
+              - generic [ref=e46]: Username
+            - generic [ref=e48]:
+              - textbox "Password" [ref=e49]:
+                - /placeholder: " "
+              - generic [ref=e50]: Password
+              - button "Show" [ref=e51]
+          - generic [ref=e52]:
+            - checkbox "Remember me" [ref=e53]
+            - generic [ref=e54]: Remember me
+          - button "Sign In" [ref=e55]:
+            - generic [ref=e56]: Sign In
+    - generic [ref=e58]: md
+  - img
