@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet, useParams, useNavigate } from "react-router-dom";
 import { useStore, isDemoMode, clearAllData, setDemoMode } from "./store/useStore";
+import { subscribeToWalletAndTransactions, subscribeToSettledBets } from "./store/realtimeManager";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { I18nProvider } from "./i18n";
 import Layout from "./components/Layout";
@@ -71,18 +72,103 @@ function AppContent() {
 function App() {
   const auth = useStore(s => s.auth);
   const subscribeUserStatus = useStore(s => s.subscribeUserStatus);
+  const subscribePlatformConfig = useStore(s => s.subscribePlatformConfig);
 
   useEffect(() => {
     // Mark store as hydrated
     useStore.setState({ _hydrated: true });
   }, []);
 
+  // Platform config subscription (always active, not auth-scoped)
   useEffect(() => {
-    let unsub = () => { };
+    const unsubPlatform = subscribePlatformConfig();
+    return () => unsubPlatform?.();
+  }, [subscribePlatformConfig]);
+
+  // Auth-scoped subscriptions (wallet, transactions, user status, settled bets)
+  useEffect(() => {
+    let unsubWallet = () => {};
+    let unsubUserStatus = () => {};
+    let unsubBets = () => {};
+
     if (auth?.id) {
-      unsub = subscribeUserStatus(auth.id);
+      const username = auth?.username || '';
+
+      // Wallet + transactions realtime
+      (async () => {
+        unsubWallet = await subscribeToWalletAndTransactions(
+          auth.id,
+          (main, bonus) => useStore.setState({ availableBalance: main, totalBalance: main + bonus }),
+          (tx) => {
+            useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
+
+            // Transaction notification dispatch
+            if (tx.type === 'DEPOSIT' && tx.status === 'COMPLETED') {
+              useStore.setState({
+                systemNotification: {
+                  type: 'deposit_approved',
+                  title: 'Deposit Approved',
+                  message: `+${Number(tx.amount || 0).toLocaleString()} P has been credited to your wallet.`,
+                },
+              });
+            }
+            if (tx.type === 'DEPOSIT' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
+              useStore.setState({
+                systemNotification: {
+                  type: 'deposit_rejected',
+                  title: 'Deposit Rejected',
+                  message: `Your deposit of ${Number(tx.amount || 0).toLocaleString()} P was rejected.`,
+                },
+              });
+            }
+            if (tx.type === 'WITHDRAWAL' && tx.status === 'COMPLETED') {
+              useStore.setState({
+                systemNotification: {
+                  type: 'withdraw_approved',
+                  title: 'Withdrawal Complete',
+                  message: `${Number(tx.amount || 0).toLocaleString()} P has been withdrawn.`,
+                },
+              });
+            }
+            if (tx.type === 'WITHDRAWAL' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
+              useStore.setState({
+                systemNotification: {
+                  type: 'withdraw_rejected',
+                  title: 'Withdrawal Rejected',
+                  message: `Your withdrawal of ${Number(tx.amount || 0).toLocaleString()} P was rejected.`,
+                },
+              });
+            }
+          },
+          (error) => {
+            console.warn('[NUMBER9] Wallet realtime error, may fallback to polling:', error?.message);
+          }
+        );
+      })();
+
+      // User status realtime
+      unsubUserStatus = subscribeUserStatus(auth.id);
+
+      // Settled bets realtime
+      (async () => {
+        unsubBets = await subscribeToSettledBets(
+          auth.id,
+          (bet) => {
+            // On bet settlement, trigger version bump to update UI
+            useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+          },
+          (error) => {
+            console.warn('[NUMBER9] Bets realtime error:', error?.message);
+          }
+        );
+      })();
     }
-    return () => unsub();
+
+    return () => {
+      unsubWallet?.();
+      unsubUserStatus?.();
+      unsubBets?.();
+    };
   }, [auth?.id, subscribeUserStatus]);
 
   useEffect(() => {

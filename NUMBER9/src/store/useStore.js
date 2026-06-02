@@ -63,6 +63,65 @@ export const useStore = create((set, get) => ({
   REG, LOGIN, ACCOUNT,
   systemStatus: { kingStatus: 'OPEN', platformMaintenance: false, kingStatusMsg: '', platformMsg: '' },
   setSystemStatus: (status) => set({ systemStatus: status }),
+
+  subscribePlatformConfig: () => {
+    if (DEMO_MODE) return () => {};
+    let channel;
+    const setup = async () => {
+      try {
+        const { supabase } = await import("../utils/supabase.js");
+        channel = supabase
+          .channel('platform_config')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'platform_config',
+          }, (payload) => {
+            const { key, value } = payload.new || {};
+
+            set(s => {
+              const updates = { ...s.systemStatus };
+              if (key === 'king_status') updates.kingStatus = value || 'OPEN';
+              if (key === 'king_status_msg') updates.kingStatusMsg = value || '';
+              if (key === 'platform_maintenance') updates.platformMaintenance = value === 'true' || value === true;
+              if (key === 'platform_msg') updates.platformMsg = value || '';
+
+              return { systemStatus: updates };
+            });
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn('[NUMBER9] subscribePlatformConfig error:', e?.message);
+      }
+    };
+    setup();
+    return () => { if (channel) channel.unsubscribe(); };
+  },
+
+  syncPlatformConfig: async () => {
+    try {
+      const { supabase } = await import("../utils/supabase.js");
+      const { data: config, error } = await supabase
+        .from('platform_config')
+        .select('key, value')
+        .in('key', ['king_status', 'king_status_msg', 'platform_maintenance', 'platform_msg']);
+
+      if (!error && config) {
+        const updates = {};
+        config.forEach(item => {
+          if (item.key === 'king_status') updates.kingStatus = item.value || 'OPEN';
+          if (item.key === 'king_status_msg') updates.kingStatusMsg = item.value || '';
+          if (item.key === 'platform_maintenance') updates.platformMaintenance = item.value === 'true' || item.value === true;
+          if (item.key === 'platform_msg') updates.platformMsg = item.value || '';
+        });
+        if (Object.keys(updates).length > 0) {
+          set(s => ({ systemStatus: { ...s.systemStatus, ...updates } }));
+        }
+      }
+    } catch (e) {
+      console.warn('[NUMBER9] syncPlatformConfig error:', e?.message);
+    }
+  },
   systemNotification: null,
   clearSystemNotification: () => set({ systemNotification: null }),
   _hydrated: false,
@@ -83,9 +142,24 @@ export const useStore = create((set, get) => ({
             table: 'users',
             filter: 'id=eq.' + userId,
           }, (payload) => {
+            const newStatus = payload.new;
+
+            // If account locked or suspended → auto logout
+            if (newStatus.login_status === 'LOCKED' || newStatus.account_status === 'SUSPENDED') {
+              set({
+                systemNotification: {
+                  type: 'warning',
+                  title: 'Account Suspended',
+                  message: 'Your account has been locked or suspended. Please contact support.',
+                },
+              });
+              get().logout();
+              return;
+            }
+
+            // If registration approved → show notification
             const oldStatus = payload.old?.registration_status;
-            const newStatus = payload.new?.registration_status;
-            if (oldStatus !== 'APPROVED' && newStatus === 'APPROVED') {
+            if (oldStatus !== 'APPROVED' && newStatus.registration_status === 'APPROVED') {
               set({
                 systemNotification: {
                   type: 'approved',
@@ -249,8 +323,23 @@ export const useStore = create((set, get) => ({
 
   logout: () => {
     unsubscribeWalletRealtime();
+
+    // Clear localStorage
     localStorage.removeItem(LS.auth);
-    set({ auth: null });
+    localStorage.removeItem(LS.users);
+    localStorage.removeItem(LS.byUuid);
+    localStorage.removeItem(LS.byCode);
+
+    // Clear all session state atomically
+    set({
+      auth: null,
+      availableBalance: 0,
+      totalBalance: 0,
+      lockedBalance: 0,
+      referralBonus: 0,
+      systemNotification: null,
+    });
+
     import("../utils/supabase.js").then(({ setUserToken }) => setUserToken(null)).catch(() => {});
   },
 
@@ -668,10 +757,33 @@ export const clearAllData = () => {
       writeJSON(LS.auth, null);
       useStore.setState({ auth: null });
     } else {
-      import("../utils/supabase.js").then(({ setUserToken }) => {
+      import("../utils/supabase.js").then(async ({ setUserToken, supabase }) => {
         setUserToken(_auth.token);
+        // Validate token is still valid by attempting a minimal query
+        try {
+          const { data: user, error } = await supabase.auth.getUser();
+          if (error || !user?.user?.id) {
+            // Token is expired or invalid
+            writeJSON(LS.auth, null);
+            useStore.setState({ auth: null });
+            return;
+          }
+        } catch (e) {
+          // If validation fails, clear auth to force re-login
+          writeJSON(LS.auth, null);
+          useStore.setState({ auth: null });
+          return;
+        }
         useStore.getState().fetchProfile().then(prof => {
           if (!prof) return;
+
+          // Check if account is suspended or locked
+          if (prof.login_status === 'LOCKED' || prof.account_status === 'SUSPENDED') {
+            writeJSON(LS.auth, null);
+            useStore.setState({ auth: null });
+            return;
+          }
+
           const users = readJSON(LS.users, {});
           const byUuid = readJSON(LS.byUuid, {});
           const key = prof.username.toLowerCase();

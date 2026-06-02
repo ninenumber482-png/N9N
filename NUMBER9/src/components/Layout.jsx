@@ -30,6 +30,7 @@ export default function Layout({ children }) {
   const auth = useStore((s) => s.auth);
   const hydrated = useStore((s) => s._hydrated);
   const logout = useStore((s) => s.logout);
+  const systemStatus = useStore((s) => s.systemStatus);
   const nav = useNavigate();
   const { clientUuid } = useParams();
   const prefix = useMemo(() => `/c/${clientUuid || ''}`, [clientUuid]);
@@ -37,34 +38,19 @@ export default function Layout({ children }) {
   const bleed = pg === "king";
   const { t, lang, setLang } = useI18n();
   const [showLogout, setShowLogout] = useState(false);
-  const [maintenance, setMaintenance] = useState(false);
-  const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const name = auth?.displayName || auth?.username || "User";
   const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   const balanceMain = useLayoutBalance();
+
+  // Read maintenance status from realtime systemStatus (synced via App.jsx)
+  const maintenance = systemStatus?.platformMaintenance || false;
+  const maintenanceMsg = systemStatus?.platformMsg || '';
 
   const NAV_FULL = useMemo(() => NAV.map(n => ({ ...n, p: `${prefix}/${n.p}` })), [prefix]);
 
   useEffect(() => {
     if (hydrated && !auth) nav("/login", { replace: true });
   }, [auth, hydrated, nav]);
-
-  // Maintenance check — poll every 30s
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const { supabase } = await import("../utils/supabase.js");
-        const { data } = await supabase.from('platform_config').select('key, value');
-        if (!data) return;
-        const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
-        setMaintenance(cfg.maintenance_mode === 'true');
-        setMaintenanceMsg(cfg.maintenance_msg || '');
-      } catch {}
-    };
-    check();
-    const t = setInterval(check, 30000);
-    return () => clearInterval(t);
-  }, []);
 
   if (!hydrated) {
     return (

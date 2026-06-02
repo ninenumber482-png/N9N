@@ -234,7 +234,7 @@ export async function refreshKingData(userId = _userId) {
     const [resultsRes, betsRes] = await Promise.all([
       sb.from("king_results").select("*").order("session_code", { ascending: false }).limit(200),
       userId
-        ? sb.from("bets").select("*").eq("user_id", userId).order("created_at", { ascending: false })
+        ? sb.from("bets").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(500)
         : Promise.resolve({ data: [], error: null }),
     ]);
 

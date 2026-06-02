@@ -79,10 +79,15 @@ export function isWithdrawalLocked(tx) { return getWithdrawalLockRemaining(tx) >
 export async function checkWithdrawEligibility(userId) {
   try {
     // Only count deposits still LOCKED (turnover_applied < turnover_required)
-    const { data: locks } = await supabase
+    const { data: locks, error } = await supabase
       .from('deposit_locks')
       .select('turnover_required, turnover_applied')
       .eq('user_id', userId);
+
+    if (error) {
+      console.error('[NUMBER9] checkWithdrawEligibility query error:', error?.message);
+      return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
+    }
 
     const lockedLocks = (locks || []).filter(r => Number(r.turnover_applied) < Number(r.turnover_required));
     const totalRequired = lockedLocks.reduce((s, r) => s + Number(r.turnover_required), 0);
@@ -92,7 +97,7 @@ export async function checkWithdrawEligibility(userId) {
     return { isUnlocked, required: totalRequired, achieved: totalApplied, remaining };
   } catch (e) {
     console.error('[NUMBER9] checkWithdrawEligibility error:', e?.message);
-    return { isUnlocked: true, required: 0, achieved: 0, remaining: 0 };
+    return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
   }
 }
 

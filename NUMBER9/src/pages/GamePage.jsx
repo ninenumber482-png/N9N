@@ -99,16 +99,14 @@ export default function GamePage() {
 
   useEffect(() => { setKingUser(auth?.id); }, [auth?.id]);
 
+  // Load initial data on mount
   useEffect(() => {
-    let alive = true;
-    const tick = () => {
-      refreshKingData(auth?.id).then(() => { if (alive) setVersion((v) => v + 1); });
-      fetchBalances();
-    };
-    tick();
-    const t = setInterval(tick, 4000);
-    return () => { alive = false; clearInterval(t); };
-  }, [fetchBalances, auth?.id]);
+    if (!auth?.id) return;
+    refreshKingData(auth.id).then(() => setVersion((v) => v + 1));
+    fetchBalances();
+  }, [auth?.id, fetchBalances]);
+
+  // Subscribe to realtime bet settlements via App.jsx (App.jsx watches _kingVersion)
 
   useEffect(() => {
     // reset selections on new session — deferred to avoid synchronous setState in effect
@@ -1019,8 +1017,8 @@ function BidHistoryInline({ bids }) {
         {bids.length === 0
           ? <p className="py-1 text-[10px] text-zinc-400">{t('game.no_orders')}</p>
           : bids.map((b) => {
-            const win = b.status === "SETTLED_WIN";
-            const lose = b.status === "SETTLED_LOSE";
+            const win = b.result === "WIN";
+            const lose = b.result === "LOSE";
             return (
               <div key={b.clientBetId} className="flex items-center gap-1 sm:gap-2 border-b border-[#1f2128] py-1.5 last:border-0">
                 <span className="w-14 sm:w-16 text-[10px] font-black uppercase tracking-wider text-yellow-400">{b.betCode}</span>

@@ -9,6 +9,10 @@ export function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />
   }
 
+  // Account status (login_status, account_status) is monitored via realtime
+  // subscription in App.jsx. If user is suspended/locked, useStore.logout()
+  // is triggered automatically, which clears auth and forces re-login.
+
   return children
 }
 
