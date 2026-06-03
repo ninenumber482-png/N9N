@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, Link, useParams } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { Icon } from "./icons";
@@ -6,6 +6,7 @@ import { useI18n } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SystemNotification from "./ui/SystemNotification";
 import CsWidget from "./ui/CsWidget";
+import { PageSkeleton } from "./ui/Skeleton";
 
 function useLayoutBalance() {
   const availableBalance = useStore((s) => s.availableBalance);
@@ -35,6 +36,17 @@ export default function Layout({ children }) {
   const { clientUuid } = useParams();
   const prefix = useMemo(() => `/c/${clientUuid || ''}`, [clientUuid]);
   const pg = loc.pathname.split('/').pop() || "dashboard";
+  const [routeLoading, setRouteLoading] = useState(false);
+  const prevLoc = useRef(loc.pathname);
+  useEffect(() => {
+    if (prevLoc.current !== loc.pathname) {
+      setRouteLoading(true);
+      prevLoc.current = loc.pathname;
+      const t = setTimeout(() => setRouteLoading(false), 300);
+      return () => clearTimeout(t);
+    }
+    prevLoc.current = loc.pathname;
+  }, [loc.pathname]);
   const bleed = pg === "king";
   const { t, lang, setLang } = useI18n();
   const [showLogout, setShowLogout] = useState(false);
@@ -176,7 +188,7 @@ export default function Layout({ children }) {
           {/* Full-bleed routes (marketplace terminal) own their own padding;
               all other pages get the shared, uniform page padding here. */}
           <div className={bleed ? "w-full" : "w-full px-4 pt-4 pb-28 sm:px-6 sm:pt-8 sm:pb-28 lg:px-10 lg:py-10"}>
-            {children}
+            {routeLoading ? <PageSkeleton /> : children}
           </div>
         </div>
       </main>

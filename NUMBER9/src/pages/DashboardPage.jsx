@@ -6,6 +6,7 @@ import { fetchUserTransactions } from '../store/wallet'
 import { listBids } from '../store/king'
 import { useI18n } from '../i18n'
 import PageShell from '../components/ui/PageShell'
+import { SkeletonCard, Shimmer } from '../components/ui/Skeleton'
 import { wibDate, wibTime } from '../utils/wib'
 
 const fmt = (n) => Number(n || 0).toLocaleString()
@@ -24,15 +25,16 @@ export default function DashboardPage() {
   useEffect(() => { const i = setInterval(() => setClock(wibTime()), 1000); return () => clearInterval(i) }, [])
 
   const [userTxs, setUserTxs] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchBalances()
-  }, [fetchBalances])
-
-  useEffect(() => {
-    if (!auth?.id) return
-    fetchUserTransactions(auth.id, 10).then(data => setUserTxs(data || [])).catch(() => {})
-  }, [auth?.id])
+    Promise.all([
+      fetchBalances(),
+      auth?.id ? fetchUserTransactions(auth.id, 10) : Promise.resolve([]),
+    ]).then(([, txs]) => {
+      setUserTxs(txs || [])
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [fetchBalances, auth?.id])
 
   const acts = useMemo(() => {
     if (!auth?.username) return []
@@ -58,6 +60,62 @@ export default function DashboardPage() {
     }))
     return [...txActs, ...bidActs].sort((a, b) => b.ts - a.ts).slice(0, 5)
   }, [userTxs, auth?.id, t])
+
+  if (loading) {
+    return (
+      <PageShell
+        max="wide"
+        className="relative"
+        title={t('dashboard.welcome_back', { name: who })}
+        actions={
+          <div className="hidden sm:flex items-center gap-2 rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-400" />
+            <span className="font-mono text-[13px] font-black text-yellow-400 tabular-nums">{clock}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">WIB</span>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          <div>
+            <Shimmer className="h-3 w-48 mb-3" />
+            <div className="flex items-baseline gap-3">
+              <Shimmer className="h-12 w-40" />
+              <Shimmer className="h-6 w-16" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <SkeletonCard lines={2} />
+            <SkeletonCard lines={2} />
+          </div>
+          <div className="flex gap-3">
+            <Shimmer className="h-10 w-28 rounded-lg" />
+            <Shimmer className="h-10 w-28 rounded-lg" />
+            <Shimmer className="h-10 w-28 rounded-lg" />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <Shimmer className="h-5 w-40" />
+              <Shimmer className="h-4 w-16" />
+            </div>
+            <div className="space-y-3">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-[#0c0e14] border border-[#1f2128]">
+                  <div className="flex items-center gap-4">
+                    <Shimmer className="h-4 w-10" />
+                    <div>
+                      <Shimmer className="h-4 w-48 mb-1" />
+                      <Shimmer className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <Shimmer className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell
