@@ -284,7 +284,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     phone: '',
     loading: false,
   };
-  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   isSuperadmin = false;
   private destroy$ = new Subject<void>();
 
@@ -309,7 +308,6 @@ export class UsersComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.isSuperadmin = this.auth.getCurrentUser()?.role === 'superadmin';
     this.load();
-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
     this.realtime.subscribeUsers();
     this.realtime.users$
       .pipe(takeUntil(this.destroy$))
@@ -319,7 +317,6 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -332,7 +329,6 @@ export class UsersComponent implements OnInit, OnDestroy {
       if (this.selectedId) this.loadUserDetail(this.selectedId);
       this.cdr.markForCheck();
     } catch (e: any) {
-      console.warn('[users] silent refresh failed', e?.message || e);
     }
   }
 
