@@ -840,13 +840,17 @@ function SpinDigit() {
 function ResultReveal({ result }) {
   const { t } = useI18n();
   const [revealed, setRevealed] = useState(0);
+  const [showStats, setShowStats] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   useEffect(() => {
-    /* reveal one-by-one, snappy — each digit rolls then locks before the next */
-    const t0 = setTimeout(() => setRevealed(0), 0);
-    const t1 = setTimeout(() => setRevealed(1), 60);
-    const t2 = setTimeout(() => setRevealed(2), 480);
-    const t3 = setTimeout(() => setRevealed(3), 900);
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    /* Smooth reveal: 0→1→2→3 over ~3 seconds, then stats drop in */
+    setRevealed(0); setShowStats(false); setCelebrate(false);
+    const t1 = setTimeout(() => setRevealed(1), 600);
+    const t2 = setTimeout(() => setRevealed(2), 1400);
+    const t3 = setTimeout(() => setRevealed(3), 2200);
+    const t4 = setTimeout(() => setShowStats(true), 2800);
+    const t5 = setTimeout(() => setCelebrate(true), 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearTimeout(t5); };
   }, [result.sessionCode]);
 
   const bigUp = result.bigSmall === "BIG";
@@ -857,36 +861,34 @@ function ResultReveal({ result }) {
       <div className="flex flex-wrap items-stretch gap-0 divide-x divide-[#1f2128]">
         {/* Digits block */}
         <div className="flex items-center gap-2 px-5 py-4">
-          <Digit n={revealed >= 1 ? result.digit1 : null} />
-          <Digit n={revealed >= 2 ? result.digit2 : null} />
-          <Digit n={revealed >= 3 ? result.digit3 : null} />
+          <Digit n={revealed >= 1 ? result.digit1 : null} delay={0} />
+          <Digit n={revealed >= 2 ? result.digit2 : null} delay={1} />
+          <Digit n={revealed >= 3 ? result.digit3 : null} delay={2} />
         </div>
 
-        {/* Stats grid — shown after full reveal */}
-        {revealed >= 3 && (
-          <div className="flex flex-1 items-center divide-x divide-[#1f2128]">
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('common.total')}</p>
-              <p className="font-mono text-3xl font-black text-white">{result.resultTotal}</p>
-            </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('game.big_small_short')}</p>
-              <span className={`mt-1 rounded-lg px-3 py-1 text-[13px] font-extrabold uppercase tracking-widest ${bigUp ? "bg-emerald-500 text-black" : "bg-red-500 text-white"}`}>
-                {result.bigSmall === 'BIG' ? t('game.big') : t('game.small')}
-              </span>
-            </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('game.odd_even_short')}</p>
-              <span className={`mt-1 rounded-lg px-3 py-1 text-[13px] font-extrabold uppercase tracking-widest ${oddUp ? "bg-emerald-500 text-black" : "bg-red-500 text-white"}`}>
-                {result.oddEven === 'ODD' ? t('game.odd') : t('game.even')}
-              </span>
-            </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('game.number')}</p>
-              <p className="font-mono text-3xl font-black text-white">{result.resultNumber ?? result.resultTotal}</p>
-            </div>
+        {/* Stats grid — shown after full reveal with smooth drop */}
+        <div className={`flex flex-1 items-center divide-x divide-[#1f2128] transition-all duration-700 ease-out ${showStats ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('common.total')}</p>
+            <p className={`font-mono text-3xl font-black text-white transition-transform duration-500 ${celebrate ? 'scale-110' : 'scale-100'}`}>{result.resultTotal}</p>
           </div>
-        )}
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('game.big_small_short')}</p>
+            <span className={`mt-1 rounded-lg px-3 py-1 text-[13px] font-extrabold uppercase tracking-widest transition-all duration-500 ${bigUp ? "bg-emerald-500 text-black" : "bg-red-500 text-white"} ${celebrate ? 'scale-110 shadow-lg' : 'scale-100'}`}>
+              {result.bigSmall === 'BIG' ? t('game.big') : t('game.small')}
+            </span>
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('game.odd_even_short')}</p>
+            <span className={`mt-1 rounded-lg px-3 py-1 text-[13px] font-extrabold uppercase tracking-widest transition-all duration-500 ${oddUp ? "bg-emerald-500 text-black" : "bg-red-500 text-white"} ${celebrate ? 'scale-110 shadow-lg' : 'scale-100'}`}>
+              {result.oddEven === 'ODD' ? t('game.odd') : t('game.even')}
+            </span>
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-3">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{t('game.number')}</p>
+            <p className={`font-mono text-3xl font-black text-white transition-transform duration-500 ${celebrate ? 'scale-110' : 'scale-100'}`}>{result.resultNumber ?? result.resultTotal}</p>
+          </div>
+        </div>
       </div>
     </ArenaShell>
   );
@@ -894,28 +896,31 @@ function ResultReveal({ result }) {
 
 /* Each digit rolls fast then locks — combined with the staggered reveal above,
    the three numbers "come out" one by one like a draw machine. */
-function Digit({ n }) {
+function Digit({ n, delay = 0 }) {
   const [shown, setShown] = useState(null);
   const [rolling, setRolling] = useState(false);
+  const [locked, setLocked] = useState(false);
   useEffect(() => {
     let iv;
     const t1 = setTimeout(() => {
-      if (n === null) { setShown(null); setRolling(false); return; }
+      if (n === null) { setShown(null); setRolling(false); setLocked(false); return; }
       setRolling(true);
-    }, 0);
+    }, delay * 200);
     if (n !== null) {
       iv = setInterval(() => setShown(Math.floor(Math.random() * 10)), 45);
     }
-    const t2 = n !== null ? setTimeout(() => { clearInterval(iv); setShown(n); setRolling(false); }, 360) : null;
+    const t2 = n !== null ? setTimeout(() => { clearInterval(iv); setShown(n); setRolling(false); setLocked(true); }, 360 + delay * 200) : null;
     return () => { clearTimeout(t1); if (t2) clearTimeout(t2); if (iv) clearInterval(iv); };
-  }, [n]);
+  }, [n, delay]);
   const empty = n === null;
   return (
-    <span className={`grid h-14 w-10 place-items-center rounded-xl border font-mono text-2xl font-black transition-all duration-200 sm:h-16 sm:w-12 sm:text-3xl ${empty
+    <span className={`grid h-14 w-10 place-items-center rounded-xl border font-mono text-2xl font-black transition-all duration-500 sm:h-16 sm:w-12 sm:text-3xl ${empty
         ? "scale-95 border-[#1f2128] bg-[#13151c] text-zinc-700"
         : rolling
           ? "scale-105 border-violet-400/50 bg-violet-400/10 text-violet-200"
-          : "scale-100 border-yellow-400/40 bg-yellow-400/10 text-yellow-300 shadow-[0_0_14px_-2px_rgba(250,204,21,0.4)]"
+          : locked
+            ? "scale-110 border-yellow-400/60 bg-yellow-400/15 text-yellow-300 shadow-[0_0_20px_-2px_rgba(250,204,21,0.5)]"
+            : "scale-100 border-yellow-400/40 bg-yellow-400/10 text-yellow-300 shadow-[0_0_14px_-2px_rgba(250,204,21,0.4)]"
       }`}>
       {empty ? "·" : shown}
     </span>

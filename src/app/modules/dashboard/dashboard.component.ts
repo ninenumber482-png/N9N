@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, Router } from '@angular/router';
+import { RealtimeService } from '../../core/services/realtime.service';
 
 const PAGE_ORDER = [
   { route: '/overview', label: 'Overview' },
@@ -67,10 +68,26 @@ const PAGE_ORDER = [
     </div>
   `,
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit, OnDestroy {
   pages = PAGE_ORDER;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private realtime: RealtimeService) {}
+
+  ngOnInit() {
+    // Global realtime subscriptions for toast notifications
+    // These run regardless of which page the admin is on
+    this.realtime.subscribeTransactions();
+    this.realtime.subscribeKyc();
+    this.realtime.subscribeBets();
+    this.realtime.subscribeEngineStatus();
+  }
+
+  ngOnDestroy() {
+    this.realtime.unsubscribeTransactions();
+    this.realtime.unsubscribeKyc();
+    this.realtime.unsubscribeBets();
+    this.realtime.unsubscribeEngineStatus();
+  }
 
   get current() {
     const path = this.router.url.split('?')[0];

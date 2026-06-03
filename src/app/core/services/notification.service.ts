@@ -1,18 +1,21 @@
 import { Injectable } from '@angular/core';
 import { toast } from 'ngx-sonner';
+import { ToastService } from './toast.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
-  constructor() {}
+  constructor(private toastService: ToastService) {}
 
   success(message: string, description?: string): void {
+    // Show both ngx-sonner toast AND badge notification
     toast.success(message, {
       description: description || '',
       duration: 4000,
       position: 'top-right',
     });
+    this.toastService.success(message, description, 4000);
   }
 
   error(message: string, description?: string): void {
@@ -21,6 +24,7 @@ export class NotificationService {
       duration: 3000,
       position: 'top-right',
     });
+    this.toastService.error(message, description, 5000);
   }
 
   info(message: string, description?: string): void {
@@ -29,6 +33,7 @@ export class NotificationService {
       duration: 3000,
       position: 'top-right',
     });
+    this.toastService.info(message, description, 3000);
   }
 
   warning(message: string, description?: string): void {
@@ -37,6 +42,7 @@ export class NotificationService {
       duration: 4000,
       position: 'top-right',
     });
+    this.toastService.warning(message, description, 4000);
   }
 
   loading(message: string): string | number {
