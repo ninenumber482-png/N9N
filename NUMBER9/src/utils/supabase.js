@@ -23,7 +23,12 @@ if (supabaseUrl && supabaseKey) {
     }
 
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {
-      global: { fetch: customFetch }
+      global: { fetch: customFetch },
+      realtime: {
+        // Disable realtime WebSocket — service is down (Cloudflare error 1101)
+        // Polling fallback is used instead via periodic refresh
+        enabled: false
+      }
     })
   } catch {}
 }

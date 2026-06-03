@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet, useParams, useNavigate } from "react-router-dom";
 import { useStore, isDemoMode, clearAllData, setDemoMode } from "./store/useStore";
 import { subscribeToWalletAndTransactions, subscribeToSettledBets } from "./store/realtimeManager";
+import { usePolling } from "./hooks/usePolling";
+import { supabase } from "./utils/supabase";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { I18nProvider } from "./i18n";
 import Layout from "./components/Layout";
@@ -166,6 +168,45 @@ function App() {
       unsubBets?.();
     };
   }, [auth?.id, subscribeUserStatus]);
+
+  // Polling fallback — refresh wallet & transactions every 5s
+  // (WebSocket realtime is disabled due to Cloudflare error 1101)
+  usePolling(async () => {
+    if (!auth?.id || !supabase) return;
+    try {
+      // Refresh wallet
+      const { data: wallet } = await supabase
+        .from('wallet')
+        .select('balance_main, balance_bonus')
+        .eq('user_id', auth.id)
+        .single();
+      if (wallet) {
+        const main = Number(wallet.balance_main || 0);
+        const bonus = Number(wallet.balance_bonus || 0);
+        useStore.setState({ availableBalance: main, totalBalance: main + bonus });
+      }
+      // Refresh transactions
+      const { data: txs } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', auth.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (txs?.length) {
+        useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
+      }
+      // Refresh bets for 3D King
+      const { data: bets } = await supabase
+        .from('bets')
+        .select('*')
+        .eq('user_id', auth.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (bets?.length) {
+        useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+      }
+    } catch {}
+  }, 5000, [auth?.id]);
 
   useEffect(() => {
     // Expose utilities to browser console for development/admin use
