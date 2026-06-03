@@ -743,17 +743,15 @@ export const clearAllData = () => {
       (async () => {
         if (!supabase) return;
         setUserToken(_auth.token);
-        // Validate token is still valid by attempting a minimal query
+        // Validate JWT expiry client-side (no Supabase Auth session needed)
         try {
-          const { data: user, error } = await supabase.auth.getUser();
-          if (error || !user?.user?.id) {
-            // Token is expired or invalid
+          const payload = JSON.parse(atob(_auth.token.split('.')[1]));
+          if (payload.exp * 1000 < Date.now()) {
             writeJSON(LS.auth, null);
             useStore.setState({ auth: null });
             return;
           }
         } catch (e) {
-          // If validation fails, clear auth to force re-login
           writeJSON(LS.auth, null);
           useStore.setState({ auth: null });
           return;
