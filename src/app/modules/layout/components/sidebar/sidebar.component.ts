@@ -34,7 +34,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       const [pendingDeposits, pendingWithdrawals, pendingKyc, pendingBets] = await Promise.all([
         this.admin.countPending('DEPOSIT').catch(() => 0),
         this.admin.countPending('WITHDRAWAL').catch(() => 0),
-        this.admin.count('kyc_documents', 'status=eq.PENDING').catch(() => 0),
+        this.admin.rpc('count_kyc_by_status', { p_status: 'PENDING' }).then(r => Number(r) || 0).catch(() => 0),
         this.admin.count('bets', 'status=eq.PENDING').catch(() => 0),
       ]);
       this.menuService.updateBadges({

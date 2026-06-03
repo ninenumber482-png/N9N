@@ -58,9 +58,9 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
               @for (k of displayDocs; track k.id) {
                 <tr class="border-border border-b text-xs">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <p class="font-semibold text-foreground">{{ k.user?.display_name || k.user?.username || k.user_id?.slice(0,16) || '—' }}</p>
-                    @if (k.user?.username) {
-                      <p class="text-muted-foreground text-[10px]">&#64;{{ k.user.username }}</p>
+                    <p class="font-semibold text-foreground">{{ k.user_display_name || k.user_username || k.user_id?.slice(0,16) || '—' }}</p>
+                    @if (k.user_username) {
+                      <p class="text-muted-foreground text-[10px]">&#64;{{ k.user_username }}</p>
                     }
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">{{ k.document_type || 'ID' }}</td>
@@ -72,10 +72,12 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
                   </td>
                   <td class="max-sm:hidden text-muted-foreground whitespace-nowrap sm:px-4 sm:py-3 text-[10px]">{{ k.created_at | wibDate:'short' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    @if (k.document_url) {
-                      <img [src]="k.document_url" (click)="viewImage(k.document_url)" class="h-10 w-16 rounded border border-border object-cover cursor-pointer hover:opacity-80 transition-opacity" title="Klik untuk perbesar" />
+                    @if (docUrls[k.id]) {
+                      <img [src]="docUrls[k.id]" (click)="viewImage(docUrls[k.id])" class="h-10 w-16 rounded border border-border object-cover cursor-pointer hover:opacity-80 transition-opacity" title="Klik untuk perbesar" />
                     } @else {
-                      <span class="text-muted-foreground text-[10px]">—</span>
+                      <button (click)="loadDocUrl(k.id)" [disabled]="loadingUrls.has(k.id)" class="text-muted-foreground hover:text-foreground text-[10px] underline">
+                        {{ loadingUrls.has(k.id) ? '...' : 'Lihat' }}
+                      </button>
                     }
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
@@ -136,6 +138,8 @@ export class KycComponent implements OnInit, OnDestroy {
   filtered: any[] = [];
   statusFilter = '';
   previewImage: string | null = null;
+  docUrls: Record<string, string> = {};
+  loadingUrls = new Set<string>();
   currentPage = 1;
   pageSize = 20;
 
@@ -206,6 +210,21 @@ export class KycComponent implements OnInit, OnDestroy {
 
   viewImage(url: string) { this.previewImage = url; }
 
+  async loadDocUrl(id: string) {
+    if (this.loadingUrls.has(id) || this.docUrls[id]) return;
+    this.loadingUrls.add(id);
+    this.cdr.markForCheck();
+    try {
+      const url = await this.admin.getKycDocumentUrl(id);
+      if (url) this.docUrls[id] = url;
+    } catch (e: any) {
+      // silent fail
+    } finally {
+      this.loadingUrls.delete(id);
+      this.cdr.markForCheck();
+    }
+  }
+
   statusClass(s: string) { const m: Record<string,string> = { APPROVED: 'bg-emerald-400/10 text-emerald-400', PENDING: 'bg-amber-400/10 text-amber-400', REJECTED: 'bg-red-400/10 text-red-400' }; return m[s] || 'bg-zinc-400/10 text-zinc-400'; }
 
   confirmAction(action: string, k: any) {
@@ -214,21 +233,21 @@ export class KycComponent implements OnInit, OnDestroy {
     this.confirm.action = action;
     if (action === 'approve') {
       this.confirm.title = 'Setujui KYC';
-      this.confirm.message = `Setujui dokumen KYC ${k.document_type || 'ID'} milik ${k.user?.username || k.user_id?.slice(0,16)}? Pengguna akan terverifikasi.`;
+      this.confirm.message = `Setujui dokumen KYC ${k.document_type || 'ID'} milik ${k.user_username || k.user_id?.slice(0,16)}? Pengguna akan terverifikasi.`;
       this.confirm.icon = '✓';
       this.confirm.iconBg = 'bg-emerald-400/10';
       this.confirm.confirmText = 'Setujui';
       this.confirm.confirmVariant = 'success';
     } else if (action === 'reverify') {
       this.confirm.title = 'Verifikasi Ulang KYC';
-      this.confirm.message = `Verifikasi ulang dokumen KYC ${k.document_type || 'ID'} milik ${k.user?.username || k.user_id?.slice(0,16)}? KYC akan disetujui.`;
+      this.confirm.message = `Verifikasi ulang dokumen KYC ${k.document_type || 'ID'} milik ${k.user_username || k.user_id?.slice(0,16)}? KYC akan disetujui.`;
       this.confirm.icon = '↻';
       this.confirm.iconBg = 'bg-sky-400/10';
       this.confirm.confirmText = 'Verifikasi';
       this.confirm.confirmVariant = 'success';
     } else {
       this.confirm.title = 'Tolak KYC';
-      this.confirm.message = `Tolak dokumen KYC ${k.document_type || 'ID'} milik ${k.user?.username || k.user_id?.slice(0,16)}?`;
+      this.confirm.message = `Tolak dokumen KYC ${k.document_type || 'ID'} milik ${k.user_username || k.user_id?.slice(0,16)}?`;
       this.confirm.icon = '✕';
       this.confirm.iconBg = 'bg-red-400/10';
       this.confirm.confirmText = 'Tolak';
@@ -290,7 +309,7 @@ export class KycComponent implements OnInit, OnDestroy {
       if (admin) {
         await this.admin.logAction(admin.username, 'REJECT_KYC', 'kyc_documents', k.id, 'PENDING', 'REJECTED:' + reason);
       }
-      this.notification.success('KYC ditolak', `Pengguna ${k.user?.username || k.user_id?.slice(0, 16)} telah ditolak.`);
+      this.notification.success('KYC ditolak', `Pengguna ${k.user_username || k.user_id?.slice(0, 16)} telah ditolak.`);
       await this.load();
       this.cdr.markForCheck();
     } catch (e: any) {

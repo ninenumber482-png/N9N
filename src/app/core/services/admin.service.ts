@@ -105,7 +105,14 @@ export class AdminService {
   }
 
   async rpc(name: string, params: Record<string, any> = {}): Promise<any> {
-    return this.proxy<any>('POST', `/rpc/${name}`, params);
+    const cacheKey = `RPC:${name}:${JSON.stringify(params)}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
+      return Promise.resolve(cached.data);
+    }
+    const data = await this.proxy<any>('POST', `/rpc/${name}`, params);
+    this.cache.set(cacheKey, { data, ts: Date.now() });
+    return data;
   }
 
   // ── USERS ──
@@ -122,7 +129,7 @@ export class AdminService {
     return this.get<any>(`audit_log?resource_id=eq.${resourceId}&order=created_at.desc&limit=${limit}`);
   }
   getKycDocsByUser(userId: string) {
-    return this.get<any>(`kyc_documents?user_id=eq.${userId}&order=created_at.desc`);
+    return this.rpc('get_kyc_documents_by_user', { p_user_id: userId });
   }
 
   // ── WALLET ──
@@ -206,7 +213,8 @@ export class AdminService {
   }
 
   // ── KYC DOCUMENTS ──
-  getKycDocuments() { return this.get<any>('kyc_documents', 'select=*,user:users!kyc_documents_user_id_fkey(username,display_name)&order=created_at.desc'); }
+  getKycDocuments() { return this.rpc('get_kyc_documents_admin_list'); }
+  getKycDocumentUrl(id: string) { return this.rpc('get_kyc_document_url', { p_id: id }); }
   updateKycStatus(id: string, status: string, rejectionReason?: string) {
     return this.updateRow('kyc_documents', id, {
       status, rejection_reason: rejectionReason || null, reviewed_at: new Date().toISOString(),
@@ -325,8 +333,8 @@ export class AdminService {
       this.count('users'),
       this.count('transactions'),
       this.count('bets', 'status=eq.PENDING'),
-      this.count('kyc_documents', 'status=eq.PENDING'),
+      this.rpc('count_kyc_by_status', { p_status: 'PENDING' }),
     ]);
-    return { totalUsers: users, totalTransactions: totalTx, pendingBets, pendingKyc };
+    return { totalUsers: users, totalTransactions: totalTx, pendingBets, pendingKyc: Number(pendingKyc) || 0 };
   }
 }
