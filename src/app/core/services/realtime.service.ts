@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { createClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, interval } from 'rxjs';
 import { ToastService } from './toast.service';
 
 @Injectable({ providedIn: 'root' })
@@ -12,6 +12,9 @@ export class RealtimeService implements OnDestroy {
   );
 
   private readonly MAX_ARRAY_SIZE = 200;
+  private readonly POLL_INTERVAL_MS = 5000; // 5 second polling fallback
+  private readonly WS_RETRY_MS = 30000; // Retry WebSocket every 30s
+
   private transactionsSubject = new BehaviorSubject<any[]>([]);
   private walletsSubject = new BehaviorSubject<any[]>([]);
   private betsSubject = new BehaviorSubject<any[]>([]);
@@ -34,23 +37,50 @@ export class RealtimeService implements OnDestroy {
 
   private channels: Map<string, any> = new Map();
   private channelRefs: Map<string, number> = new Map();
+  private pollSubs: Map<string, any> = new Map();
+  private wsEnabled = false;
 
-  constructor(private toastService: ToastService) {}
+  constructor(private toastService: ToastService) {
+    this.tryEnableWebSocket();
+  }
+
+  /** Attempt WebSocket connection, fallback to polling if it fails */
+  private tryEnableWebSocket() {
+    try {
+      const channel = this.supabase.channel('health-check');
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] WebSocket connected');
+          this.wsEnabled = true;
+          this.supabase.removeChannel(channel);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('[Realtime] WebSocket failed, using polling fallback');
+          this.wsEnabled = false;
+        }
+      });
+    } catch (e) {
+      console.warn('[Realtime] WebSocket error, using polling fallback');
+      this.wsEnabled = false;
+    }
+  }
 
   /** Subscribe dengan reference counting — aman dipanggil dari multiple components */
   subscribeTransactions() {
     this._addRef('transactions', () => {
-      const channel = this.supabase
-        .channel('transactions-all')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-        }, (payload: any) => {
-          this.handleTransactionChange(payload);
-        })
-        .subscribe();
-      this.channels.set('transactions', channel);
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('transactions-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, (payload: any) => {
+            this.handleTransactionChange(payload);
+          })
+          .subscribe();
+        this.channels.set('transactions', channel);
+      } else {
+        // Polling fallback
+        this.pollSubs.set('transactions', interval(this.POLL_INTERVAL_MS).subscribe(() => {
+          this._pollTransactions();
+        }));
+      }
     });
   }
 
@@ -60,17 +90,19 @@ export class RealtimeService implements OnDestroy {
 
   subscribeWallets() {
     this._addRef('wallets', () => {
-      const channel = this.supabase
-        .channel('wallets-all')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'wallet',
-        }, (payload: any) => {
-          this.handleWalletChange(payload);
-        })
-        .subscribe();
-      this.channels.set('wallets', channel);
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('wallets-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet' }, (payload: any) => {
+            this.handleWalletChange(payload);
+          })
+          .subscribe();
+        this.channels.set('wallets', channel);
+      } else {
+        this.pollSubs.set('wallets', interval(this.POLL_INTERVAL_MS).subscribe(() => {
+          this._pollWallets();
+        }));
+      }
     });
   }
 
@@ -80,17 +112,19 @@ export class RealtimeService implements OnDestroy {
 
   subscribeBets() {
     this._addRef('bets', () => {
-      const channel = this.supabase
-        .channel('bets-all')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'bets',
-        }, (payload: any) => {
-          this.handleBetChange(payload);
-        })
-        .subscribe();
-      this.channels.set('bets', channel);
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('bets-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'bets' }, (payload: any) => {
+            this.handleBetChange(payload);
+          })
+          .subscribe();
+        this.channels.set('bets', channel);
+      } else {
+        this.pollSubs.set('bets', interval(this.POLL_INTERVAL_MS).subscribe(() => {
+          this._pollBets();
+        }));
+      }
     });
   }
 
@@ -100,17 +134,19 @@ export class RealtimeService implements OnDestroy {
 
   subscribeKyc() {
     this._addRef('kyc', () => {
-      const channel = this.supabase
-        .channel('kyc-all')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'kyc_documents',
-        }, (payload: any) => {
-          this.handleKycChange(payload);
-        })
-        .subscribe();
-      this.channels.set('kyc', channel);
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('kyc-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'kyc_documents' }, (payload: any) => {
+            this.handleKycChange(payload);
+          })
+          .subscribe();
+        this.channels.set('kyc', channel);
+      } else {
+        this.pollSubs.set('kyc', interval(this.POLL_INTERVAL_MS).subscribe(() => {
+          this._pollKyc();
+        }));
+      }
     });
   }
 
@@ -120,17 +156,15 @@ export class RealtimeService implements OnDestroy {
 
   subscribeReferrals() {
     this._addRef('referrals', () => {
-      const channel = this.supabase
-        .channel('referrals-all')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'referrals',
-        }, (payload: any) => {
-          this.handleReferralChange(payload);
-        })
-        .subscribe();
-      this.channels.set('referrals', channel);
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('referrals-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'referrals' }, (payload: any) => {
+            this.handleReferralChange(payload);
+          })
+          .subscribe();
+        this.channels.set('referrals', channel);
+      }
     });
   }
 
@@ -138,10 +172,83 @@ export class RealtimeService implements OnDestroy {
     this._removeRef('referrals');
   }
 
+  subscribeUsers() {
+    this._addRef('users', () => {
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('users-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
+            this.usersSubject.next();
+          })
+          .subscribe();
+        this.channels.set('users', channel);
+      } else {
+        this.pollSubs.set('users', interval(this.POLL_INTERVAL_MS).subscribe(() => {
+          this.usersSubject.next();
+        }));
+      }
+    });
+  }
+
+  unsubscribeUsers() {
+    this._removeRef('users');
+  }
+
+  subscribeEngineStatus() {
+    this._addRef('engine_status', () => {
+      if (this.wsEnabled) {
+        const channel = this.supabase
+          .channel('engine-results')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'king_results' }, (payload: any) => {
+            const result = payload.new;
+            this.engineStatusSubject.next(result);
+            this.toastService.success(
+              '3D King Result',
+              `${result.d1}${result.d2}${result.d3} = ${result.total} (${result.big_small}/${result.odd_even})`
+            );
+          })
+          .subscribe();
+        this.channels.set('engine_status', channel);
+      } else {
+        this.pollSubs.set('engine_status', interval(this.POLL_INTERVAL_MS).subscribe(() => {
+          this._pollEngineResults();
+        }));
+      }
+    });
+  }
+
+  unsubscribeEngineStatus() {
+    this._removeRef('engine_status');
+  }
+
+  // ── Polling Fallback Methods ──
+
+  private async _pollTransactions() {
+    // Polling is handled by individual pages via their load() methods
+    // This just triggers the refresh signal
+    this.depositQueueSubject.next({ _poll: true });
+  }
+
+  private async _pollWallets() {
+    this.walletsSubject.next([]);
+  }
+
+  private async _pollBets() {
+    this.betsSubject.next([]);
+  }
+
+  private async _pollKyc() {
+    this.kycSubject.next([]);
+  }
+
+  private async _pollEngineResults() {
+    this.engineStatusSubject.next({ _poll: true });
+  }
+
   private _addRef(key: string, factory: () => void) {
     const refs = (this.channelRefs.get(key) || 0) + 1;
     this.channelRefs.set(key, refs);
-    if (refs === 1 && !this.channels.has(key)) {
+    if (refs === 1 && !this.channels.has(key) && !this.pollSubs.has(key)) {
       factory();
     }
   }
@@ -154,6 +261,11 @@ export class RealtimeService implements OnDestroy {
         this.supabase.removeChannel(ch);
         this.channels.delete(key);
       }
+      const poll = this.pollSubs.get(key);
+      if (poll) {
+        poll.unsubscribe();
+        this.pollSubs.delete(key);
+      }
       this.channelRefs.delete(key);
     } else {
       this.channelRefs.set(key, refs);
@@ -164,16 +276,15 @@ export class RealtimeService implements OnDestroy {
     return arr.length > maxSize ? arr.slice(0, maxSize) : arr;
   }
 
+  // ── Handlers ──
+
   private async handleTransactionChange(payload: any) {
     const current = this.transactionsSubject.value;
     const tx = payload.new;
     if (payload.eventType === 'DELETE') {
-      this.transactionsSubject.next(
-        this.capArray(current.filter(t => t.id !== payload.old.id))
-      );
+      this.transactionsSubject.next(this.capArray(current.filter(t => t.id !== payload.old.id)));
     } else if (payload.eventType === 'INSERT') {
       this.transactionsSubject.next(this.capArray([tx, ...current]));
-      // Push to deposit/withdrawal queue subjects
       if (tx?.type === 'DEPOSIT') {
         this.depositQueueSubject.next(tx);
         this.toastService.info('Deposit Baru', `Deposit ${tx.amount}P dari user ${tx.user_id?.slice(0,8)}`);
@@ -188,10 +299,8 @@ export class RealtimeService implements OnDestroy {
         updated[idx] = tx;
         this.transactionsSubject.next(updated);
       }
-      // Also emit to queue subjects on status changes
       if (tx?.type === 'DEPOSIT') this.depositQueueSubject.next(tx);
       if (tx?.type === 'WITHDRAWAL') this.withdrawalQueueSubject.next(tx);
-      // Show toast on status changes
       if (payload.old?.status !== tx?.status) {
         const userLabel = tx.user?.username || tx.user_id?.slice(0, 8) || 'User';
         if (tx?.type === 'DEPOSIT') {
@@ -209,9 +318,7 @@ export class RealtimeService implements OnDestroy {
   private async handleWalletChange(payload: any) {
     const current = this.walletsSubject.value;
     if (payload.eventType === 'DELETE') {
-      this.walletsSubject.next(
-        this.capArray(current.filter(w => w.id !== payload.old.id))
-      );
+      this.walletsSubject.next(this.capArray(current.filter(w => w.id !== payload.old.id)));
     } else if (payload.eventType === 'INSERT') {
       this.walletsSubject.next(this.capArray([payload.new, ...current]));
     } else if (payload.eventType === 'UPDATE') {
@@ -229,9 +336,7 @@ export class RealtimeService implements OnDestroy {
     const current = this.betsSubject.value;
     const bet = payload.new;
     if (payload.eventType === 'DELETE') {
-      this.betsSubject.next(
-        this.capArray(current.filter(b => b.id !== payload.old.id))
-      );
+      this.betsSubject.next(this.capArray(current.filter(b => b.id !== payload.old.id)));
     } else if (payload.eventType === 'INSERT') {
       this.betsSubject.next(this.capArray([bet, ...current]));
       this.toastService.info('Bet Baru', `${bet.selection} ${bet.stake}P — Session ${bet.session_code}`);
@@ -242,7 +347,6 @@ export class RealtimeService implements OnDestroy {
         updated[idx] = bet;
         this.betsSubject.next(updated);
       }
-      // Show toast on settlement
       if (payload.old?.status === 'PENDING' && bet?.status === 'SETTLED') {
         const result = bet?.result === 'WIN' ? 'Menang' : 'Kalah';
         const payout = bet?.actual_payout || 0;
@@ -260,9 +364,7 @@ export class RealtimeService implements OnDestroy {
     const current = this.kycSubject.value;
     const kyc = payload.new;
     if (payload.eventType === 'DELETE') {
-      this.kycSubject.next(
-        this.capArray(current.filter(k => k.id !== payload.old.id))
-      );
+      this.kycSubject.next(this.capArray(current.filter(k => k.id !== payload.old.id)));
     } else if (payload.eventType === 'INSERT') {
       this.kycSubject.next(this.capArray([kyc, ...current]));
       this.toastService.info('KYC Baru', `Dokumen ${kyc.document_type} dari user ${kyc.user_id?.slice(0,8)}`);
@@ -273,7 +375,6 @@ export class RealtimeService implements OnDestroy {
         updated[idx] = kyc;
         this.kycSubject.next(updated);
       }
-      // Show toast on status changes
       if (payload.old?.status !== kyc?.status) {
         if (kyc?.status === 'PENDING') {
           this.toastService.info('KYC Diperbarui', `Dokumen menunggu review`);
@@ -290,9 +391,7 @@ export class RealtimeService implements OnDestroy {
   private async handleReferralChange(payload: any) {
     const current = this.referralsSubject.value;
     if (payload.eventType === 'DELETE') {
-      this.referralsSubject.next(
-        this.capArray(current.filter(r => r.id !== payload.old.id))
-      );
+      this.referralsSubject.next(this.capArray(current.filter(r => r.id !== payload.old.id)));
     } else if (payload.eventType === 'INSERT') {
       this.referralsSubject.next(this.capArray([payload.new, ...current]));
     } else if (payload.eventType === 'UPDATE') {
@@ -306,56 +405,13 @@ export class RealtimeService implements OnDestroy {
     console.log('[Realtime] Referral updated:', payload.eventType, payload.new?.id?.slice(0, 8));
   }
 
-  subscribeUsers() {
-    this._addRef('users', () => {
-      const channel = this.supabase
-        .channel('users-all')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'users',
-        }, () => {
-          this.usersSubject.next();
-        })
-        .subscribe();
-      this.channels.set('users', channel);
-    });
-  }
-
-  unsubscribeUsers() {
-    this._removeRef('users');
-  }
-
-  subscribeEngineStatus() {
-    this._addRef('engine_status', () => {
-      const channel = this.supabase
-        .channel('engine-results')
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'king_results',
-        }, (payload: any) => {
-          const result = payload.new;
-          this.engineStatusSubject.next(result);
-          this.toastService.success(
-            '3D King Result',
-            `${result.d1}${result.d2}${result.d3} = ${result.total} (${result.big_small}/${result.odd_even})`
-          );
-        })
-        .subscribe();
-      this.channels.set('engine_status', channel);
-    });
-  }
-
-  unsubscribeEngineStatus() {
-    this._removeRef('engine_status');
-  }
-
   unsubscribeAll() {
     this.channels.forEach(channel => {
       this.supabase.removeChannel(channel);
     });
     this.channels.clear();
+    this.pollSubs.forEach(sub => sub.unsubscribe());
+    this.pollSubs.clear();
     this.channelRefs.clear();
   }
 
