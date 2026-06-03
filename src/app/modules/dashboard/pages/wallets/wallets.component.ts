@@ -8,6 +8,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { RealtimeService } from '../../../../core/services/realtime.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 const ADJUSTMENT_TYPES = [
   { value: 'BONUS',        label: 'Bonus' },
@@ -20,7 +21,7 @@ const ADJUSTMENT_TYPES = [
 @Component({
   selector: 'app-wallets',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -80,7 +81,7 @@ const ADJUSTMENT_TYPES = [
                 </tr>
               </thead>
               <tbody>
-                @for (w of filteredWallets; track w.id) {
+                @for (w of paginatedWallets; track w.id) {
                   <tr class="border-border hover:bg-muted/30 border-b text-xs transition-colors">
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                       <p class="font-semibold text-foreground">{{ w.user?.display_name || w.user?.username || '—' }}</p>
@@ -112,51 +113,7 @@ const ADJUSTMENT_TYPES = [
                       }
                     </td>
                   </tr>
-                  @if (adjusting?.user_id === w.user_id) {
-                    <tr class="bg-muted/5 border-border border-b">
-                      <td colspan="10" class="px-4 pb-4 pt-2">
-                        <div class="grid gap-4 sm:grid-cols-3">
-                          <div class="space-y-2">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jenis Penyesuaian</p>
-                            <select [(ngModel)]="adjType" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none w-full">
-                              @for (t of adjTypes; track t.value) {
-                                <option [value]="t.value">{{ t.label }}</option>
-                              }
-                            </select>
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2">Field</p>
-                            <select [(ngModel)]="adjField" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none w-full">
-                              <option value="balance_main">Main Balance</option>
-                              <option value="balance_bonus">Bonus Balance</option>
-                            </select>
-                          </div>
-                          <div class="space-y-2">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah (+ tambah / - kurang)</p>
-                            <input type="number" [(ngModel)]="adjAmount" placeholder="cth: 50000 atau -10000"
-                              class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
-                            <p class="text-xs text-muted-foreground mt-1">
-                              Saldo baru:
-                              <span [class]="previewBalance(w) >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'">
-                                {{ previewBalance(w) | number:'1.2-2' }} P
-                              </span>
-                            </p>
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2">Catatan</p>
-                            <input [(ngModel)]="adjNotes" placeholder="Alasan penyesuaian…"
-                              class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
-                          </div>
-                          <div class="flex items-end gap-2">
-                            <button (click)="saveAdjust(w)" [disabled]="!adjAmount"
-                              class="bg-primary text-primary-foreground disabled:opacity-50 rounded-lg px-4 py-2 text-xs font-bold">
-                              Simpan
-                            </button>
-                            <button (click)="adjusting = null"
-                              class="text-muted-foreground rounded-lg px-3 py-2 text-xs font-bold">
-                              Batal
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  }
+
                 } @empty {
                   <tr><td colspan="10" class="text-muted-foreground px-4 py-12 text-center">Tidak ada wallet ditemukan.</td></tr>
                 }
@@ -164,6 +121,7 @@ const ADJUSTMENT_TYPES = [
             </table>
           </div>
         </div>
+        <app-pagination [currentPage]="currentPage" [totalItems]="filteredWallets.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
 
       <!-- ── Tab: Platform Accounts ─────────────────────────────────────── -->
@@ -249,7 +207,7 @@ const ADJUSTMENT_TYPES = [
                 </tr>
               </thead>
               <tbody>
-                @for (a of accounts; track a.id) {
+                @for (a of paginatedAccounts; track a.id) {
                   <tr class="border-border hover:bg-muted/30 border-b text-xs transition-colors">
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">{{ a.provider_name }}</td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">{{ a.account_holder }}</td>
@@ -282,8 +240,61 @@ const ADJUSTMENT_TYPES = [
             </table>
           </div>
         </div>
+        <app-pagination [currentPage]="currentPage" [totalItems]="accounts.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
-    </div>
+
+    <!-- Balance Adjustment Modal -->
+    @if (adjusting) {
+      <div class="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-black/60" (click)="adjusting = null">
+        <div class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+            <h3 class="text-sm font-extrabold text-foreground">Sesuaikan Saldo</h3>
+            <button (click)="adjusting = null" class="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+          </div>
+          <div class="px-5 py-4 max-h-[65vh] overflow-y-auto">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="space-y-2">
+                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jenis Penyesuaian</p>
+                <select [(ngModel)]="adjType" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none w-full">
+                  @for (t of adjTypes; track t.value) {
+                    <option [value]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2">Field</p>
+                <select [(ngModel)]="adjField" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none w-full">
+                  <option value="balance_main">Main Balance</option>
+                  <option value="balance_bonus">Bonus Balance</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah (+ tambah / - kurang)</p>
+                <input type="number" [(ngModel)]="adjAmount" placeholder="cth: 50000 atau -10000"
+                  class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
+                <p class="text-xs text-muted-foreground mt-1">
+                  Saldo baru:
+                  <span [class]="previewBalance(adjusting) >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'">
+                    {{ previewBalance(adjusting) | number:'1.2-2' }} P
+                  </span>
+                </p>
+                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2">Catatan</p>
+                <input [(ngModel)]="adjNotes" placeholder="Alasan penyesuaian…"
+                  class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+              <button (click)="saveAdjust(adjusting)" [disabled]="!adjAmount"
+                class="bg-primary text-primary-foreground disabled:opacity-50 rounded-lg px-4 py-2 text-xs font-bold">
+                Simpan
+              </button>
+              <button (click)="adjusting = null"
+                class="text-muted-foreground rounded-lg px-3 py-2 text-xs font-bold">
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
 
     <app-confirm-dialog
       [open]="confirm.open"
@@ -307,6 +318,8 @@ export class WalletsComponent implements OnInit, OnDestroy {
   wallets: any[] = [];
   filteredWallets: any[] = [];
   walletSearch = '';
+  currentPage = 1;
+  pageSize = 20;
 
   adjusting: any = null;
   adjType = 'MANUAL';
@@ -396,7 +409,18 @@ export class WalletsComponent implements OnInit, OnDestroy {
     }
   }
 
+  get paginatedWallets() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredWallets.slice(start, start + this.pageSize);
+  }
+
+  get paginatedAccounts() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.accounts.slice(start, start + this.pageSize);
+  }
+
   filterWallets() {
+    this.currentPage = 1;
     let list = this.wallets.filter(w => w.user?.role !== 'admin' && w.user?.role !== 'superadmin');
     const q = this.walletSearch.toLowerCase();
     this.filteredWallets = q
@@ -405,7 +429,6 @@ export class WalletsComponent implements OnInit, OnDestroy {
   }
 
   openAdjust(w: any) {
-    if (this.adjusting?.user_id === w.user_id) { this.adjusting = null; return; }
     this.adjusting = w;
     this.adjType = 'MANUAL';
     this.adjField = 'balance_main';
@@ -529,6 +552,10 @@ export class WalletsComponent implements OnInit, OnDestroy {
   typeClass(t: string) {
     const m: Record<string, string> = { BANK: 'bg-sky-400/10 text-sky-400', EWALLET: 'bg-violet-400/10 text-violet-400', QRIS: 'bg-amber-400/10 text-amber-400' };
     return m[t] || 'bg-zinc-400/10 text-zinc-400';
+  }
+
+  onPageChange(p: number) {
+    this.currentPage = p;
   }
 
   net(w: any): number {

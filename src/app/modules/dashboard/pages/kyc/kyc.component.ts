@@ -8,11 +8,12 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { RealtimeService } from '../../../../core/services/realtime.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-kyc',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -54,7 +55,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
               </tr>
             </thead>
             <tbody>
-              @for (k of filtered; track k.id) {
+              @for (k of displayDocs; track k.id) {
                 <tr class="border-border border-b text-xs">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                     <p class="font-semibold text-foreground">{{ k.user?.display_name || k.user?.username || k.user_id?.slice(0,16) || '—' }}</p>
@@ -104,6 +105,8 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
         </div>
       </div>
 
+      <app-pagination [currentPage]="currentPage" [totalItems]="filtered.length" (pageChange)="onPageChange($event)"></app-pagination>
+
       @if (previewImage) {
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" (click)="previewImage = null">
           <img [src]="previewImage" class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" (click)="$event.stopPropagation()" />
@@ -133,6 +136,13 @@ export class KycComponent implements OnInit, OnDestroy {
   filtered: any[] = [];
   statusFilter = '';
   previewImage: string | null = null;
+  currentPage = 1;
+  pageSize = 20;
+
+  get displayDocs() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filtered.slice(start, start + this.pageSize);
+  }
   error: string | null = null;
   loading = false;
   approving = new Set<string>();
@@ -185,7 +195,9 @@ export class KycComponent implements OnInit, OnDestroy {
     }
   }
 
-  applyFilter() { this.filtered = this.statusFilter ? this.documents.filter(d => d.status === this.statusFilter) : this.documents; }
+  applyFilter() { this.currentPage = 1; this.filtered = this.statusFilter ? this.documents.filter(d => d.status === this.statusFilter) : this.documents; }
+
+  onPageChange(p: number) { this.currentPage = p; }
 
   cancelDialog() {
     this.confirm.open = false;

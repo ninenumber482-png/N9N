@@ -5,11 +5,12 @@ import { Subject, takeUntil } from 'rxjs';
 import { AdminService } from '../../../../core/services/admin.service';
 import { RealtimeService } from '../../../../core/services/realtime.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-bets',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe],
+  imports: [CommonModule, FormsModule, WibDatePipe, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -44,7 +45,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
               </tr>
             </thead>
             <tbody>
-              @for (b of filtered; track b.id) {
+              @for (b of displayBets; track b.id) {
                 <tr class="border-border hover:bg-muted/30 border-b text-xs transition-colors">
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono">{{ b.bet_code?.slice(0,12) }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
@@ -74,6 +75,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
             </tbody>
           </table>
         </div>
+      <app-pagination [currentPage]="currentPage" [totalItems]="filtered.length" (pageChange)="onPageChange($event)"></app-pagination>
       </div>
     </div>
   `,
@@ -84,6 +86,8 @@ export class BetsComponent implements OnInit, OnDestroy {
   statusFilter = '';
   loading = true;
   error: string | null = null;
+  currentPage = 1;
+  pageSize = 20;
   private destroy$ = new Subject<void>();
 
   constructor(private admin: AdminService, private cdr: ChangeDetectorRef, private realtime: RealtimeService) {}
@@ -131,13 +135,20 @@ export class BetsComponent implements OnInit, OnDestroy {
     }
   }
 
+  get displayBets() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filtered.slice(start, start + this.pageSize);
+  }
+
   get emptyMessage(): string {
     if (this.loading) return 'Loading bets...';
     if (this.error) return this.error;
     return 'No bets found';
   }
 
-  applyFilter() { this.filtered = this.statusFilter ? this.bets.filter(b => b.status === this.statusFilter) : this.bets; }
+  applyFilter() { this.currentPage = 1; this.filtered = this.statusFilter ? this.bets.filter(b => b.status === this.statusFilter) : this.bets; }
+
+  onPageChange(p: number) { this.currentPage = p; }
 
   statusClass(s: string) {
     const m: Record<string, string> = { PENDING: 'bg-amber-400/10 text-amber-400', WON: 'bg-emerald-400/10 text-emerald-400', LOST: 'bg-red-400/10 text-red-400', CANCELLED: 'bg-zinc-400/10 text-zinc-400' };

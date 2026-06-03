@@ -110,6 +110,7 @@ export class AdminService {
 
   // ── USERS ──
   getUsers() { return this.get<any>('users', 'order=created_at.desc'); }
+  getUsersWithWallets() { return this.get<any>('users', 'select=*,wallet(*)&order=created_at.desc'); }
   getUser(id: string) { return this.get<any>(`users?id=eq.${id}`, 'limit=1'); }
   updateUser(id: string, data: any) { return this.updateRow('users', id, data); }
   deleteUser(id: string) { return this.deleteRow('users', id); }
@@ -170,6 +171,12 @@ export class AdminService {
 
   // ── BETS ──
   getBets(limit = 100) { return this.get<any>(`bets?select=*,user:users!bets_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}`); }
+  getBetsByUser(userId: string, limit = 50) {
+    return this.get<any>(`bets?user_id=eq.${userId}&order=created_at.desc&limit=${limit}`);
+  }
+  getTransactionsByUser(userId: string, limit = 50) {
+    return this.get<any>(`transactions?user_id=eq.${userId}&order=created_at.desc&limit=${limit}`);
+  }
   getBetsBySession(sessionCode: string) {
     return this.get<any>(`bets?session_code=eq.${sessionCode}&order=created_at.desc`);
   }

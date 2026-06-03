@@ -1,7 +1,7 @@
 @for (menu of menuService.pagesMenu; track menu) {
   <div>
     @if (menuService.showSideBar) {
-      <div class="mx-1 flex items-center justify-between py-3">
+      <div class="mx-1 flex items-center justify-between py-1.5">
         <small [ngClass]="{ hidden: !menuService.showSideBar }" class="text-muted-foreground/50 text-xs font-semibold">
           {{ menu.group }}
         </small>
@@ -89,7 +89,7 @@
       }
     </ul>
     @if (menu.separator) {
-      <div class="py-3">
+      <div class="py-1.5">
         <hr class="border-border border-dashed" />
       </div>
     }

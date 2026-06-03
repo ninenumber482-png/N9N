@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../../core/services/admin.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-session-monitor',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe],
+  imports: [CommonModule, FormsModule, WibDatePipe, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -45,7 +46,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
             <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3"></th>
           </tr></thead>
           <tbody>
-            @for (s of sessions; track s.id) {
+            @for (s of displaySessions; track s.id) {
               <tr class="border-border hover:bg-muted/30 border-b">
                 <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">{{ s.user_id?.slice(0,8) }}</td>
                 <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono text-muted-foreground max-sm:hidden">{{ s.ip_address || '-' }}</td>
@@ -72,12 +73,15 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
           </tbody>
         </table>
       </div>
+      <app-pagination [currentPage]="currentPage" [totalItems]="sessions.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
     </div>
   `,
 })
 export class SessionMonitorComponent implements OnInit, OnDestroy {
   sessions: any[] = [];
+  currentPage = 1;
+  pageSize = 20;
   loading = true;
   error: string | null = null;
   killing: string | null = null;
@@ -106,6 +110,13 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
     this.loading = false;
     this.cdr.markForCheck();
   }
+
+  get displaySessions() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.sessions.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(p: number) { this.currentPage = p; }
 
   isExpired(expiresAt: string) {
     return new Date(expiresAt).getTime() < Date.now();

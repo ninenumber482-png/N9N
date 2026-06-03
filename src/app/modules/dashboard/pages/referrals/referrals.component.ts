@@ -75,7 +75,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono text-xs font-bold text-foreground">
                     {{ r.code }}
                     @if (!r.created_by) {
-                      <span class="bg-violet-400/10 text-violet-400 rounded px-1 py-0.5 text-[8px] font-bold ml-1">PLATFORM</span>
+                      <span class="bg-muted text-foreground rounded px-1 py-0.5 text-[8px] font-medium ml-1">PLATFORM</span>
                     }
                   </td>
                   <td class="max-sm:hidden sm:px-4 sm:py-3">
@@ -110,8 +110,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       <button (click)="confirmAction(r)"
-                        [class]="r.status === 'ACTIVE' ? 'bg-red-400/10 text-red-400 hover:bg-red-400/20' : 'bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20'"
-                        class="rounded px-2 py-1 text-[10px] font-bold transition-colors">
+                        class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium transition-colors">
                         {{ r.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                       </button>
                       @if (editingId === r.id) {
@@ -279,7 +278,7 @@ export class ReferralsComponent implements OnInit, OnDestroy {
     this.confirm.title = next === 'INACTIVE' ? 'Nonaktifkan Referral' : 'Aktifkan Referral';
     this.confirm.message = `${next === 'INACTIVE' ? 'Nonaktifkan' : 'Aktifkan'} kode referral ${r.code}?`;
     this.confirm.icon = next === 'INACTIVE' ? '◌' : '✓';
-    this.confirm.iconBg = next === 'INACTIVE' ? 'bg-red-400/10' : 'bg-emerald-400/10';
+    this.confirm.iconBg = 'bg-muted';
     this.confirm.confirmText = next === 'INACTIVE' ? 'Nonaktifkan' : 'Aktifkan';
     this.confirm.confirmVariant = next === 'INACTIVE' ? 'danger' : 'success';
     this.confirm.open = true;
@@ -371,11 +370,6 @@ export class ReferralsComponent implements OnInit, OnDestroy {
   }
 
   statusClass(s: string) {
-    const m: Record<string, string> = {
-      ACTIVE: 'bg-emerald-400/10 text-emerald-400',
-      INACTIVE: 'bg-zinc-400/10 text-zinc-400',
-      EXPIRED: 'bg-red-400/10 text-red-400',
-    };
-    return m[s] || 'bg-zinc-400/10 text-zinc-400';
+    return 'bg-muted text-foreground';
   }
 }

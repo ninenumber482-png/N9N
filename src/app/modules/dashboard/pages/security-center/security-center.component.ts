@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../../core/services/admin.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-security-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe],
+  imports: [CommonModule, FormsModule, WibDatePipe, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -16,7 +17,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
           <p class="text-muted-foreground mt-1 max-sm:text-[10px] sm:text-sm">Security alerts, failed logins, and audit events</p>
         </div>
         <div class="flex gap-2">
-          <select [(ngModel)]="tab" class="bg-card border-border text-foreground rounded-lg border max-sm:px-2 max-sm:py-1.5 sm:px-3 sm:py-2 max-sm:text-[9px] sm:text-xs font-semibold outline-none">
+          <select [(ngModel)]="tab" (ngModelChange)="onTabChange($event)" class="bg-card border-border text-foreground rounded-lg border max-sm:px-2 max-sm:py-1.5 sm:px-3 sm:py-2 max-sm:text-[9px] sm:text-xs font-semibold outline-none">
             <option value="alerts">Security Alerts</option>
             <option value="failed">Failed Logins</option>
             <option value="audit">Recent Audit</option>
@@ -49,7 +50,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
               <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">IP</th>
             </tr></thead>
             <tbody>
-              @for (l of alerts; track l.id) {
+              @for (l of displayItems; track l.id) {
                 <tr class="border-border hover:bg-muted/30 border-b">
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">{{ l.created_at | wibDate:'short' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3"><span class="rounded px-2 py-0.5 text-[10px] font-bold bg-amber-400/10 text-amber-400">{{ l.alert_type }}</span></td>
@@ -74,7 +75,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
               <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">User Agent</th>
             </tr></thead>
             <tbody>
-              @for (l of failedLogins; track l.id) {
+              @for (l of displayItems; track l.id) {
                 <tr class="border-border hover:bg-muted/30 border-b">
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">{{ l.attempted_at | wibDate:'short' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">{{ l.username }}</td>
@@ -98,7 +99,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
               <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">IP</th>
             </tr></thead>
             <tbody>
-              @for (l of auditLogs; track l.id) {
+              @for (l of displayItems; track l.id) {
                 <tr class="border-border hover:bg-muted/30 border-b">
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">{{ l.created_at | wibDate:'short' }}</td>
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono max-sm:hidden">{{ l.admin_id?.slice(0,10) }}</td>
@@ -111,17 +112,38 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
           </table>
         </div>
       }
+      <app-pagination [currentPage]="currentPage" [totalItems]="currentTabData.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
     </div>
   `,
 })
 export class SecurityCenterComponent implements OnInit {
   tab = 'alerts';
+  currentPage = 1;
+  pageSize = 20;
   alerts: any[] = [];
   failedLogins: any[] = [];
   auditLogs: any[] = [];
   loading = true;
   error: string | null = null;
+
+  get currentTabData(): any[] {
+    switch (this.tab) {
+      case 'alerts': return this.alerts;
+      case 'failed': return this.failedLogins;
+      case 'audit': return this.auditLogs;
+      default: return [];
+    }
+  }
+
+  get displayItems() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.currentTabData.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(p: number) { this.currentPage = p; }
+
+  onTabChange(t: string) { this.tab = t; this.currentPage = 1; }
 
   constructor(private admin: AdminService, private cdr: ChangeDetectorRef) {}
 

@@ -2,11 +2,12 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../../core/services/admin.service';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-turnover',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -66,7 +67,7 @@ import { AdminService } from '../../../../core/services/admin.service';
             <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">PnL</th>
           </tr></thead>
           <tbody>
-            @for (w of filteredWallets; track w.user_id) {
+            @for (w of displayWallets; track w.user_id) {
               <tr class="border-border hover:bg-muted/30 border-b">
                 <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                   <p class="font-semibold text-foreground text-xs">{{ w.user?.username || w.user_id?.slice(0,8) }}</p>
@@ -89,6 +90,7 @@ import { AdminService } from '../../../../core/services/admin.service';
           </tbody>
         </table>
       </div>
+      <app-pagination [currentPage]="currentPage" [totalItems]="filteredWallets.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
     </div>
   `,
@@ -96,6 +98,8 @@ import { AdminService } from '../../../../core/services/admin.service';
 export class TurnoverComponent implements OnInit {
   wallets: any[] = [];
   search = '';
+  currentPage = 1;
+  pageSize = 20;
   loading = true;
   error: string | null = null;
   totalTurnover = 0;
@@ -106,6 +110,13 @@ export class TurnoverComponent implements OnInit {
   constructor(private admin: AdminService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() { this.load(); }
+
+  get displayWallets() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredWallets.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(p: number) { this.currentPage = p; window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
   get filteredWallets() {
     if (!this.search.trim()) return this.wallets;

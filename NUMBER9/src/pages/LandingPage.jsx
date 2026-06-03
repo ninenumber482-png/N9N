@@ -80,9 +80,17 @@ export default function LandingPage() {
       <section className="px-4 py-20 md:py-32 bg-[#0c0e14] border-t border-[#1f2128]">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-2xl font-black mb-12 text-center">{t('landing.trusted_by')}</h2>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-6 items-center justify-items-center">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-x-8 gap-y-10 items-center justify-items-center">
             {LOGOS.map((logo, i) => (
-              <img key={i} src={logo.src} alt={logo.alt} className="h-12 w-auto opacity-70 hover:opacity-100 transition" />
+              <div key={i} className="flex h-10 w-full items-center justify-center">
+                <img
+                  src={logo.src}
+                  alt={logo.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="max-h-8 max-w-[110px] w-auto object-contain opacity-70 hover:opacity-100 transition duration-300"
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -92,13 +100,13 @@ export default function LandingPage() {
       <section className="px-4 py-20 md:py-32 border-t border-[#1f2128]">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-4xl font-black mb-16 text-center">{t('landing.values_title')}</h2>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             {VALUES.map((value, i) => {
               const labels = [t('landing.value_integrity'), t('landing.value_collaboration'), t('landing.value_innovation'), t('landing.value_excellence')];
               const descs = [t('landing.value_integrity_desc'), t('landing.value_collaboration_desc'), t('landing.value_innovation_desc'), t('landing.value_excellence_desc')];
               return (
-              <div key={i} className="rounded-xl border border-[#1f2128] bg-[#0c0e14] p-6 text-center">
-                <img src={value.icon} alt={labels[i]} className="h-12 w-12 mx-auto mb-4" />
+              <div key={i} className="flex h-full flex-col items-center rounded-xl border border-[#1f2128] bg-[#0c0e14] p-6 text-center transition duration-300 hover:border-yellow-400/30 hover:bg-[#11141c]">
+                <img src={value.icon} alt={labels[i]} loading="lazy" decoding="async" className="h-14 w-14 object-contain mb-4" />
                 <h3 className="text-xl font-bold mb-2">{labels[i]}</h3>
                 <p className="text-zinc-400 text-sm">{descs[i]}</p>
               </div>

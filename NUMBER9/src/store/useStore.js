@@ -43,11 +43,6 @@ const writeJSON = (k, v) => {
   } catch {}
 };
 
-const newUuid = () =>
-  crypto.randomUUID
-    ? crypto.randomUUID()
-    : "u-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
-
 const now = () => new Date().toISOString();
 
 const generateRefCode = () => {
@@ -338,120 +333,46 @@ export const useStore = create((set, get) => ({
   registerUser: async (data) => {
     const uname = String(data.username || "").trim().toLowerCase();
     if (!uname) return { ok: false, error: "Username is required." };
+    if (!data.referralCode) return { ok: false, error: "Referral code is required." };
 
     try {
-      if (!supabase) return { ok: false, error: "Backend unavailable." };
-      const bcrypt = await import("bcryptjs");
-
-      // Validate referral code
-      if (!data.referralCode) return { ok: false, error: "Referral code is required." };
-      const normCode = data.referralCode.trim().toUpperCase();
-      let referralId = null; // referrals.id when using a system-generated code
-      let referredByUser = null; // users.id of the human referrer (for My Network downline)
-      let sysRef = null;
-
-      // 1. Try personal user code
-      const { data: refOwner, error: refErr } = await supabase
-        .from("users")
-        .select("id,username,display_name,account_status,referral_code")
-        .eq("referral_code", normCode)
-        .single();
-
-      if (!refErr && refOwner) {
-        if (refOwner.account_status !== "ACTIVE") {
-          return { ok: false, error: "Referral code belongs to an inactive account." };
+      // Registration runs server-side (user-register Edge Function, service role):
+      // RLS on `users` blocks anon referral lookup + insert, so the client cannot
+      // do this directly. The edge fn validates the referral code, hashes the
+      // password, creates the user/wallet/KYC docs atomically.
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
+          },
+          body: JSON.stringify({
+            username: uname,
+            password: data.password,
+            displayName: data.displayName,
+            email: data.email || "",
+            phone: data.phone || "",
+            country: data.country || "Indonesia",
+            referralCode: data.referralCode,
+            bankName: data.bankName || "",
+            bankAccountNumber: data.bankAccountNumber || "",
+            bankAccountName: data.bankAccountName || "",
+            kyc: data.kyc || {},
+          }),
         }
-        referredByUser = refOwner.id; // user-to-user referral
-      } else {
-        // 2. Try system referrals table (admin-generated)
-        const { data: refData, error: sysRefErr } = await supabase
-          .from("referrals")
-          .select("id,code,status,expires_at,max_uses,used_count,created_by")
-          .eq("code", normCode)
-          .single();
-        if (sysRefErr || !refData) {
-          return { ok: false, error: "Referral code is invalid." };
-        }
-        if (refData.status !== "ACTIVE") {
-          return { ok: false, error: "Referral code is inactive." };
-        }
-        if (refData.expires_at && new Date(refData.expires_at) < new Date()) {
-          return { ok: false, error: "Referral code has expired." };
-        }
-        if (refData.max_uses != null && refData.used_count >= refData.max_uses) {
-          return { ok: false, error: "Referral code usage limit reached." };
-        }
-        referralId = refData.id;
-        referredByUser = refData.created_by || null; // code creator, NULL for platform codes
-        sysRef = refData;
+      );
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.error) {
+        return { ok: false, error: body.error || "Registration failed." };
       }
-
-      // Check username availability
-      const { data: existing } = await supabase
-        .from("users").select("id").eq("username", uname).single();
-      if (existing) return { ok: false, error: "Username already taken." };
-
-      // Check email availability (prevent duplicate accounts with same email)
-      const emailVal = data.email || "";
-      if (emailVal) {
-        const { data: existingEmail } = await supabase
-          .from("users").select("id").eq("email", emailVal).single();
-        if (existingEmail) return { ok: false, error: "Email already registered." };
-      }
-
-      const passwordHash = await bcrypt.hash(data.password, 10);
-      const uuid = newUuid();
-      const refCode = generateRefCode();
-
-      const userInsert = {
-        id: uuid,
-        username: uname,
-        password_hash: passwordHash,
-        display_name: data.displayName || uname,
-        email: data.email || "",
-        phone: data.phone || "",
-        country: data.country || "Indonesia",
-        role: "user",
-        account_status: "PENDING",
-        registration_status: REG.PENDING,
-        login_status: LOGIN.LOCKED,
-        referral_code: refCode,
-        bank_name: data.bankName || "",
-        bank_account_number: data.bankAccountNumber || "",
-        bank_account_name: data.bankAccountName || "",
-        kyc_status: "PENDING",
-      };
-      if (referralId) userInsert.referred_by = referralId;
-      if (referredByUser) userInsert.referred_by_user = referredByUser;
-
-      const { error: insertErr } = await supabase.from("users").insert(userInsert);
-
-      if (insertErr) {
-        if (insertErr.code === "23505") return { ok: false, error: "Username already taken." };
-        return { ok: false, error: insertErr.message || "Registration failed." };
-      }
-
-      // Atomically increment referral used_count
-      if (referralId) {
-        await supabase.rpc("increment_referral_used", { p_referral_id: referralId }).catch(() => {});
-      }
-
-      // Create wallet for new user
-      await supabase.from("wallet").insert({ user_id: uuid }).catch(() => {});
-
-      // Store KYC documents
-      const kyc = data.kyc || {};
-      const kycDocs = [];
-      if (kyc.docImage) kycDocs.push({ document_type: kyc.documentType || "ID Document", document_url: kyc.docImage });
-      if (kyc.selfieImage) kycDocs.push({ document_type: "Selfie", document_url: kyc.selfieImage });
-      if (kycDocs.length) {
-        await supabase.from("kyc_documents").insert(kycDocs.map(d => ({ user_id: uuid, ...d, status: "PENDING" })));
-      }
-
       return {
         ok: true,
-        user: { uuid, username: uname, referralCode: refCode, referredByCode: data.referralCode },
-        message: "Registration successful. Awaiting admin approval.",
+        user: body.user,
+        message: body.message || "Registration successful. Awaiting admin approval.",
       };
     } catch {
       return { ok: false, error: "Registration failed. Please try again." };
@@ -495,37 +416,25 @@ export const useStore = create((set, get) => ({
     const norm = String(code || "").trim().toUpperCase();
     if (!norm) return null;
     try {
-      if (!supabase) return null;
-      // 1. Personal user referral code
-      const { data: userData, error: userErr } = await supabase
-        .from("users")
-        .select("id,username,display_name,referral_code,account_status")
-        .eq("referral_code", norm)
-        .single();
-      if (!userErr && userData && userData.account_status === "ACTIVE") {
-        return { uuid: userData.id, username: userData.username, displayName: userData.display_name, referralCode: userData.referral_code };
-      }
-      // 2. System-generated referral code (from admin dashboard)
-      const { data: refData, error: refErr } = await supabase
-        .from("referrals")
-        .select("id,code,status,expires_at,max_uses,used_count,created_by")
-        .eq("code", norm)
-        .single();
-      if (!refErr && refData && refData.status === "ACTIVE") {
-        if (refData.expires_at && new Date(refData.expires_at) < new Date()) return null;
-        if (refData.max_uses != null && refData.used_count >= refData.max_uses) return null;
-        const { data: creator } = await supabase
-          .from("users")
-          .select("id,username,display_name")
-          .eq("id", refData.created_by)
-          .single();
-        return {
-          uuid: creator?.id || refData.created_by,
-          username: creator?.username || "NUMBER9",
-          displayName: creator?.display_name || "NUMBER9 Platform",
-          referralCode: refData.code,
-          _referralId: refData.id,
-        };
+      // Referral preview during registration. RLS on `users` blocks anon lookups,
+      // so resolve via the user-register Edge Function (service role, validateOnly).
+      // Handles both personal user codes and admin-generated system codes.
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
+          },
+          body: JSON.stringify({ validateOnly: true, referralCode: norm }),
+        }
+      );
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.ok && body.upline) {
+        const u = body.upline;
+        return { uuid: u.uuid, username: u.username, displayName: u.displayName, referralCode: u.referralCode };
       }
     } catch {}
     return null;

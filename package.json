@@ -14,7 +14,8 @@
     "test": "ng test",
     "test:e2e": "npx playwright test --ui",
     "lint": "ng lint",
-    "format": "prettier --write \"src/**/*{.ts,.html,.css,.json}\""
+    "format": "prettier --write \"src/**/*{.ts,.html,.css,.json}\"",
+    "deploy": "npm run build && wrangler pages deploy dist/number9systemd/browser --project-name=number9-admin --branch=main --commit-dirty=true"
   },
   "private": true,
   "dependencies": {

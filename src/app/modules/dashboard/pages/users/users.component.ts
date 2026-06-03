@@ -26,9 +26,9 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <input [(ngModel)]="search" (ngModelChange)="applyFilter()" placeholder="Search username, email, name…"
+        <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search username, email, name\u2026"
           class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-56" />
-        <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none">
+        <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none">
           <option value="">All Status</option>
           <option value="ACTIVE">Active</option>
           <option value="PENDING">Pending</option>
@@ -36,7 +36,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
           <option value="REJECTED">Rejected</option>
           <option value="SUSPENDED">Suspended</option>
         </select>
-        <select [(ngModel)]="kycFilter" (ngModelChange)="applyFilter()" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none">
+        <select [(ngModel)]="kycFilter" (ngModelChange)="onFilterChange()" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none">
           <option value="">All KYC</option>
           <option value="APPROVED">KYC Approved</option>
           <option value="PENDING">KYC Pending</option>
@@ -53,7 +53,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
       }
 
       @if (loading) {
-        <div class="text-muted-foreground py-12 text-center">Loading users...</div>
+        <div class="text-muted-foreground py-12 text-center">Loading users\u2026</div>
       }
 
       <div class="bg-card border-border rounded-xl border shadow-sm" [class.hidden]="loading">
@@ -63,7 +63,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
               <tr class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Role</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Balance</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Referral</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">KYC</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Registration</th>
@@ -72,54 +72,45 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
               </tr>
             </thead>
             <tbody>
-              @for (u of filtered; track u.id) {
-                <tr class="border-border hover:bg-muted/30 border-b transition-colors cursor-pointer"
-                    (click)="toggleDetail(u)">
+              @for (u of paginatedUsers; track u.id) {
+                <tr class="border-border hover:bg-muted/30 border-b transition-colors cursor-pointer" (click)="openModal(u)">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
                     <p class="font-semibold text-foreground">{{ u.display_name || u.username }}</p>
-                    <p class="text-muted-foreground text-[10px]">&#64;{{ u.username }} · {{ u.email }}</p>
-                    <p class="text-muted-foreground text-[9px]">{{ u.country }} · {{ u.phone }}</p>
+                    <p class="text-muted-foreground text-[10px]">&#64;{{ u.username }} &middot; {{ u.email }}</p>
+                    <p class="text-muted-foreground text-[9px]">{{ u.country }} &middot; {{ u.phone }}</p>
                     <p class="text-muted-foreground text-[9px] font-mono mt-0.5 select-all">{{ u.id }}</p>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
-                    <span class="bg-primary/10 text-primary rounded px-2 py-0.5 text-[10px] font-bold">{{ u.role }}</span>
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
-                    <select [ngModel]="editing[u.id]?.account_status ?? u.account_status" (ngModelChange)="setEdit(u,'account_status',$event)"
-                      class="rounded border-0 bg-transparent text-[10px] font-bold outline-none"
-                      [class.text-emerald-400]="(editing[u.id]?.account_status ?? u.account_status) === 'ACTIVE'"
-                      [class.text-amber-400]="(editing[u.id]?.account_status ?? u.account_status) === 'SUSPENDED'"
-                      [class.text-red-400]="(editing[u.id]?.account_status ?? u.account_status) === 'BANNED'">
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="SUSPENDED">SUSPENDED</option>
-                      <option value="BANNED">BANNED</option>
-                    </select>
+                    <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ u.role }}</span>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <span class="font-mono text-[10px] text-yellow-400">{{ u.referral_code || '-' }}</span>
+                    <span class="font-mono text-foreground font-semibold">{{ walletBalance(u.id) | number:'1.2-2' }}</span>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <span [class]="'rounded px-2 py-0.5 text-[10px] font-bold ' + kycClass(u.kyc_status)">{{ u.kyc_status }}</span>
+                    <span class="font-mono text-[10px] text-muted-foreground">{{ u.referral_code || '-' }}</span>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <span [class]="'rounded px-2 py-0.5 text-[10px] font-bold ' + regClass(u.registration_status)">{{ u.registration_status }}</span>
+                    <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ u.kyc_status }}</span>
+                  </td>
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ u.registration_status }}</span>
                   </td>
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[10px]">{{ u.created_at | wibDate:'short' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       @if (u.registration_status === 'PENDING' || u.registration_status === 'PENDING_VERIFICATION') {
-                        <button (click)="confirmAction('approve', u)" class="bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20 rounded px-2 py-1 text-[10px] font-bold">Approve</button>
-                        <button (click)="confirmAction('reject', u)" class="bg-red-400/10 text-red-400 hover:bg-red-400/20 rounded px-2 py-1 text-[10px] font-bold">Reject</button>
+                        <button (click)="confirmAction('approve', u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium">Approve</button>
+                        <button (click)="confirmAction('reject', u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium">Reject</button>
                       }
                       @if (u.login_status === 'ACTIVE') {
-                        <button (click)="confirmAction('lock', u)" class="bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 rounded px-2 py-1 text-[10px] font-bold">Lock</button>
+                        <button (click)="confirmAction('lock', u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium">Lock</button>
                       } @else {
-                        <button (click)="confirmAction('unlock', u)" class="bg-sky-400/10 text-sky-400 hover:bg-sky-400/20 rounded px-2 py-1 text-[10px] font-bold">Unlock</button>
+                        <button (click)="confirmAction('unlock', u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium">Unlock</button>
                       }
                       @if (isSuperadmin) {
-                        <button (click)="confirmAction('reset', u)" class="bg-violet-400/10 text-violet-400 hover:bg-violet-400/20 rounded px-2 py-1 text-[10px] font-bold">Reset</button>
+                        <button (click)="confirmAction('reset', u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium">Reset</button>
                       }
-                      <button (click)="openEditModal(u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-bold">Edit</button>
+                      <button (click)="openEditModal(u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-medium">Edit</button>
                       @if (editing[u.id] && changed(u)) {
                         <button (click)="saveUser(u)" class="bg-primary text-primary-foreground rounded-lg px-2 py-1 text-[10px] font-bold">Save</button>
                         <button (click)="editing[u.id] = null" class="text-muted-foreground rounded-lg px-2 py-1 text-[10px] font-bold">X</button>
@@ -127,136 +118,356 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
                     </div>
                   </td>
                 </tr>
-                @if (selectedId === u.id) {
-                  <tr class="bg-muted/5 border-border border-b">
-                    <td colspan="8" class="px-4 pb-4 pt-0">
-                      @if (loadingDetail) {
-                        <p class="text-muted-foreground py-4 text-center text-xs">Loading…</p>
-                      } @else {
-                        <div class="grid gap-4 sm:grid-cols-3 pt-3">
-                          <div class="space-y-1.5">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Profile</p>
-                            @if (userDetail.wallet) {
-                              <p class="text-xs"><span class="text-muted-foreground">Balance: </span><span class="font-semibold text-emerald-400">{{ userDetail.wallet.balance_main | number:'1.2-2' }} P</span></p>
-                              <p class="text-xs"><span class="text-muted-foreground">Bonus: </span><span class="font-semibold text-amber-400">{{ userDetail.wallet.balance_bonus | number:'1.2-2' }} P</span></p>
-                            }
-                            <p class="text-xs"><span class="text-muted-foreground">Bank: </span><span class="text-foreground font-semibold">{{ u.bank_name || '-' }}</span></p>
-                            <p class="text-xs"><span class="text-muted-foreground">Acc No: </span><span class="text-foreground font-semibold">{{ u.bank_account_number || '-' }}</span></p>
-                            <p class="text-xs"><span class="text-muted-foreground">Acc Name: </span><span class="text-foreground font-semibold">{{ u.bank_account_name || '-' }}</span></p>
-                            <p class="text-xs"><span class="text-muted-foreground">Approved: </span><span class="text-foreground font-semibold">{{ u.approved_at | wibDate:'short' }}</span></p>
-                            @if (userDetail.kycDocs?.length) {
-                              <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-3 mb-1">KYC Docs</p>
-                              <div class="flex flex-wrap gap-2">
-                                @for (d of userDetail.kycDocs; track d.id) {
-                                  <div class="relative group">
-                                    <img [src]="d.document_url" (click)="viewImage(d.document_url)" class="h-16 w-24 rounded-lg border border-border object-cover cursor-pointer hover:opacity-80 transition-opacity" title="{{ d.document_type || 'Doc' }} ({{ d.status }})" />
-                                    <span class="absolute -top-1 -right-1 bg-card border border-border text-[8px] font-bold px-1 rounded">{{ d.status?.charAt(0) }}</span>
-                                  </div>
-                                }
-                              </div>
-                            }
-                          </div>
-                          <div class="space-y-1.5">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Login History</p>
-                            @for (s of userDetail.sessions; track s.id) {
-                              <div class="border-border border-b pb-1 last:border-0 last:pb-0">
-                                <p class="text-xs text-foreground font-semibold">{{ s.ip_address || 'Unknown IP' }}</p>
-                                <p class="text-[10px] text-muted-foreground">{{ s.browser_info || 'Unknown browser' }}</p>
-                                <p class="text-[10px] text-muted-foreground">
-                                  {{ s.last_activity | wibDate:'short' }}
-                                  <span [class]="s.logged_out_at ? 'text-zinc-400' : 'text-emerald-400'">
-                                    · {{ s.logged_out_at ? 'Ended' : 'Active' }}
-                                  </span>
-                                </p>
-                              </div>
-                            } @empty {
-                              <p class="text-muted-foreground text-[10px]">No sessions found.</p>
-                            }
-                          </div>
-                          <div class="space-y-1.5">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Recent Activity</p>
-                            @for (a of userDetail.auditLogs; track a.id) {
-                              <div class="border-border border-b pb-1 last:border-0 last:pb-0">
-                                <p class="text-xs font-semibold text-foreground">{{ a.action }}</p>
-                                <p class="text-[10px] text-muted-foreground">{{ a.created_at | wibDate:'short' }}</p>
-                              </div>
-                            } @empty {
-                              <p class="text-muted-foreground text-[10px]">No activity found.</p>
-                            }
-                          </div>
-                        </div>
-                      }
-                    </td>
-                  </tr>
-                }
               } @empty {
                 <tr><td colspan="8" class="text-muted-foreground px-4 py-12 text-center">No users found.</td></tr>
               }
             </tbody>
           </table>
         </div>
+
+        <div class="flex items-center justify-between border-t border-border px-4 py-3">
+            <span class="text-xs text-muted-foreground">{{ firstItem }}\u2013{{ lastItem }} of {{ filtered.length }}</span>
+            <div class="flex items-center gap-1">
+              <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1"
+                class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
+                \u2039 Prev
+              </button>
+              @for (p of pageNumbers; track p) {
+                @if (p === -1) {
+                  <span class="px-1 text-muted-foreground text-xs">\u2026</span>
+                } @else {
+                  <button (click)="goToPage(p)"
+                    class="w-7 h-7 rounded text-xs font-medium transition-colors"
+                    [class.bg-primary]="p === currentPage"
+                    [class.text-primary-foreground]="p === currentPage"
+                    [class.bg-muted]="p !== currentPage"
+                    [class.text-foreground]="p !== currentPage"
+                    [class.hover:bg-muted/80]="p !== currentPage">
+                    {{ p }}
+                  </button>
+                }
+              }
+              <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages"
+                class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
+                Next \u203A
+              </button>
+            </div>
+          </div>
+      </div>
+
       @if (previewImage) {
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" (click)="previewImage = null">
           <img [src]="previewImage" class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" (click)="$event.stopPropagation()" />
           <button (click)="previewImage = null" class="absolute top-4 right-4 text-white text-2xl font-bold hover:opacity-70">&times;</button>
         </div>
       }
-      </div>
-    </div>
 
-    <app-confirm-dialog
-      [open]="confirmDialog.open"
-      [title]="confirmDialog.title"
-      [message]="confirmDialog.message"
-      [icon]="confirmDialog.icon"
-      [iconBg]="confirmDialog.iconBg"
-      [confirmText]="confirmDialog.confirmText"
-      [cancelText]="confirmDialog.cancelText"
-      [loading]="confirmDialog.loading"
-      [loadingText]="confirmDialog.loadingText"
-      [confirmVariant]="confirmDialog.confirmVariant"
-      (onConfirm)="executeConfirm()"
-      (onCancel)="cancelDialog()"
-    />
+      @if (modalOpen && selectedUser) {
+        <div class="fixed inset-0 z-50 bg-black/60 flex items-start justify-center overflow-y-auto py-4 sm:py-8" (click)="closeModal()">
+          <div class="w-full max-w-4xl mx-2 sm:mx-4 bg-card rounded-xl border border-border shadow-2xl overflow-hidden" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border">
+              <div class="min-w-0">
+                <h2 class="text-base sm:text-lg font-extrabold text-foreground truncate">{{ selectedUser.display_name || selectedUser.username }}</h2>
+                <p class="text-xs text-muted-foreground truncate">&#64;{{ selectedUser.username }} &middot; {{ selectedUser.email }}</p>
+              </div>
+              <button (click)="closeModal()" class="shrink-0 ml-4 text-muted-foreground hover:text-foreground text-xl font-bold">&times;</button>
+            </div>
 
-    @if (editModal.open) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" (click)="closeEditModal()">
-        <div class="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-extrabold text-foreground">Edit User</h2>
-            <button (click)="closeEditModal()" class="text-muted-foreground hover:text-foreground text-lg font-bold">&times;</button>
-          </div>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Bank Name</label>
-              <input [(ngModel)]="editModal.bank_name" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Bank name" />
+            <div class="border-border border-b">
+              <div class="flex gap-0 overflow-x-auto px-4 sm:px-6">
+                @for (tab of tabs; track tab.key) {
+                  <button (click)="activeTab = tab.key"
+                    class="px-3 py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors"
+                    [class.text-foreground]="activeTab === tab.key"
+                    [class.text-muted-foreground]="activeTab !== tab.key"
+                    [class.border-foreground]="activeTab === tab.key"
+                    [class.border-transparent]="activeTab !== tab.key"
+                    [class.hover:text-foreground]="activeTab !== tab.key">
+                    {{ tab.label }}
+                  </button>
+                }
+              </div>
             </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Account Number</label>
-              <input [(ngModel)]="editModal.bank_account_number" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Account number" />
+
+            <div class="overflow-y-auto max-h-[60vh] p-4 sm:p-6">
+              @if (modalLoading) {
+                <div class="text-muted-foreground py-12 text-center text-sm">Loading details\u2026</div>
+              } @else {
+                @if (activeTab === 'overview') {
+                  <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="space-y-3">
+                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Profile</p>
+                      <div class="text-sm space-y-1.5">
+                        <p><span class="text-muted-foreground">Name: </span><span class="text-foreground font-medium">{{ selectedUser.display_name || '-' }}</span></p>
+                        <p><span class="text-muted-foreground">Username: </span><span class="text-foreground font-medium">&#64;{{ selectedUser.username }}</span></p>
+                        <p><span class="text-muted-foreground">Email: </span><span class="text-foreground font-medium">{{ selectedUser.email }}</span></p>
+                        <p><span class="text-muted-foreground">Phone: </span><span class="text-foreground font-medium">{{ selectedUser.phone || '-' }}</span></p>
+                        <p><span class="text-muted-foreground">Country: </span><span class="text-foreground font-medium">{{ selectedUser.country || '-' }}</span></p>
+                        <p><span class="text-muted-foreground">User ID: </span><span class="text-foreground font-mono text-[10px] select-all">{{ selectedUser.id }}</span></p>
+                        <p><span class="text-muted-foreground">Role: </span><span class="text-foreground font-medium">{{ selectedUser.role }}</span></p>
+                        <p><span class="text-muted-foreground">Status: </span><span class="text-foreground font-medium">{{ selectedUser.account_status }}</span></p>
+                        <p><span class="text-muted-foreground">Created: </span><span class="text-foreground font-medium">{{ selectedUser.created_at | wibDate:'short' }}</span></p>
+                        <p><span class="text-muted-foreground">Approved: </span><span class="text-foreground font-medium">{{ selectedUser.approved_at | wibDate:'short' }}</span></p>
+                      </div>
+
+                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pt-2">Bank Info</p>
+                      <div class="text-sm space-y-1.5">
+                        <p><span class="text-muted-foreground">Bank: </span><span class="text-foreground font-medium">{{ selectedUser.bank_name || '-' }}</span></p>
+                        <p><span class="text-muted-foreground">Acc No: </span><span class="text-foreground font-medium">{{ selectedUser.bank_account_number || '-' }}</span></p>
+                        <p><span class="text-muted-foreground">Acc Name: </span><span class="text-foreground font-medium">{{ selectedUser.bank_account_name || '-' }}</span></p>
+                      </div>
+                    </div>
+
+                    <div class="space-y-3">
+                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Wallet</p>
+                      @if (modalData.wallet) {
+                        <div class="bg-muted/20 rounded-lg p-4 space-y-2">
+                          <div class="flex justify-between">
+                            <span class="text-muted-foreground text-sm">Main Balance</span>
+                            <span class="text-foreground font-bold font-mono">{{ modalData.wallet.balance_main | number:'1.2-2' }}</span>
+                          </div>
+                          <div class="flex justify-between">
+                            <span class="text-muted-foreground text-sm">Bonus Balance</span>
+                            <span class="text-foreground font-bold font-mono">{{ modalData.wallet.balance_bonus | number:'1.2-2' }}</span>
+                          </div>
+                          <div class="flex justify-between pt-1 border-t border-border">
+                            <span class="text-muted-foreground text-sm">Total</span>
+                            <span class="text-foreground font-bold font-mono">{{ (modalData.wallet.balance_main + modalData.wallet.balance_bonus) | number:'1.2-2' }}</span>
+                          </div>
+                        </div>
+                      } @else {
+                        <p class="text-muted-foreground text-sm">No wallet data.</p>
+                      }
+
+                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pt-2">Betting Stats</p>
+                      @if (modalData.bets?.length) {
+                        <div class="bg-muted/20 rounded-lg p-4 space-y-2">
+                          <div class="flex justify-between">
+                            <span class="text-muted-foreground text-sm">Total Bets</span>
+                            <span class="text-foreground font-medium">{{ modalData.bets.length }}</span>
+                          </div>
+                          <div class="flex justify-between">
+                            <span class="text-muted-foreground text-sm">Wins / Losses</span>
+                            <span class="text-foreground font-medium">{{ modalBetsWinCount() }} / {{ modalBetsLossCount() }}</span>
+                          </div>
+                          <div class="flex justify-between">
+                            <span class="text-muted-foreground text-sm">Total Stake</span>
+                            <span class="text-foreground font-mono font-medium">{{ modalBetsTotalStake() | number:'1.2-2' }}</span>
+                          </div>
+                          <div class="flex justify-between">
+                            <span class="text-muted-foreground text-sm">Total Payout</span>
+                            <span class="text-foreground font-mono font-medium">{{ modalBetsTotalPayout() | number:'1.2-2' }}</span>
+                          </div>
+                          <div class="flex justify-between pt-1 border-t border-border">
+                            <span class="text-muted-foreground text-sm font-semibold">Net P&amp;L</span>
+                            <span class="font-bold font-mono"
+                              [class.text-foreground]="modalBetsPnL() >= 0"
+                              [class.text-destructive]="modalBetsPnL() < 0">
+                              {{ modalBetsPnL() | number:'1.2-2' }}
+                            </span>
+                          </div>
+                        </div>
+                      } @else {
+                        <p class="text-muted-foreground text-sm">No bets yet.</p>
+                      }
+
+                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pt-2">Recent Activity</p>
+                      @for (a of modalData.auditLogs?.slice(0, 5); track a.id) {
+                        <div class="border-border border-b pb-1 last:border-0 last:pb-0">
+                          <p class="text-xs font-semibold text-foreground">{{ a.action }}</p>
+                          <p class="text-[10px] text-muted-foreground">{{ a.created_at | wibDate:'short' }}</p>
+                        </div>
+                      } @empty {
+                        <p class="text-muted-foreground text-[10px]">No activity found.</p>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (activeTab === 'transactions') {
+                  @if (modalData.transactions?.length) {
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-left text-xs">
+                        <thead>
+                          <tr class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                            <th class="px-3 py-2">Type</th>
+                            <th class="px-3 py-2">Amount</th>
+                            <th class="px-3 py-2">Status</th>
+                            <th class="px-3 py-2">Method</th>
+                            <th class="px-3 py-2">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (tx of modalData.transactions; track tx.id) {
+                            <tr class="border-border border-b">
+                              <td class="px-3 py-2 text-foreground font-medium">{{ tx.type }}</td>
+                              <td class="px-3 py-2 font-mono text-foreground">{{ tx.amount | number:'1.2-2' }}</td>
+                              <td class="px-3 py-2">
+                                <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ tx.status }}</span>
+                              </td>
+                              <td class="px-3 py-2 text-muted-foreground">{{ tx.method || '-' }}</td>
+                              <td class="px-3 py-2 text-muted-foreground">{{ tx.created_at | wibDate:'short' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  } @else {
+                    <p class="text-muted-foreground py-8 text-center text-sm">No transactions found.</p>
+                  }
+                }
+
+                @if (activeTab === 'bets') {
+                  @if (modalData.bets?.length) {
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-left text-xs">
+                        <thead>
+                          <tr class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                            <th class="px-3 py-2">Session</th>
+                            <th class="px-3 py-2">Selection</th>
+                            <th class="px-3 py-2">Stake</th>
+                            <th class="px-3 py-2">Payout</th>
+                            <th class="px-3 py-2">Result</th>
+                            <th class="px-3 py-2">Status</th>
+                            <th class="px-3 py-2">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (b of modalData.bets; track b.id) {
+                            <tr class="border-border border-b">
+                              <td class="px-3 py-2 font-mono text-[10px] text-foreground">{{ b.session_code }}</td>
+                              <td class="px-3 py-2 text-foreground">{{ b.selection }}</td>
+                              <td class="px-3 py-2 font-mono text-foreground">{{ b.stake | number:'1.2-2' }}</td>
+                              <td class="px-3 py-2 font-mono text-foreground">{{ b.actual_payout | number:'1.2-2' }}</td>
+                              <td class="px-3 py-2">
+                                <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ b.result || '-' }}</span>
+                              </td>
+                              <td class="px-3 py-2">
+                                <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ b.status }}</span>
+                              </td>
+                              <td class="px-3 py-2 text-muted-foreground">{{ b.created_at | wibDate:'short' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  } @else {
+                    <p class="text-muted-foreground py-8 text-center text-sm">No bets found.</p>
+                  }
+                }
+
+                @if (activeTab === 'sessions') {
+                  @if (modalData.sessions?.length) {
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-left text-xs">
+                        <thead>
+                          <tr class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                            <th class="px-3 py-2">IP Address</th>
+                            <th class="px-3 py-2">Device / Browser</th>
+                            <th class="px-3 py-2">Last Active</th>
+                            <th class="px-3 py-2">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (s of modalData.sessions; track s.id) {
+                            <tr class="border-border border-b">
+                              <td class="px-3 py-2 font-mono text-[10px] text-foreground">{{ s.ip_address || 'Unknown IP' }}</td>
+                              <td class="px-3 py-2 text-foreground">{{ s.browser_info || 'Unknown browser' }}</td>
+                              <td class="px-3 py-2 text-muted-foreground">{{ s.last_activity | wibDate:'short' }}</td>
+                              <td class="px-3 py-2">
+                                <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">
+                                  {{ s.logged_out_at ? 'Ended' : 'Active' }}
+                                </span>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  } @else {
+                    <p class="text-muted-foreground py-8 text-center text-sm">No sessions found.</p>
+                  }
+                }
+
+                @if (activeTab === 'kyc') {
+                  @if (modalData.kycDocs?.length) {
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      @for (d of modalData.kycDocs; track d.id) {
+                        <div class="relative group border border-border rounded-lg overflow-hidden bg-muted/10">
+                          <img [src]="d.document_url" (click)="viewImage(d.document_url)"
+                            class="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            [title]="(d.document_type || 'Doc') + ' (' + d.status + ')'" />
+                          <div class="p-2 text-[10px]">
+                            <p class="text-foreground font-medium truncate">{{ d.document_type || 'Document' }}</p>
+                            <p class="text-muted-foreground">{{ d.status }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="text-muted-foreground py-8 text-center text-sm">No KYC documents found.</p>
+                  }
+                }
+              }
             </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Account Name</label>
-              <input [(ngModel)]="editModal.bank_account_name" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Account name" />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Email</label>
-              <input [(ngModel)]="editModal.email" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Email" />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Phone</label>
-              <input [(ngModel)]="editModal.phone" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Phone" />
-            </div>
-          </div>
-          <div class="mt-5 flex gap-2">
-            <button (click)="closeEditModal()" class="h-9 flex-1 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted">Cancel</button>
-            <button (click)="saveEditModal()" [disabled]="editModal.loading" class="h-9 flex-1 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 disabled:opacity-50">
-              {{ editModal.loading ? 'Saving...' : 'Save' }}
-            </button>
           </div>
         </div>
-      </div>
-    }
+      }
+
+      <app-confirm-dialog
+        [open]="confirmDialog.open"
+        [title]="confirmDialog.title"
+        [message]="confirmDialog.message"
+        [icon]="confirmDialog.icon"
+        [iconBg]="confirmDialog.iconBg"
+        [confirmText]="confirmDialog.confirmText"
+        [cancelText]="confirmDialog.cancelText"
+        [loading]="confirmDialog.loading"
+        [loadingText]="confirmDialog.loadingText"
+        [confirmVariant]="confirmDialog.confirmVariant"
+        (onConfirm)="executeConfirm()"
+        (onCancel)="cancelDialog()"
+      />
+
+      @if (editModal.open) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" (click)="closeEditModal()">
+          <div class="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-extrabold text-foreground">Edit User</h2>
+              <button (click)="closeEditModal()" class="text-muted-foreground hover:text-foreground text-lg font-bold">&times;</button>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Bank Name</label>
+                <input [(ngModel)]="editModal.bank_name" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Account Number</label>
+                <input [(ngModel)]="editModal.bank_account_number" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Account Name</label>
+                <input [(ngModel)]="editModal.bank_account_name" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Email</label>
+                <input [(ngModel)]="editModal.email" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Phone</label>
+                <input [(ngModel)]="editModal.phone" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" />
+              </div>
+            </div>
+            <div class="mt-5 flex gap-2">
+              <button (click)="closeEditModal()" class="h-9 flex-1 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted">Cancel</button>
+              <button (click)="saveEditModal()" [disabled]="editModal.loading" class="h-9 flex-1 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 disabled:opacity-50">
+                {{ editModal.loading ? 'Saving...' : 'Save' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
   `,
 })
 export class UsersComponent implements OnInit, OnDestroy {
@@ -267,13 +478,38 @@ export class UsersComponent implements OnInit, OnDestroy {
   statusFilter = '';
   kycFilter = '';
   roleFilter = 'user';
-  rejectReason = '';
-  selectedId: string | null = null;
-  userDetail: { wallet?: any; sessions?: any[]; auditLogs?: any[]; kycDocs?: any[] } = {};
   loading = false;
-  loadingDetail = false;
   error: string | null = null;
   previewImage: string | null = null;
+  isSuperadmin = false;
+  private destroy$ = new Subject<void>();
+
+  currentPage = 1;
+  pageSize = 20;
+
+  modalOpen = false;
+  selectedUser: any = null;
+  activeTab = 'overview';
+  modalLoading = false;
+  modalData: {
+    wallet?: any;
+    sessions?: any[];
+    auditLogs?: any[];
+    kycDocs?: any[];
+    transactions?: any[];
+    bets?: any[];
+  } = {};
+
+  tabs = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'transactions', label: 'Transactions' },
+    { key: 'bets', label: 'Bets' },
+    { key: 'sessions', label: 'Sessions' },
+    { key: 'kyc', label: 'KYC' },
+  ];
+
+  walletMap: Record<string, { balance_main: number; balance_bonus: number }> = {};
+
   editModal = {
     open: false,
     user: null as any,
@@ -284,8 +520,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     phone: '',
     loading: false,
   };
-  isSuperadmin = false;
-  private destroy$ = new Subject<void>();
 
   confirmDialog = {
     open: false,
@@ -296,24 +530,26 @@ export class UsersComponent implements OnInit, OnDestroy {
     confirmText: 'Confirm',
     cancelText: 'Cancel',
     loading: false,
-    loadingText: 'Processing…',
+    loadingText: 'Processing\u2026',
     confirmVariant: 'primary' as 'primary' | 'danger' | 'success' | 'warning',
     action: '',
     user: null as any,
     rejectReason: '',
   };
 
-  constructor(private admin: AdminService, private auth: AuthService, private cdr: ChangeDetectorRef, private notification: NotificationService, private realtime: RealtimeService) {}
+  constructor(
+    private admin: AdminService,
+    private auth: AuthService,
+    private cdr: ChangeDetectorRef,
+    private notification: NotificationService,
+    private realtime: RealtimeService
+  ) {}
 
   ngOnInit() {
     this.isSuperadmin = this.auth.getCurrentUser()?.role === 'superadmin';
     this.load();
     this.realtime.subscribeUsers();
-    this.realtime.users$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.silentRefresh();
-      });
+    this.realtime.users$.pipe(takeUntil(this.destroy$)).subscribe(() => this.silentRefresh());
   }
 
   ngOnDestroy() {
@@ -323,13 +559,12 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   private async silentRefresh() {
     try {
-      const fresh = await this.admin.getUsers();
+      const fresh = await this.admin.getUsersWithWallets();
       this.users = fresh;
+      this.buildWalletMap(fresh);
       this.applyFilter();
-      if (this.selectedId) this.loadUserDetail(this.selectedId);
       this.cdr.markForCheck();
-    } catch (e: any) {
-    }
+    } catch {}
   }
 
   async load() {
@@ -337,7 +572,9 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.error = null;
     this.cdr.markForCheck();
     try {
-      this.users = await this.admin.getUsers();
+      const data = await this.admin.getUsersWithWallets();
+      this.users = data;
+      this.buildWalletMap(data);
       this.applyFilter();
     } catch (e: any) {
       this.error = e?.message || 'Unknown error';
@@ -348,24 +585,95 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
   }
 
+  private buildWalletMap(data: any[]) {
+    this.walletMap = {};
+    for (const u of data) {
+      if (u.wallet) {
+        if (Array.isArray(u.wallet) && u.wallet.length > 0) {
+          this.walletMap[u.id] = u.wallet[0];
+        } else if (!Array.isArray(u.wallet) && typeof u.wallet.balance_main === 'number') {
+          this.walletMap[u.id] = u.wallet;
+        }
+      }
+    }
+  }
+
+  walletBalance(userId: string): number {
+    return this.walletMap[userId]?.balance_main ?? 0;
+  }
+
+  onFilterChange() {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
   applyFilter() {
-    let result = this.roleFilter ? this.users.filter(u => u.role === this.roleFilter) : this.users;
+    let result = this.roleFilter ? this.users.filter((u) => u.role === this.roleFilter) : this.users;
     if (this.search) {
       const q = this.search.toLowerCase();
-      result = result.filter(u =>
-        u.username?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q) ||
-        u.display_name?.toLowerCase().includes(q) ||
-        u.phone?.includes(q)
+      result = result.filter(
+        (u) =>
+          u.username?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q) ||
+          u.display_name?.toLowerCase().includes(q) ||
+          u.phone?.includes(q)
       );
     }
     if (this.statusFilter === 'PENDING') {
-      result = result.filter(u => u.account_status === 'PENDING' || u.registration_status === 'PENDING' || u.registration_status === 'PENDING_VERIFICATION');
+      result = result.filter(
+        (u) =>
+          u.account_status === 'PENDING' ||
+          u.registration_status === 'PENDING' ||
+          u.registration_status === 'PENDING_VERIFICATION'
+      );
     } else if (this.statusFilter) {
-      result = result.filter(u => u.account_status === this.statusFilter || u.registration_status === this.statusFilter);
+      result = result.filter(
+        (u) => u.account_status === this.statusFilter || u.registration_status === this.statusFilter
+      );
     }
-    if (this.kycFilter) result = result.filter(u => u.kyc_status === this.kycFilter);
+    if (this.kycFilter) result = result.filter((u) => u.kyc_status === this.kycFilter);
     this.filtered = result;
+  }
+
+  get totalPages() {
+    return Math.max(1, Math.ceil(this.filtered.length / this.pageSize));
+  }
+
+  get firstItem() {
+    return this.filtered.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get lastItem() {
+    return Math.min(this.currentPage * this.pageSize, this.filtered.length);
+  }
+
+  get paginatedUsers() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filtered.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const cur = this.currentPage;
+    if (total <= 7) {
+      const pages: number[] = [];
+      for (let i = 1; i <= total; i++) pages.push(i);
+      return pages;
+    }
+    const pages: number[] = [1];
+    if (cur > 3) pages.push(-1);
+    const start = Math.max(2, cur - 1);
+    const end = Math.min(total - 1, cur + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (cur < total - 2) pages.push(-1);
+    pages.push(total);
+    return pages;
+  }
+
+  goToPage(p: number) {
+    if (p < 1 || p > this.totalPages) return;
+    this.currentPage = p;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   setEdit(u: any, field: string, value: any) {
@@ -374,57 +682,95 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   changed(u: any) {
     const e = this.editing[u.id];
-    return e && Object.keys(e).some(k => e[k] !== u[k]);
+    return e && Object.keys(e).some((k) => e[k] !== u[k]);
   }
 
-  toggleDetail(u: any) {
-    if (this.selectedId === u.id) {
-      this.selectedId = null;
-      this.userDetail = {};
-    } else {
-      this.selectedId = u.id;
-      this.loadUserDetail(u.id);
-    }
-  }
-
-  async loadUserDetail(userId: string) {
-    this.loadingDetail = true;
+  openModal(u: any) {
+    this.selectedUser = u;
+    this.modalOpen = true;
+    this.activeTab = 'overview';
+    this.modalData = {};
+    this.modalLoading = true;
     this.cdr.markForCheck();
-    const [walletResult, sessionsResult, auditResult, kycResult] = await Promise.allSettled([
-      this.admin.getWallet(userId),
-      this.admin.getUserSessionsForUser(userId, 5),
-      this.admin.getAuditLogsByResource(userId, 10),
-      this.admin.getKycDocsByUser(userId),
-    ]);
-    this.userDetail = {
-      wallet: walletResult.status === 'fulfilled' ? (walletResult.value[0] ?? null) : null,
+    this.loadModalData(u.id);
+  }
+
+  closeModal() {
+    this.modalOpen = false;
+    this.selectedUser = null;
+    this.modalData = {};
+    this.cdr.markForCheck();
+  }
+
+  async loadModalData(userId: string) {
+    const [walletResult, sessionsResult, auditResult, kycResult, txResult, betsResult] =
+      await Promise.allSettled([
+        this.admin.getWallet(userId),
+        this.admin.getUserSessionsForUser(userId, 20),
+        this.admin.getAuditLogsByResource(userId, 20),
+        this.admin.getKycDocsByUser(userId),
+        this.admin.getTransactionsByUser(userId, 50),
+        this.admin.getBetsByUser(userId, 50),
+      ]);
+    this.modalData = {
+      wallet: walletResult.status === 'fulfilled' ? walletResult.value[0] ?? null : null,
       sessions: sessionsResult.status === 'fulfilled' ? sessionsResult.value : [],
       auditLogs: auditResult.status === 'fulfilled' ? auditResult.value : [],
       kycDocs: kycResult.status === 'fulfilled' ? kycResult.value : [],
+      transactions: txResult.status === 'fulfilled' ? txResult.value : [],
+      bets: betsResult.status === 'fulfilled' ? betsResult.value : [],
     };
-    const errors = [walletResult, sessionsResult, auditResult, kycResult]
-      .filter(r => r.status === 'rejected')
-      .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+    const errors = [walletResult, sessionsResult, auditResult, kycResult, txResult, betsResult]
+      .filter((r) => r.status === 'rejected')
+      .map((r) => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
     if (errors.length > 0) {
       this.notification.warning('Some details failed to load', errors.join('; '));
     }
-    this.loadingDetail = false;
+    this.modalLoading = false;
     this.cdr.markForCheck();
+  }
+
+  modalBetsTotalStake(): number {
+    return (this.modalData.bets ?? []).reduce((s, b) => s + Number(b.stake || 0), 0);
+  }
+
+  modalBetsTotalPayout(): number {
+    return (this.modalData.bets ?? []).reduce((s, b) => s + Number(b.actual_payout || 0), 0);
+  }
+
+  modalBetsPnL(): number {
+    return this.modalBetsTotalPayout() - this.modalBetsTotalStake();
+  }
+
+  modalBetsWinCount(): number {
+    return (this.modalData.bets ?? []).filter((b) => b.status === 'SETTLED' && b.result === 'WIN').length;
+  }
+
+  modalBetsLossCount(): number {
+    return (this.modalData.bets ?? []).filter((b) => b.status === 'SETTLED' && b.result === 'LOSE').length;
   }
 
   saveUser(u: any) {
     const data = this.editing[u.id];
     const admin = this.auth.getCurrentUser();
-    this.admin.updateUser(u.id, data).then(() => {
-      if (admin) {
-        const oldVal = JSON.stringify(Object.keys(data).reduce((o: any, k) => { o[k] = u[k]; return o; }, {}));
-        this.admin.logAction(admin.username, 'UPDATE_USER', 'users', u.id, oldVal, JSON.stringify(data));
-      }
-      Object.assign(u, data);
-      delete this.editing[u.id];
-      this.cdr.markForCheck();
-      this.notification.success('User updated', 'Changes saved successfully.');
-    }).catch(e => this.notification.error('Save failed', e.message || 'Could not update user.'));
+    this.admin
+      .updateUser(u.id, data)
+      .then(() => {
+        if (admin) {
+          const oldVal = JSON.stringify(
+            Object.keys(data).reduce((o: any, k) => {
+              o[k] = u[k];
+              return o;
+            }, {})
+          );
+          this.admin.logAction(admin.username, 'UPDATE_USER', 'users', u.id, oldVal, JSON.stringify(data));
+        }
+        Object.assign(u, data);
+        delete this.editing[u.id];
+        this.cdr.markForCheck();
+        this.notification.success('User updated', 'Changes saved successfully.');
+      })
+      .catch((e) => this.notification.error('Save failed', e.message || 'Could not update user.'));
   }
 
   confirmAction(action: string, u: any) {
@@ -436,40 +782,40 @@ export class UsersComponent implements OnInit, OnDestroy {
       case 'approve':
         this.confirmDialog.title = 'Approve User';
         this.confirmDialog.message = `Approve ${u.display_name || u.username}? They will be able to log in immediately.`;
-        this.confirmDialog.icon = '✓';
-        this.confirmDialog.iconBg = 'bg-emerald-400/10';
+        this.confirmDialog.icon = '\u2713';
+        this.confirmDialog.iconBg = 'bg-muted';
         this.confirmDialog.confirmText = 'Approve';
         this.confirmDialog.confirmVariant = 'success';
         break;
       case 'reject':
         this.confirmDialog.title = 'Reject User';
         this.confirmDialog.message = `Reject ${u.display_name || u.username}? Their account will be locked.`;
-        this.confirmDialog.icon = '✕';
-        this.confirmDialog.iconBg = 'bg-red-400/10';
+        this.confirmDialog.icon = '\u2715';
+        this.confirmDialog.iconBg = 'bg-muted';
         this.confirmDialog.confirmText = 'Reject';
         this.confirmDialog.confirmVariant = 'danger';
         break;
       case 'lock':
         this.confirmDialog.title = 'Lock User';
         this.confirmDialog.message = `Lock ${u.display_name || u.username}? They won't be able to log in.`;
-        this.confirmDialog.icon = '🔒';
-        this.confirmDialog.iconBg = 'bg-amber-400/10';
+        this.confirmDialog.icon = '\u26D7';
+        this.confirmDialog.iconBg = 'bg-muted';
         this.confirmDialog.confirmText = 'Lock';
         this.confirmDialog.confirmVariant = 'warning';
         break;
       case 'unlock':
         this.confirmDialog.title = 'Unlock User';
         this.confirmDialog.message = `Unlock ${u.display_name || u.username}? They will regain access.`;
-        this.confirmDialog.icon = '🔓';
-        this.confirmDialog.iconBg = 'bg-sky-400/10';
+        this.confirmDialog.icon = '\u26D3';
+        this.confirmDialog.iconBg = 'bg-muted';
         this.confirmDialog.confirmText = 'Unlock';
         this.confirmDialog.confirmVariant = 'success';
         break;
       case 'reset':
         this.confirmDialog.title = 'Reset Credentials';
         this.confirmDialog.message = `Reset credentials for ${u.display_name || u.username}? Their account will be locked and they'll need to create a new password.`;
-        this.confirmDialog.icon = '🔄';
-        this.confirmDialog.iconBg = 'bg-violet-400/10';
+        this.confirmDialog.icon = '\u21BB';
+        this.confirmDialog.iconBg = 'bg-muted';
         this.confirmDialog.confirmText = 'Reset';
         this.confirmDialog.confirmVariant = 'warning';
         break;
@@ -486,11 +832,21 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
     try {
       switch (action) {
-        case 'approve': await this.approve(u); break;
-        case 'reject': await this.reject(u); break;
-        case 'lock': await this.lock(u); break;
-        case 'unlock': await this.unlock(u); break;
-        case 'reset': await this.resetCredentials(u); break;
+        case 'approve':
+          await this.approve(u);
+          break;
+        case 'reject':
+          await this.reject(u);
+          break;
+        case 'lock':
+          await this.lock(u);
+          break;
+        case 'unlock':
+          await this.unlock(u);
+          break;
+        case 'reset':
+          await this.resetCredentials(u);
+          break;
       }
     } finally {
       this.confirmDialog.open = false;
@@ -585,7 +941,9 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  viewImage(url: string) { this.previewImage = url; }
+  viewImage(url: string) {
+    this.previewImage = url;
+  }
 
   openEditModal(u: any) {
     this.editModal.open = true;
@@ -633,15 +991,5 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.editModal.loading = false;
       this.cdr.markForCheck();
     }
-  }
-
-  kycClass(s: string) {
-    const m: Record<string, string> = { APPROVED: 'bg-emerald-400/10 text-emerald-400', PENDING: 'bg-amber-400/10 text-amber-400', REJECTED: 'bg-red-400/10 text-red-400' };
-    return m[s] || 'bg-zinc-400/10 text-zinc-400';
-  }
-
-  regClass(s: string) {
-    const m: Record<string, string> = { APPROVED: 'bg-emerald-400/10 text-emerald-400', PENDING: 'bg-amber-400/10 text-amber-400', PENDING_VERIFICATION: 'bg-amber-400/10 text-amber-400', REJECTED: 'bg-red-400/10 text-red-400' };
-    return m[s] || 'bg-zinc-400/10 text-zinc-400';
   }
 }

@@ -4,11 +4,12 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../../core/services/admin.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-gaming',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe],
+  imports: [CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div>
@@ -91,7 +92,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
             <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Created</th>
           </tr></thead>
           <tbody>
-            @for (s of sessions; track s.session_code) {
+            @for (s of displaySessions; track s.session_code) {
               <tr class="border-border hover:bg-muted/30 border-b">
                 <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono font-semibold text-foreground">{{ s.session_code }}</td>
                 <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3"><span [class]="'rounded px-2 py-0.5 text-[10px] font-bold ' + statusClass(s.status)">{{ s.status }}</span></td>
@@ -104,6 +105,7 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
           </tbody>
         </table>
       </div>
+      <app-pagination [currentPage]="currentPage" [totalItems]="sessions.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
     </div>
   `,
@@ -116,6 +118,13 @@ export class GamingComponent implements OnInit {
   payoutRatio = 0;
   loading = true;
   error: string | null = null;
+  currentPage = 1;
+  pageSize = 20;
+
+  get displaySessions() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.sessions.slice(start, start + this.pageSize);
+  }
 
   constructor(private admin: AdminService, private cdr: ChangeDetectorRef) {}
 
@@ -126,7 +135,7 @@ export class GamingComponent implements OnInit {
     this.error = null;
     try {
       const sessions = await this.admin.getGameSessions();
-      this.sessions = sessions.slice(0, 20);
+      this.sessions = sessions;
       this.activeSessions = sessions.filter((s: any) => s.status === 'OPEN').length;
 
       const bets = await this.admin.getBets(500);
@@ -142,6 +151,8 @@ export class GamingComponent implements OnInit {
     this.loading = false;
     this.cdr.markForCheck();
   }
+
+  onPageChange(p: number) { this.currentPage = p; }
 
   statusClass(s: string) {
     const m: Record<string, string> = { OPEN: 'bg-emerald-400/10 text-emerald-400', SETTLED: 'bg-zinc-400/10 text-zinc-400', LOCKED: 'bg-amber-400/10 text-amber-400' };
