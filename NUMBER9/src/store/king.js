@@ -15,6 +15,8 @@
    ============================================================ */
 
 
+import { supabase } from '../utils/supabase';
+
 /* ---- Supabase backend (100% LIVE) ---- */
 const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPA_KEY = import.meta.env.VITE_SUPABASE_KEY;
@@ -24,11 +26,6 @@ const hasBackend = () => Boolean(SUPA_URL && SUPA_KEY);
    bets and debit the right wallet. */
 let _userId = null;
 export function setKingUser(userId) { _userId = userId || null; }
-
-async function supa() {
-  const { supabase } = await import('../utils/supabase.js');
-  return supabase;
-}
 
 /* Map a Supabase `king_results` row to the result shape the UI expects
    (digit1/2/3, resultTotal, resultNumber, bigSmall, oddEven). */
@@ -230,11 +227,11 @@ export async function refreshKingData(userId = _userId) {
   if (!hasBackend()) return { bets: _bets, results: _results, backendSession: _backendSession };
 
   try {
-    const sb = await supa();
+    if (!supabase) return { bets: _bets, results: _results, backendSession: _backendSession };
     const [resultsRes, betsRes] = await Promise.all([
-      sb.from("king_results").select("*").order("session_code", { ascending: false }).limit(200),
+      supabase.from("king_results").select("*").order("session_code", { ascending: false }).limit(200),
       userId
-        ? sb.from("bets").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(500)
+        ? supabase.from("bets").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(500)
         : Promise.resolve({ data: [], error: null }),
     ]);
 
@@ -250,9 +247,7 @@ export async function refreshKingData(userId = _userId) {
     if (!betsRes.error) {
       _bets = (betsRes.data || []).map(mapBetRow);
     }
-  } catch (err) {
-    console.error("[NUMBER9] refreshKingData failed:", err?.message || err);
-  }
+  } catch {}
 
   return { bets: _bets, results: _results, backendSession: _backendSession };
 }
@@ -296,7 +291,7 @@ const codeFor3 = (sel) => (typeof sel === "number" ? `TOTAL_${sel}` : sel);
 export async function placeBid({ sessionCode, selections, stake, username, userId = _userId }) {
   if (hasBackend() && userId) {
     try {
-      const sb = await supa();
+      if (!supabase) return { ok: false, error: "Backend unavailable. Cannot place bet." };
 
       const p_selections = selections.map((selection) => ({
         bet_code: codeFor3(selection),
@@ -305,7 +300,7 @@ export async function placeBid({ sessionCode, selections, stake, username, userI
         potential_payout: payoutFor(selection, stake),
       }));
 
-      const { data, error } = await sb.rpc("place_bet", {
+      const { data, error } = await supabase.rpc("place_bet", {
         p_user_id: userId,
         p_session_code: sessionCode,
         p_selections,
@@ -316,7 +311,6 @@ export async function placeBid({ sessionCode, selections, stake, username, userI
       await refreshKingData(userId);
       return { ok: true, count: selections.length };
     } catch (err) {
-      console.error("[NUMBER9] placeBid Supabase error:", err?.message || err);
       return { ok: false, error: err?.message || "Bet failed. Please try again." };
     }
   }

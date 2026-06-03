@@ -1,0 +1,88 @@
+-- =============================================================================
+-- FIX (follow-up to 20260603170000): place_bet still failed once the FOR UPDATE
+-- + window error was cleared, now with "query has no destination for result
+-- data". The final data-modifying CTE statement ended in a bare
+--   SELECT COUNT(*) FROM applied;
+-- which in PL/pgSQL returns rows with no INTO/PERFORM target. That line was
+-- never reached before (the function aborted earlier at parse time), so the
+-- defect was latent. Give the result a destination via INTO a dummy variable;
+-- the `applied` UPDATE still runs because the outer SELECT references it.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.place_bet(p_user_id uuid, p_session_code character varying, p_selections jsonb)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_total   DECIMAL(12,2);
+  v_balance DECIMAL(12,2);
+  v_count   INTEGER;
+  v_lock_rows INTEGER;
+  v_session_token TEXT;
+  v_actual_user_id UUID;
+BEGIN
+  PERFORM check_rate_limit(p_user_id, 'PLACE_BET', 30, 60000);
+
+  v_session_token := current_setting('request.headers', true)::json->>'x-user-token';
+  IF v_session_token IS NULL THEN RAISE EXCEPTION 'UNAUTHORIZED'; END IF;
+  SELECT id INTO v_actual_user_id FROM users
+    WHERE session_token = v_session_token AND session_expires_at > NOW();
+  IF v_actual_user_id IS NULL OR v_actual_user_id != p_user_id THEN RAISE EXCEPTION 'UNAUTHORIZED'; END IF;
+
+  SELECT COALESCE(SUM((s->>'stake')::DECIMAL), 0) INTO v_total FROM jsonb_array_elements(p_selections) AS s;
+  IF v_total <= 0 THEN RAISE EXCEPTION 'INVALID_STAKE'; END IF;
+
+  SELECT balance_main INTO v_balance FROM wallet WHERE user_id = p_user_id FOR UPDATE;
+  IF v_balance IS NULL THEN RAISE EXCEPTION 'WALLET_NOT_FOUND'; END IF;
+  IF v_balance < v_total THEN RAISE EXCEPTION 'INSUFFICIENT_BALANCE'; END IF;
+
+  INSERT INTO bets (user_id, session_code, bet_code, selection, stake, potential_payout, status)
+  SELECT p_user_id, p_session_code, s->>'bet_code', s->>'selection',
+         (s->>'stake')::DECIMAL, (s->>'potential_payout')::DECIMAL, 'PENDING'
+  FROM jsonb_array_elements(p_selections) AS s;
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+
+  UPDATE wallet
+     SET balance_main = balance_main - v_total,
+         total_turnover = total_turnover + v_total,
+         updated_at = NOW()
+   WHERE user_id = p_user_id;
+
+  -- Apply turnover FIFO to deposit locks. Lock rows first (no window fn), then
+  -- compute the running total; INTO gives the COUNT a destination (PL/pgSQL).
+  WITH locked AS (
+    SELECT id, turnover_required, turnover_applied, created_at
+      FROM deposit_locks
+     WHERE user_id = p_user_id
+       AND turnover_applied < turnover_required
+     ORDER BY created_at ASC
+     FOR UPDATE
+  ),
+  locks AS (
+    SELECT id, turnover_required, turnover_applied,
+           SUM(turnover_required - turnover_applied) OVER (ORDER BY created_at ASC) AS cumulative_unlock
+      FROM locked
+  ),
+  applied AS (
+    UPDATE deposit_locks d
+       SET turnover_applied = LEAST(
+             d.turnover_applied + GREATEST(0,
+               LEAST(
+                 l.turnover_required - l.turnover_applied,
+                 v_total - (l.cumulative_unlock - (l.turnover_required - l.turnover_applied))
+               )
+             ),
+             d.turnover_required
+           )
+      FROM locks l
+     WHERE d.id = l.id
+       AND l.cumulative_unlock - (l.turnover_required - l.turnover_applied) < v_total
+    RETURNING d.id
+  )
+  SELECT COUNT(*) INTO v_lock_rows FROM applied;
+
+  RETURN v_count;
+END;
+$function$;

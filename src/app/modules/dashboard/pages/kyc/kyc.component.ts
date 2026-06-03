@@ -81,12 +81,18 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
                     @if (k.status === 'PENDING') {
                       <div class="flex flex-wrap gap-1">
                         <button (click)="confirmAction('approve', k)" [disabled]="approving.has(k.id)"
-                          class="bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">
+                          class="bg-muted text-foreground hover:bg-muted/80 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">
                           {{ approving.has(k.id) ? '...' : 'Setujui' }}
                         </button>
                         <button (click)="confirmAction('reject', k)" [disabled]="approving.has(k.id)"
-                          class="bg-red-400/10 text-red-400 hover:bg-red-400/20 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">Tolak</button>
+                          class="bg-muted text-foreground hover:bg-muted/80 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">Tolak</button>
                       </div>
+                    }
+                    @if (k.status === 'REJECTED') {
+                      <button (click)="confirmAction('reverify', k)" [disabled]="approving.has(k.id)"
+                        class="bg-muted text-foreground hover:bg-muted/80 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">
+                        {{ approving.has(k.id) ? '...' : 'Verifikasi Ulang' }}
+                      </button>
                     }
                   </td>
                 </tr>
@@ -201,6 +207,13 @@ export class KycComponent implements OnInit, OnDestroy {
       this.confirm.iconBg = 'bg-emerald-400/10';
       this.confirm.confirmText = 'Setujui';
       this.confirm.confirmVariant = 'success';
+    } else if (action === 'reverify') {
+      this.confirm.title = 'Verifikasi Ulang KYC';
+      this.confirm.message = `Verifikasi ulang dokumen KYC ${k.document_type || 'ID'} milik ${k.user?.username || k.user_id?.slice(0,16)}? KYC akan disetujui.`;
+      this.confirm.icon = '↻';
+      this.confirm.iconBg = 'bg-sky-400/10';
+      this.confirm.confirmText = 'Verifikasi';
+      this.confirm.confirmVariant = 'success';
     } else {
       this.confirm.title = 'Tolak KYC';
       this.confirm.message = `Tolak dokumen KYC ${k.document_type || 'ID'} milik ${k.user?.username || k.user_id?.slice(0,16)}?`;
@@ -221,6 +234,7 @@ export class KycComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
     try {
       if (action === 'approve') await this.approve(k);
+      else if (action === 'reverify') await this.approve(k);
       else await this.reject(k);
     } finally {
       this.confirm.open = false;

@@ -28,8 +28,7 @@ export async function fetchPlatformAccounts() {
         note: a.instructions || '',
       }));
     }
-  } catch (e) {
-    console.warn('[NUMBER9] fetchPlatformAccounts error:', e?.message);
+  } catch {
   }
   return [];
 }
@@ -51,8 +50,7 @@ export async function fetchWalletBalance(userId) {
         totalTurnover: Number(data.total_turnover ?? 0),
       };
     }
-  } catch (e) {
-    console.error('[NUMBER9] fetchWalletBalance error:', e?.message);
+  } catch {
   }
   return { main: 0, bonus: 0, totalDeposited: 0, totalWithdrawn: 0, totalTurnover: 0 };
 }
@@ -85,7 +83,6 @@ export async function checkWithdrawEligibility(userId) {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('[NUMBER9] checkWithdrawEligibility query error:', error?.message);
       return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
     }
 
@@ -95,8 +92,7 @@ export async function checkWithdrawEligibility(userId) {
     const remaining = Math.max(0, totalRequired - totalApplied);
     const isUnlocked = remaining <= 0;
     return { isUnlocked, required: totalRequired, achieved: totalApplied, remaining };
-  } catch (e) {
-    console.error('[NUMBER9] checkWithdrawEligibility error:', e?.message);
+  } catch {
     return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
   }
 }
@@ -124,14 +120,11 @@ export async function requestDeposit(params) {
       if (error.code === '23505') {
         return { ok: false, error: "Deposit already pending (duplicate detected)" };
       }
-      console.error('[NUMBER9] Deposit error:', error.message);
       return { ok: false, error: "Failed to create deposit request" };
     }
 
-    console.info('[NUMBER9] ✅ Deposit created in Supabase', { id: data?.id, amount: amt, proof: proofUrl ? 'yes' : 'no' });
     return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
   } catch (e) {
-    console.error('[NUMBER9] requestDeposit exception:', e?.message);
     return { ok: false, error: e?.message || "Network error" };
   }
 }
@@ -146,10 +139,9 @@ async function uploadProof(userUuid, base64DataUrl) {
     const { data, error } = await supabase.functions.invoke('upload-proof', {
       body: { dataUrl: base64DataUrl, kind: 'deposit' },
     });
-    if (error) { console.error('[NUMBER9] Proof upload error:', error.message); return null; }
+    if (error) { return null; }
     return data?.url || null;
-  } catch (e) {
-    console.error('[NUMBER9] Proof upload exception:', e?.message);
+  } catch {
     return null;
   }
 }
@@ -186,14 +178,11 @@ export async function requestWithdraw(params) {
       if (error.code === '23505') {
         return { ok: false, error: "Withdrawal already pending (duplicate)" };
       }
-      console.error('[NUMBER9] Withdrawal error:', error.message);
       return { ok: false, error: "Failed to create withdrawal request" };
     }
 
-    console.info('[NUMBER9] ✅ Withdrawal created in Supabase', { id: data?.id, amount: amt });
     return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
   } catch (e) {
-    console.error('[NUMBER9] requestWithdraw exception:', e?.message);
     return { ok: false, error: e?.message || "Network error" };
   }
 }
@@ -215,7 +204,7 @@ export async function fetchUserBank(userId) {
       bankAccountNumber: data.bank_account_number || '',
       bankAccountName: data.bank_account_name || '',
     };
-  } catch (e) { console.error('[NUMBER9] fetchUserBank:', e?.message); }
+  } catch {}
   return { bankName: '', bankAccountNumber: '', bankAccountName: '' };
 }
 
@@ -242,8 +231,7 @@ export async function fetchTurnoverSummary(userId) {
     const remaining = totalRequired - totalApplied;
     const pct = totalRequired > 0 ? Math.min(100, Math.round((totalApplied / totalRequired) * 100)) : 0;
     return { required: totalRequired, achieved: totalApplied, remaining, pct, totalDeposited, totalTurnover, isUnlocked: remaining <= 0 };
-  } catch (e) {
-    console.error('[NUMBER9] fetchTurnoverSummary:', e?.message);
+  } catch {
     return { required: 0, achieved: 0, remaining: 0, pct: 0, totalDeposited: 0, totalTurnover: 0, isUnlocked: true };
   }
 }
@@ -273,13 +261,9 @@ export async function fetchUserTransactions(userId, limit = 100) {
         processedAt: t.processed_at,
         notes: t.notes,
       };
-      // Debug: log PENDING deposits
-      if (mapped.type === 'DEPOSIT' && mapped.status === 'PENDING') {
-        console.info('[NUMBER9] 🔒 Deposit lock active — requestedAt:', mapped.requestedAt);
-      }
       return mapped;
     });
-  } catch (e) { console.error('[NUMBER9] fetchUserTransactions:', e?.message); }
+  } catch {}
   return [];
 }
 
@@ -300,7 +284,6 @@ export async function subscribeWalletRealtime(userUuid, username, onWalletUpdate
         const w = payload.new;
         const main = Number(w.balance_main ?? 0);
         const bonus = Number(w.balance_bonus ?? 0);
-        console.info('[NUMBER9] 💰 Realtime wallet update — main:', main, 'bonus:', bonus);
         onWalletUpdate?.(main, bonus);
       })
       .on('postgres_changes', {
@@ -310,7 +293,6 @@ export async function subscribeWalletRealtime(userUuid, username, onWalletUpdate
         filter: `user_id=eq.${userUuid}`,
       }, payload => {
         const tx = payload.new;
-        console.info('[NUMBER9] 📋 Realtime tx INSERT — status:', tx.status, 'amount:', tx.amount);
         onTxUpdate?.(tx);
       })
       .on('postgres_changes', {
@@ -320,14 +302,10 @@ export async function subscribeWalletRealtime(userUuid, username, onWalletUpdate
         filter: `user_id=eq.${userUuid}`,
       }, payload => {
         const tx = payload.new;
-        console.info('[NUMBER9] 📋 Realtime tx UPDATE — status:', tx.status, 'amount:', tx.amount);
         onTxUpdate?.(tx);
       })
-      .subscribe(status => {
-        console.info('[NUMBER9] Realtime subscription status:', status);
-      });
-  } catch (e) {
-    console.warn('[NUMBER9] Realtime subscribe failed:', e?.message);
+      .subscribe();
+  } catch {
   }
 }
 

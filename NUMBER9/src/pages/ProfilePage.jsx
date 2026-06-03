@@ -28,8 +28,7 @@ export default function ProfilePage() {
           setLoading(false);
         }
       })
-      .catch((err) => {
-        console.error('[NUMBER9] Failed to fetch profile:', err);
+      .catch(() => {
         if (isMounted) setLoading(false);
       });
     return () => { isMounted = false; };

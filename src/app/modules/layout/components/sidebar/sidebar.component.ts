@@ -1,7 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import packageJson from '../../../../../../package.json';
 import { MenuService } from '../../services/menu.service';
 import { SidebarMenuComponent } from './sidebar-menu/sidebar-menu.component';
 import { AdminService } from '../../../../core/services/admin.service';
@@ -13,7 +12,6 @@ import { AdminService } from '../../../../core/services/admin.service';
   imports: [NgClass, AngularSvgIconModule, SidebarMenuComponent],
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  public appJson: any = packageJson;
   private badgeTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(

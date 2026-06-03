@@ -85,7 +85,7 @@ export default function DepositPage() {
     setAccountsLoading(true);
     fetchPlatformAccounts()
       .then((r) => { if (alive && Array.isArray(r)) setAccounts(r); })
-      .catch((err) => console.error('[NUMBER9] Failed to fetch platform accounts:', err))
+      .catch(() => {})
       .finally(() => { if (alive) setAccountsLoading(false); });
     return () => { alive = false; };
   }, []);
@@ -130,7 +130,6 @@ export default function DepositPage() {
     fetchUserTransactions(auth.id).then(txs => { if (aliveRef.current) setUserTxs(txs || []); }).catch(() => {});
       }, 500);
     } catch (err) {
-      console.error('[NUMBER9] Deposit submit error:', err);
       setLoading(false);
       setToast({ type:"err", text: t('common.network_error') });
     }

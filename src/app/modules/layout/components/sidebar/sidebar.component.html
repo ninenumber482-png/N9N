@@ -14,7 +14,7 @@
             <svg-icon src="assets/icons/logo.svg"> </svg-icon>
           </a>
           <b class="text-foreground ps-2 ml-1 grow text-sm font-bold">
-            {{ appJson.displayName }}
+            NUMBER9
           </b>
         </div>
       }
@@ -42,17 +42,8 @@
       </svg-icon>
 
       <div class="ml-3 truncate text-[10px] font-semibold tracking-wide focus:outline-hidden">
-        <span class="bg-primary/10 text-primary px-2 font-semibold">v{{ appJson.version }}</span>
+        <span class="text-muted-foreground/50">NUMBER9</span>
       </div>
-
-      @if (!menuService.showSideBar) {
-        <div class="fixed w-full">
-          <span
-            class="z-1 bg-foreground text-background absolute left-12 -top-4 w-auto min-w-max origin-left scale-0 p-2 text-xs font-bold shadow-md transition-all duration-200 group-hover:scale-100">
-            v{{ appJson.version }}
-          </span>
-        </div>
-      }
     </div>
   </div>
 </nav>

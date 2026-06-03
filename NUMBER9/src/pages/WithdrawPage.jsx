@@ -82,7 +82,6 @@ export default function WithdrawPage() {
       setToast({ type: "ok", text: t('withdraw.submitted') });
       setAmount("");
     } catch (err) {
-      console.error('[NUMBER9] Withdraw submit error:', err);
       setLoading(false);
       setToast({ type: "err", text: t('common.network_error') });
     }

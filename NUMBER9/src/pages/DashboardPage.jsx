@@ -37,7 +37,7 @@ export default function DashboardPage() {
   const acts = useMemo(() => {
     if (!auth?.username) return []
     const txs = userTxs
-    const bids = listBids().filter(b => b.uuid === auth.id && b.result).slice(0, 5)
+    const bids = listBids().filter(b => b.result).slice(0, 5)
     const txActs = txs.slice(0, 10).map(tx => ({
       id: tx.id,
       type: tx.type === 'DEPOSIT' ? 'DEP' : 'WD',

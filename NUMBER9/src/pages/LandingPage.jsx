@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LOGOS, VALUES, STATS } from '../config/landing';
+import { supabase } from '../utils/supabase';
 import { useI18n } from '../i18n';
 import CsWidget from '../components/ui/CsWidget';
 
@@ -10,19 +11,15 @@ export default function LandingPage() {
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
 
   useEffect(() => {
-    const check = async () => {
-      try {
-        const { supabase } = await import("../utils/supabase.js");
-        const { data } = await supabase.from('platform_config').select('key, value');
-        if (!data) return;
-        const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
-        if (cfg.maintenance_mode === 'true') {
-          setMaintenance(true);
-          setMaintenanceMsg(cfg.maintenance_msg || '');
-        }
-      } catch {}
-    };
-    check();
+    if (!supabase) return;
+    supabase.from('platform_config').select('key, value').then(({ data }) => {
+      if (!data) return;
+      const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
+      if (cfg.maintenance_mode === 'true') {
+        setMaintenance(true);
+        setMaintenanceMsg(cfg.maintenance_msg || '');
+      }
+    }).catch(() => {});
   }, []);
 
   if (maintenance) {
@@ -96,13 +93,16 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl">
           <h2 className="text-4xl font-black mb-16 text-center">{t('landing.values_title')}</h2>
           <div className="grid md:grid-cols-4 gap-6">
-            {VALUES.map((value, i) => (
+            {VALUES.map((value, i) => {
+              const labels = [t('landing.value_integrity'), t('landing.value_collaboration'), t('landing.value_innovation'), t('landing.value_excellence')];
+              const descs = [t('landing.value_integrity_desc'), t('landing.value_collaboration_desc'), t('landing.value_innovation_desc'), t('landing.value_excellence_desc')];
+              return (
               <div key={i} className="rounded-xl border border-[#1f2128] bg-[#0c0e14] p-6 text-center">
-                <img src={value.icon} alt={[t('landing.value_integrity'), t('landing.value_collaboration'), t('landing.value_innovation'), t('landing.value_excellence')][i]} className="h-12 w-12 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">{[t('landing.value_integrity'), t('landing.value_collaboration'), t('landing.value_innovation'), t('landing.value_excellence')][i]}</h3>
-                <p className="text-zinc-400 text-sm">{[t('landing.value_integrity_desc'), t('landing.value_collaboration_desc'), t('landing.value_innovation_desc'), t('landing.value_excellence_desc')][i]}</p>
+                <img src={value.icon} alt={labels[i]} className="h-12 w-12 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">{labels[i]}</h3>
+                <p className="text-zinc-400 text-sm">{descs[i]}</p>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </section>
@@ -111,13 +111,16 @@ export default function LandingPage() {
       <section className="px-4 py-20 md:py-32 border-t border-[#1f2128]">
         <div className="mx-auto max-w-6xl">
           <div className="grid md:grid-cols-4 gap-8">
-            {STATS.map((stat, i) => (
+            {STATS.map((stat, i) => {
+              const labels = [t('landing.stat_countries'), t('landing.stat_partners'), t('landing.stat_experience'), t('landing.stat_opportunities')];
+              const values = [t('landing.stat_countries_val'), t('landing.stat_partners_val'), t('landing.stat_experience_val'), t('landing.stat_opportunities_val')];
+              return (
               <div key={i} className="text-center">
-                <img src={stat.icon} alt={[t('landing.stat_countries'), t('landing.stat_partners'), t('landing.stat_experience'), t('landing.stat_opportunities')][i]} className="h-16 w-16 mx-auto mb-4 opacity-80" />
-                <div className="text-4xl font-black text-yellow-400 mb-2">{[t('landing.stat_countries_val'), t('landing.stat_partners_val'), t('landing.stat_experience_val'), t('landing.stat_opportunities_val')][i]}</div>
-                <p className="text-zinc-400">{[t('landing.stat_countries'), t('landing.stat_partners'), t('landing.stat_experience'), t('landing.stat_opportunities')][i]}</p>
+                <img src={stat.icon} alt={labels[i]} className="h-16 w-16 mx-auto mb-4 opacity-80" />
+                <div className="text-4xl font-black text-yellow-400 mb-2">{values[i]}</div>
+                <p className="text-zinc-400">{labels[i]}</p>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </section>

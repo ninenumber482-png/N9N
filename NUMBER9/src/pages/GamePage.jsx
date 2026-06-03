@@ -204,7 +204,6 @@ export default function GamePage() {
       setBigSmall(null); setOddEven(null); setNumber(null); setCustom(""); setStakeOpen(false);
       setVersion((v) => v + 1);
     } catch (err) {
-      console.error('[NUMBER9] Bid placement error:', err);
       setBidding(false);
       const errorMsg = err.message === 'Request timeout'
         ? t('game.timeout')
@@ -229,13 +228,13 @@ export default function GamePage() {
           onConfirm={() => {
             setEntryLoading(true);
             setTimeout(() => {
-              try { localStorage.setItem('n9_marketplace_entry_shown', 'true'); } catch (e) { console.warn(e); }
+              try { localStorage.setItem('n9_marketplace_entry_shown', 'true'); } catch {}
               setEntryLoading(false);
               setShowEntry(false);
             }, 1200);
           }}
           onCancel={() => {
-            try { localStorage.setItem('n9_marketplace_entry_shown', 'true'); } catch (e) { console.warn(e); }
+            try { localStorage.setItem('n9_marketplace_entry_shown', 'true'); } catch {}
             setShowEntry(false);
           }}
         />

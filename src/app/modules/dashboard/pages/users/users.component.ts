@@ -79,6 +79,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
                     <p class="font-semibold text-foreground">{{ u.display_name || u.username }}</p>
                     <p class="text-muted-foreground text-[10px]">&#64;{{ u.username }} · {{ u.email }}</p>
                     <p class="text-muted-foreground text-[9px]">{{ u.country }} · {{ u.phone }}</p>
+                    <p class="text-muted-foreground text-[9px] font-mono mt-0.5 select-all">{{ u.id }}</p>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
                     <span class="bg-primary/10 text-primary rounded px-2 py-0.5 text-[10px] font-bold">{{ u.role }}</span>
@@ -118,6 +119,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
                       @if (isSuperadmin) {
                         <button (click)="confirmAction('reset', u)" class="bg-violet-400/10 text-violet-400 hover:bg-violet-400/20 rounded px-2 py-1 text-[10px] font-bold">Reset</button>
                       }
+                      <button (click)="openEditModal(u)" class="bg-muted text-foreground hover:bg-muted/80 rounded px-2 py-1 text-[10px] font-bold">Edit</button>
                       @if (editing[u.id] && changed(u)) {
                         <button (click)="saveUser(u)" class="bg-primary text-primary-foreground rounded-lg px-2 py-1 text-[10px] font-bold">Save</button>
                         <button (click)="editing[u.id] = null" class="text-muted-foreground rounded-lg px-2 py-1 text-[10px] font-bold">X</button>
@@ -216,6 +218,45 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
       (onConfirm)="executeConfirm()"
       (onCancel)="cancelDialog()"
     />
+
+    @if (editModal.open) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" (click)="closeEditModal()">
+        <div class="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-extrabold text-foreground">Edit User</h2>
+            <button (click)="closeEditModal()" class="text-muted-foreground hover:text-foreground text-lg font-bold">&times;</button>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Bank Name</label>
+              <input [(ngModel)]="editModal.bank_name" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Bank name" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Account Number</label>
+              <input [(ngModel)]="editModal.bank_account_number" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Account number" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Account Name</label>
+              <input [(ngModel)]="editModal.bank_account_name" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Account name" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Email</label>
+              <input [(ngModel)]="editModal.email" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Email" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Phone</label>
+              <input [(ngModel)]="editModal.phone" class="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none" placeholder="Phone" />
+            </div>
+          </div>
+          <div class="mt-5 flex gap-2">
+            <button (click)="closeEditModal()" class="h-9 flex-1 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted">Cancel</button>
+            <button (click)="saveEditModal()" [disabled]="editModal.loading" class="h-9 flex-1 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 disabled:opacity-50">
+              {{ editModal.loading ? 'Saving...' : 'Save' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class UsersComponent implements OnInit, OnDestroy {
@@ -233,6 +274,16 @@ export class UsersComponent implements OnInit, OnDestroy {
   loadingDetail = false;
   error: string | null = null;
   previewImage: string | null = null;
+  editModal = {
+    open: false,
+    user: null as any,
+    bank_name: '',
+    bank_account_number: '',
+    bank_account_name: '',
+    email: '',
+    phone: '',
+    loading: false,
+  };
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
   isSuperadmin = false;
   private destroy$ = new Subject<void>();
@@ -539,6 +590,54 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   viewImage(url: string) { this.previewImage = url; }
+
+  openEditModal(u: any) {
+    this.editModal.open = true;
+    this.editModal.user = u;
+    this.editModal.bank_name = u.bank_name || '';
+    this.editModal.bank_account_number = u.bank_account_number || '';
+    this.editModal.bank_account_name = u.bank_account_name || '';
+    this.editModal.email = u.email || '';
+    this.editModal.phone = u.phone || '';
+    this.editModal.loading = false;
+    this.cdr.markForCheck();
+  }
+
+  closeEditModal() {
+    this.editModal.open = false;
+    this.editModal.user = null;
+    this.cdr.markForCheck();
+  }
+
+  async saveEditModal() {
+    const u = this.editModal.user;
+    if (!u) return;
+    this.editModal.loading = true;
+    this.cdr.markForCheck();
+    try {
+      await this.admin.updateUser(u.id, {
+        bank_name: this.editModal.bank_name,
+        bank_account_number: this.editModal.bank_account_number,
+        bank_account_name: this.editModal.bank_account_name,
+        email: this.editModal.email,
+        phone: this.editModal.phone,
+      });
+      Object.assign(u, {
+        bank_name: this.editModal.bank_name,
+        bank_account_number: this.editModal.bank_account_number,
+        bank_account_name: this.editModal.bank_account_name,
+        email: this.editModal.email,
+        phone: this.editModal.phone,
+      });
+      this.closeEditModal();
+      this.notification.success('User updated', 'Data saved.');
+    } catch (e: any) {
+      this.notification.error('Save failed', e.message || 'Could not update user.');
+    } finally {
+      this.editModal.loading = false;
+      this.cdr.markForCheck();
+    }
+  }
 
   kycClass(s: string) {
     const m: Record<string, string> = { APPROVED: 'bg-emerald-400/10 text-emerald-400', PENDING: 'bg-amber-400/10 text-amber-400', REJECTED: 'bg-red-400/10 text-red-400' };

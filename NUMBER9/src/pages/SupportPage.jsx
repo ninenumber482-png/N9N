@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Icon } from '../components/icons'
 import BackLink from '../components/ui/BackLink'
@@ -76,7 +76,6 @@ export default function SupportPage() {
       setTicketCategory(t('support.cat_deposit'))
       setTicketMessage('')
     } catch (e) {
-      console.error('[NUMBER9] Ticket submit error:', e?.message)
       setFeedback({ type: 'err', text: t('support.failed') })
     } finally {
       setSubmitting(false)

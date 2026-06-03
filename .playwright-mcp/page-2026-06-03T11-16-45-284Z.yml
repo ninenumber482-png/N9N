@@ -1,0 +1,30 @@
+- generic [ref=e3]:
+  - button "Back" [ref=e4]:
+    - img [ref=e5]
+  - generic [ref=e7]:
+    - img
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - img "NUMBER9" [ref=e11]
+        - generic [ref=e12]: MEMBER SECURE ACCESS
+      - generic [ref=e13]:
+        - heading "Sign In" [level=2] [ref=e14]
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - generic [ref=e17]: Username
+            - textbox "Username" [ref=e18]:
+              - /placeholder: username
+          - generic [ref=e19]:
+            - generic [ref=e20]: Password
+            - generic [ref=e21]:
+              - textbox "Password" [ref=e22]:
+                - /placeholder: ••••••••
+              - button [ref=e23]:
+                - img [ref=e24]
+          - button "Sign In" [disabled] [ref=e27]
+        - paragraph [ref=e28]:
+          - text: Don't have an account?
+          - link "Register" [ref=e29] [cursor=pointer]:
+            - /url: "#/register"
+      - paragraph [ref=e30]: © 2012 NUMBER9. All rights reserved.
+  - generic: v1.0.0

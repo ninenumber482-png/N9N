@@ -41,7 +41,6 @@ export default function WalletPage() {
     setTxsLoading(true);
     setTxsError(null);
     fetchUserTransactions(auth.id).then(setTxs).catch(e => {
-      console.error('[NUMBER9] Wallet fetch transactions error:', e?.message);
       setTxsError('Failed to load transactions');
     }).finally(() => setTxsLoading(false));
   }, [auth?.id]);
@@ -50,9 +49,7 @@ export default function WalletPage() {
   useEffect(() => {
     if (!auth?.id) return;
     setKingLoading(true);
-    refreshKingData(auth.id).then(() => setRefreshCount(c => c + 1)).catch(e => {
-      console.error('[NUMBER9] Wallet refresh king data error:', e?.message);
-    }).finally(() => setKingLoading(false));
+    refreshKingData(auth.id).then(() => setRefreshCount(c => c + 1)).catch(() => {}).finally(() => setKingLoading(false));
   }, [auth?.id]);
 
   const pendingDeposit = txs

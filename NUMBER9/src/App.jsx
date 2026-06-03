@@ -140,9 +140,7 @@ function App() {
               });
             }
           },
-          (error) => {
-            console.warn('[NUMBER9] Wallet realtime error, may fallback to polling:', error?.message);
-          }
+          () => {}
         );
       })();
 
@@ -157,9 +155,7 @@ function App() {
             // On bet settlement, trigger version bump to update UI
             useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
           },
-          (error) => {
-            console.warn('[NUMBER9] Bets realtime error:', error?.message);
-          }
+          () => {}
         );
       })();
     }
@@ -190,11 +186,7 @@ function App() {
           alert('✅ Logged out.');
         }
       };
-      console.log('%c[NUMBER9] Console utilities ready', 'color: #f4c400; font-weight: bold;');
-      console.log('window.NUMBER9.clearAllData()  — Wipe all localStorage data (ready for database)');
-      console.log('window.NUMBER9.setDemoMode(true/false) — Toggle demo mode');
-      console.log('window.NUMBER9.isDemoMode() — Check current mode');
-      console.log('window.NUMBER9.logout() — Logout current user');
+
     }
   }, []);
 

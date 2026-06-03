@@ -1,4 +1,5 @@
 /* eslint-disable no-empty */
+import { supabase, setUserToken } from "../utils/supabase";
 import { create } from "zustand";
 import { subscribeWalletRealtime, unsubscribeWalletRealtime } from "./wallet";
 
@@ -69,7 +70,7 @@ export const useStore = create((set, get) => ({
     let channel;
     const setup = async () => {
       try {
-        const { supabase } = await import("../utils/supabase.js");
+        if (!supabase) return;
         channel = supabase
           .channel('platform_config')
           .on('postgres_changes', {
@@ -90,9 +91,7 @@ export const useStore = create((set, get) => ({
             });
           })
           .subscribe();
-      } catch (e) {
-        console.warn('[NUMBER9] subscribePlatformConfig error:', e?.message);
-      }
+      } catch {};
     };
     setup();
     return () => { if (channel) channel.unsubscribe(); };
@@ -100,7 +99,7 @@ export const useStore = create((set, get) => ({
 
   syncPlatformConfig: async () => {
     try {
-      const { supabase } = await import("../utils/supabase.js");
+      if (!supabase) return;
       const { data: config, error } = await supabase
         .from('platform_config')
         .select('key, value')
@@ -118,9 +117,7 @@ export const useStore = create((set, get) => ({
           set(s => ({ systemStatus: { ...s.systemStatus, ...updates } }));
         }
       }
-    } catch (e) {
-      console.warn('[NUMBER9] syncPlatformConfig error:', e?.message);
-    }
+    } catch {}
   },
   systemNotification: null,
   clearSystemNotification: () => set({ systemNotification: null }),
@@ -133,7 +130,7 @@ export const useStore = create((set, get) => ({
     let channel;
     const setup = async () => {
       try {
-        const { supabase } = await import("../utils/supabase.js");
+        if (!supabase) return;
         channel = supabase
           .channel('user-status-' + userId)
           .on('postgres_changes', {
@@ -197,8 +194,6 @@ export const useStore = create((set, get) => ({
     if (!uname || !password) return { ok: false, error: "Enter username and password." };
 
     try {
-      const { supabase, setUserToken } = await import("../utils/supabase.js");
-
       // Call user-login Edge Function (server-side bcrypt validation)
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-login`,
@@ -239,8 +234,7 @@ export const useStore = create((set, get) => ({
       setUserToken(session.access_token);
 
       // Fetch initial wallet balance (required for UI to show balance after login)
-      const { supabase: sb } = await import("../utils/supabase.js");
-      const { data: wallet, error: walletErr } = await sb
+      const { data: wallet, error: walletErr } = await supabase
         .from('wallet')
         .select('balance_main, balance_bonus')
         .eq('user_id', user.id)
@@ -313,10 +307,8 @@ export const useStore = create((set, get) => ({
         }
       } catch {}
 
-      console.log("[NUMBER9] ✅ Login successful via user-login Edge Function");
       return { ok: true };
-    } catch (e) {
-      console.error("[NUMBER9] Login error:", e?.message);
+    } catch {
       return { ok: false, error: "Connection error. Please try again." };
     }
   },
@@ -340,7 +332,7 @@ export const useStore = create((set, get) => ({
       systemNotification: null,
     });
 
-    import("../utils/supabase.js").then(({ setUserToken }) => setUserToken(null)).catch(() => {});
+    setUserToken(null);
   },
 
   registerUser: async (data) => {
@@ -348,7 +340,7 @@ export const useStore = create((set, get) => ({
     if (!uname) return { ok: false, error: "Username is required." };
 
     try {
-      const { supabase } = await import("../utils/supabase.js");
+      if (!supabase) return { ok: false, error: "Backend unavailable." };
       const bcrypt = await import("bcryptjs");
 
       // Validate referral code
@@ -436,21 +428,16 @@ export const useStore = create((set, get) => ({
 
       if (insertErr) {
         if (insertErr.code === "23505") return { ok: false, error: "Username already taken." };
-        console.error("[NUMBER9] Register insert error:", insertErr.message);
         return { ok: false, error: insertErr.message || "Registration failed." };
       }
 
       // Atomically increment referral used_count
       if (referralId) {
-        await supabase.rpc("increment_referral_used", { p_referral_id: referralId })
-          .then(({ error }) => {
-            if (error) console.warn("[NUMBER9] Failed to increment referral used_count:", error.message);
-          });
+        await supabase.rpc("increment_referral_used", { p_referral_id: referralId }).catch(() => {});
       }
 
       // Create wallet for new user
-      const { error: walletErr } = await supabase.from("wallet").insert({ user_id: uuid });
-      if (walletErr) console.warn("[NUMBER9] Failed to create wallet:", walletErr.message);
+      await supabase.from("wallet").insert({ user_id: uuid }).catch(() => {});
 
       // Store KYC documents
       const kyc = data.kyc || {};
@@ -466,8 +453,7 @@ export const useStore = create((set, get) => ({
         user: { uuid, username: uname, referralCode: refCode, referredByCode: data.referralCode },
         message: "Registration successful. Awaiting admin approval.",
       };
-    } catch (e) {
-      console.error("[NUMBER9] Register error:", e?.message);
+    } catch {
       return { ok: false, error: "Registration failed. Please try again." };
     }
   },
@@ -509,7 +495,7 @@ export const useStore = create((set, get) => ({
     const norm = String(code || "").trim().toUpperCase();
     if (!norm) return null;
     try {
-      const { supabase } = await import("../utils/supabase.js");
+      if (!supabase) return null;
       // 1. Personal user referral code
       const { data: userData, error: userErr } = await supabase
         .from("users")
@@ -563,7 +549,7 @@ export const useStore = create((set, get) => ({
     const authData = readJSON(LS.auth, null);
     if (!authData?.id) return null;
     try {
-      const { supabase } = await import("../utils/supabase.js");
+      if (!supabase) return null;
       const { data, error } = await supabase
         .from('users')
         .select('id,username,display_name,email,phone,country,role,account_status,registration_status,login_status,bank_name,bank_account_number,bank_account_name,kyc_status,referral_code,referred_by,created_at,approved_at')
@@ -604,10 +590,7 @@ export const useStore = create((set, get) => ({
           approvedAt: data.approved_at,
         };
       }
-      if (error) console.error('[NUMBER9] fetchProfile error:', error.message);
-    } catch (e) {
-      console.error('[NUMBER9] fetchProfile exception:', e?.message);
-    }
+    } catch {}
     return null;
   },
 
@@ -617,13 +600,13 @@ export const useStore = create((set, get) => ({
     const authData = readJSON(LS.auth, null);
     if (!authData?.id) return [];
     try {
-      const { supabase } = await import("../utils/supabase.js");
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from('users')
         .select('id,username,display_name,account_status,registration_status,created_at')
         .eq('referred_by_user', authData.id)
         .order('created_at', { ascending: false });
-      if (error) { console.error('[NUMBER9] fetchDownlines error:', error.message); return []; }
+      if (error) { return []; }
       return (data || []).map(u => ({
         uuid: u.id,
         username: u.username,
@@ -632,8 +615,7 @@ export const useStore = create((set, get) => ({
         registration_status: u.registration_status,
         createdAt: u.created_at,
       }));
-    } catch (e) {
-      console.error('[NUMBER9] fetchDownlines exception:', e?.message);
+    } catch {
       return [];
     }
   },
@@ -700,7 +682,7 @@ export const useStore = create((set, get) => ({
     // Real wallet from Supabase when we have credentials + a logged-in UUID
     if (auth?.id && url && key) {
       try {
-        const { supabase } = await import("../utils/supabase.js");
+        if (!supabase) return;
         const { data, error } = await supabase
           .from("wallet")
           .select("balance_main,balance_bonus")
@@ -757,7 +739,9 @@ export const clearAllData = () => {
       writeJSON(LS.auth, null);
       useStore.setState({ auth: null });
     } else {
-      import("../utils/supabase.js").then(async ({ setUserToken, supabase }) => {
+      if (!supabase) { useStore.setState({ auth: null }); }
+      (async () => {
+        if (!supabase) return;
         setUserToken(_auth.token);
         // Validate token is still valid by attempting a minimal query
         try {
@@ -832,7 +816,7 @@ export const clearAllData = () => {
             }
           }
         );
-      }).catch(() => {});
+      })();
     }
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore'
+import { supabase } from '../utils/supabase'
 import LoginForm from '../components/LoginForm'
 import { useI18n } from '../i18n'
 import ModalOverlay from '../components/ui/ModalOverlay';
@@ -21,15 +22,14 @@ export default function LoginPage() {
   const { t } = useI18n()
   const toDashboard = () => `/c/${auth?.id}/dashboard`
 
-  useEffect(() => { const check = async () => {
-    try {
-      const { supabase } = await import("../utils/supabase.js");
-      const { data } = await supabase.from('platform_config').select('key, value');
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from('platform_config').select('key, value').then(({ data }) => {
       if (!data) return;
       const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
       if (cfg.maintenance_mode === 'true') { setMaintenance(true); setMaintenanceMsg(cfg.maintenance_msg || ''); }
-    } catch {}
-  }; check(); }, []);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => { if (auth) navigate(toDashboard(), { replace: true }) }, [auth, navigate])
 
@@ -50,8 +50,7 @@ export default function LoginPage() {
     if (!identity || !password) { setError(t('auth.enter_credentials')); return }
     setLoading(true)
     let result
-    try { result = await login(identity, password) } catch (err) {
-      console.error('[NUMBER9] Login error:', err)
+    try { result = await login(identity, password) } catch {
       setError(t('common.connection_error'))
       setLoading(false)
       return

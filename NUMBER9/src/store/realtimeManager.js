@@ -7,15 +7,12 @@
    to auth lifecycle (subscribe on login, cleanup on logout).
 */
 
+import { supabase } from '../utils/supabase';
+
 let _walletChannel = null;
 let _userStatusChannel = null;
 let _platformConfigChannel = null;
 let _settledBetsChannel = null;
-
-async function supa() {
-  const { supabase } = await import('../utils/supabase.js');
-  return supabase;
-}
 
 /* ---- Wallet + Transactions ---- */
 export async function subscribeToWalletAndTransactions(
@@ -27,8 +24,7 @@ export async function subscribeToWalletAndTransactions(
   if (!userId) return () => {};
 
   try {
-    const supabase = await supa();
-
+    if (!supabase) return () => {};
     _walletChannel = supabase.channel(`wallet_rt_${userId}`);
 
     _walletChannel
@@ -59,7 +55,6 @@ export async function subscribeToWalletAndTransactions(
       })
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('[NUMBER9] Wallet realtime subscription error:', status);
           onError?.(new Error(`Wallet subscription ${status}`));
         }
       });
@@ -71,7 +66,6 @@ export async function subscribeToWalletAndTransactions(
       }
     };
   } catch (e) {
-    console.error('[NUMBER9] subscribeToWalletAndTransactions error:', e?.message);
     onError?.(e);
     return () => {};
   }
@@ -86,8 +80,7 @@ export async function subscribeToUserStatus(
   if (!userId) return () => {};
 
   try {
-    const supabase = await supa();
-
+    if (!supabase) return () => {};
     _userStatusChannel = supabase.channel(`user-status-${userId}`);
 
     _userStatusChannel
@@ -115,7 +108,6 @@ export async function subscribeToUserStatus(
       })
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('[NUMBER9] User status subscription error:', status);
           onError?.(new Error(`User status subscription ${status}`));
         }
       });
@@ -127,7 +119,6 @@ export async function subscribeToUserStatus(
       }
     };
   } catch (e) {
-    console.error('[NUMBER9] subscribeToUserStatus error:', e?.message);
     onError?.(e);
     return () => {};
   }
@@ -139,8 +130,7 @@ export async function subscribeToPlatformConfig(
   onError          // (error) => void (optional)
 ) {
   try {
-    const supabase = await supa();
-
+    if (!supabase) return () => {};
     _platformConfigChannel = supabase.channel('platform_config');
 
     _platformConfigChannel
@@ -154,7 +144,6 @@ export async function subscribeToPlatformConfig(
       })
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('[NUMBER9] Platform config subscription error:', status);
           onError?.(new Error(`Platform config subscription ${status}`));
         }
       });
@@ -166,7 +155,6 @@ export async function subscribeToPlatformConfig(
       }
     };
   } catch (e) {
-    console.error('[NUMBER9] subscribeToPlatformConfig error:', e?.message);
     onError?.(e);
     return () => {};
   }
@@ -181,8 +169,7 @@ export async function subscribeToSettledBets(
   if (!userId) return () => {};
 
   try {
-    const supabase = await supa();
-
+    if (!supabase) return () => {};
     _settledBetsChannel = supabase.channel(`bets_settled_${userId}`);
 
     _settledBetsChannel
@@ -200,7 +187,6 @@ export async function subscribeToSettledBets(
       })
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('[NUMBER9] Settled bets subscription error:', status);
           onError?.(new Error(`Settled bets subscription ${status}`));
         }
       });
@@ -212,7 +198,6 @@ export async function subscribeToSettledBets(
       }
     };
   } catch (e) {
-    console.error('[NUMBER9] subscribeToSettledBets error:', e?.message);
     onError?.(e);
     return () => {};
   }
@@ -220,8 +205,8 @@ export async function subscribeToSettledBets(
 
 /* ---- Master Cleanup ---- */
 export async function unsubscribeAll() {
+  if (!supabase) return;
   try {
-    const supabase = await supa();
 
     if (_walletChannel) {
       supabase.removeChannel(_walletChannel);
@@ -239,7 +224,5 @@ export async function unsubscribeAll() {
       await _settledBetsChannel.unsubscribe();
       _settledBetsChannel = null;
     }
-  } catch (e) {
-    console.error('[NUMBER9] unsubscribeAll error:', e?.message);
-  }
+  } catch {}
 }

@@ -1,0 +1,16 @@
+[    2429ms] [LOG] %c[NUMBER9] Console utilities ready color: #f4c400; font-weight: bold; @ https://mynumber9.uk/assets/index-DAnAO9qw.js:33
+[    2430ms] [LOG] window.NUMBER9.clearAllData()  — Wipe all localStorage data (ready for database) @ https://mynumber9.uk/assets/index-DAnAO9qw.js:33
+[    2430ms] [LOG] window.NUMBER9.setDemoMode(true/false) — Toggle demo mode @ https://mynumber9.uk/assets/index-DAnAO9qw.js:33
+[    2430ms] [LOG] window.NUMBER9.isDemoMode() — Check current mode @ https://mynumber9.uk/assets/index-DAnAO9qw.js:33
+[    2430ms] [LOG] window.NUMBER9.logout() — Logout current user @ https://mynumber9.uk/assets/index-DAnAO9qw.js:33
+[   23326ms] [ERROR] Access to fetch at 'https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config' from origin 'https://mynumber9.uk' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://mynumber9.uk/#/login:0
+[   23327ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config:0
+[   23330ms] [ERROR] Access to fetch at 'https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue' from origin 'https://mynumber9.uk' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://mynumber9.uk/#/login:0
+[   23330ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue:0
+[   41569ms] [ERROR] [NUMBER9] Login error: signal is aborted without reason @ https://mynumber9.uk/assets/index-DAnAO9qw.js:10
+[   44204ms] [ERROR] Access to fetch at 'https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue' from origin 'https://mynumber9.uk' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://mynumber9.uk/#/login:0
+[   44204ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue:0
+[   65911ms] [ERROR] Access to fetch at 'https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue' from origin 'https://mynumber9.uk' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://mynumber9.uk/#/login:0
+[   65911ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue:0
+[   89459ms] [ERROR] Access to fetch at 'https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue' from origin 'https://mynumber9.uk' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://mynumber9.uk/#/login:0
+[   89460ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/platform_config?select=key%2Cvalue:0

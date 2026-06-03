@@ -25,11 +25,7 @@ if (supabaseUrl && supabaseKey) {
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {
       global: { fetch: customFetch }
     })
-  } catch (e) {
-    console.warn('[NUMBER9] Failed to create Supabase client:', e?.message)
-  }
-} else {
-  console.warn('[NUMBER9] Supabase credentials not configured. Using localStorage fallback.')
+  } catch {}
 }
 
 export const supabase = supabaseInstance
@@ -40,7 +36,6 @@ export const supabase = supabaseInstance
  */
 export function setUserToken(token) {
   globalUserToken = token
-  console.info('[NUMBER9] ✅ User token set, x-user-token header will be included in all requests')
 }
 
 // Test connection
@@ -51,15 +46,9 @@ export async function testConnection() {
       .select('count', { count: 'exact' })
       .limit(1)
 
-    if (error) {
-      console.error('[NUMBER9] Supabase connection failed:', error)
-      return false
-    }
-
-    console.log('[NUMBER9] ✅ Supabase connection successful')
+    if (error) return false
     return true
-  } catch (err) {
-    console.error('[NUMBER9] Supabase connection error:', err)
+  } catch {
     return false
   }
 }
