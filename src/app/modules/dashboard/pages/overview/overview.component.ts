@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../../core/services/admin.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
 
 @Component({
@@ -11,9 +12,16 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
   imports: [CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe],
   template: `
     <div class="space-y-6">
-      <div>
-        <h1 class="max-sm:text-lg sm:text-2xl font-extrabold text-foreground">Dashboard Overview</h1>
-        <p class="text-muted-foreground mt-1 text-sm">Real-time platform statistics from Supabase</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="max-sm:text-lg sm:text-2xl font-extrabold text-foreground">Dashboard Overview</h1>
+          <p class="text-muted-foreground mt-1 text-sm">Real-time platform statistics from Supabase</p>
+        </div>
+        <div class="flex gap-2">
+          <button (click)="testToast('success')" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-emerald-500/20 transition-colors">Test Success</button>
+          <button (click)="testToast('error')" class="bg-red-500/10 text-red-400 border border-red-500/30 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-red-500/20 transition-colors">Test Error</button>
+          <button (click)="testToast('info')" class="bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-sky-500/20 transition-colors">Test Info</button>
+        </div>
       </div>
 
       @if (loading) {
@@ -246,7 +254,7 @@ export class OverviewComponent implements OnInit {
   csWaNumber = '';
   csDisplayName = '';
 
-  constructor(private admin: AdminService, private cdr: ChangeDetectorRef) {}
+  constructor(private admin: AdminService, private cdr: ChangeDetectorRef, private notification: NotificationService) {}
 
   ngOnInit() { this.load(); this.loadCsConfig(); }
 
@@ -283,5 +291,19 @@ export class OverviewComponent implements OnInit {
     } catch {}
     this.csLoading = false;
     this.cdr.markForCheck();
+  }
+
+  testToast(type: 'success' | 'error' | 'info') {
+    switch (type) {
+      case 'success':
+        this.notification.success('Test Success', 'Notifikasi badge berhasil muncul!');
+        break;
+      case 'error':
+        this.notification.error('Test Error', 'Notifikasi error berhasil muncul!');
+        break;
+      case 'info':
+        this.notification.info('Test Info', 'Notifikasi info berhasil muncul!');
+        break;
+    }
   }
 }
