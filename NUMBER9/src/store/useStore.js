@@ -743,19 +743,6 @@ export const clearAllData = () => {
       (async () => {
         if (!supabase) return;
         setUserToken(_auth.token);
-        // Validate JWT expiry client-side (no Supabase Auth session needed)
-        try {
-          const payload = JSON.parse(atob(_auth.token.split('.')[1]));
-          if (payload.exp * 1000 < Date.now()) {
-            writeJSON(LS.auth, null);
-            useStore.setState({ auth: null });
-            return;
-          }
-        } catch (e) {
-          writeJSON(LS.auth, null);
-          useStore.setState({ auth: null });
-          return;
-        }
         useStore.getState().fetchProfile().then(prof => {
           if (!prof) return;
 
