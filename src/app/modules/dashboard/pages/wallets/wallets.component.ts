@@ -330,7 +330,6 @@ export class WalletsComponent implements OnInit, OnDestroy {
   error: string | null = null;
   isSuperadmin = false;
 
-  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(

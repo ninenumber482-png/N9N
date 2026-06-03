@@ -84,7 +84,6 @@ export class BetsComponent implements OnInit, OnDestroy {
   statusFilter = '';
   loading = true;
   error: string | null = null;
-  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(private admin: AdminService, private cdr: ChangeDetectorRef, private realtime: RealtimeService) {}

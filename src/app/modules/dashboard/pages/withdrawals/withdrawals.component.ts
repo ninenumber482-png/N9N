@@ -154,7 +154,6 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   processing = new Set<string>();
-  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private destroy$ = new Subject<void>();
 
   confirm = {

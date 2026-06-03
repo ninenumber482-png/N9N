@@ -159,13 +159,13 @@
 @layer base {
   :root {
     --background: #FFFFFF;
-    --foreground: #0C1420;
-    --card: #F1F5F9;
+    --foreground: #000000;
+    --card: #F8FAFC;
     --card-foreground: #000000;
     --primary: #E11D48;
     --primary-foreground: #FFFFFF;
-    --muted: #CFD9E5;
-    --muted-foreground: #64748B;
+    --muted: #E2E8F0;
+    --muted-foreground: #475569;
     --destructive: #CC0033;
     --destructive-foreground: #FAFAFA;
     --border: #E2E8F0;

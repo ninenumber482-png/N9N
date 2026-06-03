@@ -207,7 +207,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     action: '', tx: null as any,
   };
   error: string | null = null;
-  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -235,7 +234,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.realtime.transactions$
       .pipe(takeUntil(this.destroy$))
       .subscribe(transactions => {
-        console.info('[Admin] Realtime transactions update:', transactions?.length || 0);
         if (transactions) {
           this.all = transactions;
           this.all.forEach(tx => {
