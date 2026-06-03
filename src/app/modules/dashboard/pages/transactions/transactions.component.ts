@@ -224,13 +224,13 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    this.realtime.unsubscribeTransactions();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   private subscribeTransactions() {
-    // Subscribe to realtime transaction updates
+    // Subscribe to realtime transaction updates — hapus polling timer
     this.realtime.subscribeTransactions();
     this.realtime.transactions$
       .pipe(takeUntil(this.destroy$))

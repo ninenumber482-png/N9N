@@ -344,7 +344,7 @@ export class WalletsComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.isSuperadmin = this.auth.getCurrentUser()?.role === 'superadmin';
     this.load();
-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
+    // Hapus polling timer — realtime subscription sudah cukup
     this.realtime.subscribeWallets();
     this.realtime.wallets$
       .pipe(takeUntil(this.destroy$))
@@ -354,7 +354,7 @@ export class WalletsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    this.realtime.unsubscribeWallets();
     this.destroy$.next();
     this.destroy$.complete();
   }

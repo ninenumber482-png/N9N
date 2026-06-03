@@ -108,6 +108,13 @@ Deno.serve(async (req) => {
     })
   }
 
+  // Pagination safety: enforce limit on GET requests without explicit pagination
+  let safePath = path
+  if (method === 'GET' && !path.includes('limit=') && !path.includes('range=') && !path.startsWith('/rpc/')) {
+    const sep = path.includes('?') ? '&' : '?'
+    safePath = `${path}${sep}limit=100`
+  }
+
   // Path allowlist — restrict to known tables and rpc endpoints
   const ALLOWED_PREFIXES = [
     '/users', '/wallet', '/transactions', '/bets',
@@ -126,7 +133,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  const target = `${supabaseUrl}/rest/v1${path}`
+  const target = `${supabaseUrl}/rest/v1${safePath}`
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'apikey': serviceRoleKey,

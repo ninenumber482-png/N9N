@@ -87,7 +87,8 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.load();
-    this.interval = setInterval(() => this.load(), 10000);
+    // Dikurangi dari 10s ke 30s — session data tidak berubah secepat itu
+    this.interval = setInterval(() => this.load(), 30000);
   }
 
   ngOnDestroy() {

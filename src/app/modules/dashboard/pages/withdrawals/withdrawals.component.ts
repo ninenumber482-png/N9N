@@ -174,7 +174,7 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.load();
-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
+    // Hapus polling timer — realtime subscription sudah cukup
     this.realtime.subscribeTransactions();
     this.realtime.transactions$
       .pipe(takeUntil(this.destroy$))
@@ -184,7 +184,7 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    this.realtime.unsubscribeTransactions();
     this.destroy$.next();
     this.destroy$.complete();
   }

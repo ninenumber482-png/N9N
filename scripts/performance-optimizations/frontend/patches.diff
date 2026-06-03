@@ -1,0 +1,512 @@
+diff --git a/src/app/core/services/realtime.service.ts b/src/app/core/services/realtime.service.ts
+index 6a4d9c3..5e7a617 100644
+--- a/src/app/core/services/realtime.service.ts
++++ b/src/app/core/services/realtime.service.ts
+@@ -32,90 +32,129 @@ export class RealtimeService implements OnDestroy {
+   engineStatus$ = this.engineStatusSubject.asObservable();
+ 
+   private channels: Map<string, any> = new Map();
++  private channelRefs: Map<string, number> = new Map();
+ 
++  /** Subscribe dengan reference counting — aman dipanggil dari multiple components */
+   subscribeTransactions() {
+-    if (this.channels.has('transactions')) return;
+-
+-    const channel = this.supabase
+-      .channel('transactions-all')
+-      .on('postgres_changes', {
+-        event: '*',
+-        schema: 'public',
+-        table: 'transactions',
+-      }, (payload: any) => {
+-        this.handleTransactionChange(payload);
+-      })
+-      .subscribe();
++    this._addRef('transactions', () => {
++      const channel = this.supabase
++        .channel('transactions-all')
++        .on('postgres_changes', {
++          event: '*',
++          schema: 'public',
++          table: 'transactions',
++        }, (payload: any) => {
++          this.handleTransactionChange(payload);
++        })
++        .subscribe();
++      this.channels.set('transactions', channel);
++    });
++  }
+ 
+-    this.channels.set('transactions', channel);
++  unsubscribeTransactions() {
++    this._removeRef('transactions');
+   }
+ 
+   subscribeWallets() {
+-    if (this.channels.has('wallets')) return;
+-
+-    const channel = this.supabase
+-      .channel('wallets-all')
+-      .on('postgres_changes', {
+-        event: '*',
+-        schema: 'public',
+-        table: 'wallet',
+-      }, (payload: any) => {
+-        this.handleWalletChange(payload);
+-      })
+-      .subscribe();
++    this._addRef('wallets', () => {
++      const channel = this.supabase
++        .channel('wallets-all')
++        .on('postgres_changes', {
++          event: '*',
++          schema: 'public',
++          table: 'wallet',
++        }, (payload: any) => {
++          this.handleWalletChange(payload);
++        })
++        .subscribe();
++      this.channels.set('wallets', channel);
++    });
++  }
+ 
+-    this.channels.set('wallets', channel);
++  unsubscribeWallets() {
++    this._removeRef('wallets');
+   }
+ 
+   subscribeBets() {
+-    if (this.channels.has('bets')) return;
+-
+-    const channel = this.supabase
+-      .channel('bets-all')
+-      .on('postgres_changes', {
+-        event: '*',
+-        schema: 'public',
+-        table: 'bets',
+-      }, (payload: any) => {
+-        this.handleBetChange(payload);
+-      })
+-      .subscribe();
++    this._addRef('bets', () => {
++      const channel = this.supabase
++        .channel('bets-all')
++        .on('postgres_changes', {
++          event: '*',
++          schema: 'public',
++          table: 'bets',
++        }, (payload: any) => {
++          this.handleBetChange(payload);
++        })
++        .subscribe();
++      this.channels.set('bets', channel);
++    });
++  }
+ 
+-    this.channels.set('bets', channel);
++  unsubscribeBets() {
++    this._removeRef('bets');
+   }
+ 
+   subscribeKyc() {
+-    if (this.channels.has('kyc')) return;
+-
+-    const channel = this.supabase
+-      .channel('kyc-all')
+-      .on('postgres_changes', {
+-        event: '*',
+-        schema: 'public',
+-        table: 'kyc_documents',
+-      }, (payload: any) => {
+-        this.handleKycChange(payload);
+-      })
+-      .subscribe();
++    this._addRef('kyc', () => {
++      const channel = this.supabase
++        .channel('kyc-all')
++        .on('postgres_changes', {
++          event: '*',
++          schema: 'public',
++          table: 'kyc_documents',
++        }, (payload: any) => {
++          this.handleKycChange(payload);
++        })
++        .subscribe();
++      this.channels.set('kyc', channel);
++    });
++  }
+ 
+-    this.channels.set('kyc', channel);
++  unsubscribeKyc() {
++    this._removeRef('kyc');
+   }
+ 
+   subscribeReferrals() {
+-    if (this.channels.has('referrals')) return;
++    this._addRef('referrals', () => {
++      const channel = this.supabase
++        .channel('referrals-all')
++        .on('postgres_changes', {
++          event: '*',
++          schema: 'public',
++          table: 'referrals',
++        }, (payload: any) => {
++          this.handleReferralChange(payload);
++        })
++        .subscribe();
++      this.channels.set('referrals', channel);
++    });
++  }
+ 
+-    const channel = this.supabase
+-      .channel('referrals-all')
+-      .on('postgres_changes', {
+-        event: '*',
+-        schema: 'public',
+-        table: 'referrals',
+-      }, (payload: any) => {
+-        this.handleReferralChange(payload);
+-      })
+-      .subscribe();
++  unsubscribeReferrals() {
++    this._removeRef('referrals');
++  }
+ 
+-    this.channels.set('referrals', channel);
++  private _addRef(key: string, factory: () => void) {
++    const refs = (this.channelRefs.get(key) || 0) + 1;
++    this.channelRefs.set(key, refs);
++    if (refs === 1 && !this.channels.has(key)) {
++      factory();
++    }
++  }
++
++  private _removeRef(key: string) {
++    const refs = (this.channelRefs.get(key) || 1) - 1;
++    if (refs <= 0) {
++      const ch = this.channels.get(key);
++      if (ch) {
++        this.supabase.removeChannel(ch);
++        this.channels.delete(key);
++      }
++      this.channelRefs.delete(key);
++    } else {
++      this.channelRefs.set(key, refs);
++    }
+   }
+ 
+   private capArray(arr: any[], maxSize = this.MAX_ARRAY_SIZE): any[] {
+@@ -227,37 +266,43 @@ export class RealtimeService implements OnDestroy {
+   }
+ 
+   subscribeUsers() {
+-    if (this.channels.has('users')) return;
+-
+-    const channel = this.supabase
+-      .channel('users-all')
+-      .on('postgres_changes', {
+-        event: '*',
+-        schema: 'public',
+-        table: 'users',
+-      }, () => {
+-        this.usersSubject.next();
+-      })
+-      .subscribe();
++    this._addRef('users', () => {
++      const channel = this.supabase
++        .channel('users-all')
++        .on('postgres_changes', {
++          event: '*',
++          schema: 'public',
++          table: 'users',
++        }, () => {
++          this.usersSubject.next();
++        })
++        .subscribe();
++      this.channels.set('users', channel);
++    });
++  }
+ 
+-    this.channels.set('users', channel);
++  unsubscribeUsers() {
++    this._removeRef('users');
+   }
+ 
+   subscribeEngineStatus() {
+-    if (this.channels.has('engine_status')) return;
+-
+-    const channel = this.supabase
+-      .channel('engine-results')
+-      .on('postgres_changes', {
+-        event: 'INSERT',
+-        schema: 'public',
+-        table: 'king_results',
+-      }, (payload: any) => {
+-        this.engineStatusSubject.next(payload.new);
+-      })
+-      .subscribe();
++    this._addRef('engine_status', () => {
++      const channel = this.supabase
++        .channel('engine-results')
++        .on('postgres_changes', {
++          event: 'INSERT',
++          schema: 'public',
++          table: 'king_results',
++        }, (payload: any) => {
++          this.engineStatusSubject.next(payload.new);
++        })
++        .subscribe();
++      this.channels.set('engine_status', channel);
++    });
++  }
+ 
+-    this.channels.set('engine_status', channel);
++  unsubscribeEngineStatus() {
++    this._removeRef('engine_status');
+   }
+ 
+   unsubscribeAll() {
+@@ -265,6 +310,7 @@ export class RealtimeService implements OnDestroy {
+       this.supabase.removeChannel(channel);
+     });
+     this.channels.clear();
++    this.channelRefs.clear();
+   }
+ 
+   ngOnDestroy() {
+diff --git a/src/app/modules/dashboard/pages/3dking/3dking.component.ts b/src/app/modules/dashboard/pages/3dking/3dking.component.ts
+index 61acbc5..575a1cd 100644
+--- a/src/app/modules/dashboard/pages/3dking/3dking.component.ts
++++ b/src/app/modules/dashboard/pages/3dking/3dking.component.ts
+@@ -277,13 +277,18 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
+     // Fast clock: rebuild rows + advance the engine. markForCheck is required
+     // because this is a zoneless app — a bare setInterval won't trigger CD, so
+     // the table/countdowns would otherwise freeze after first paint.
++    // OPTIMIZED: UI ticker 1 detik (cukup untuk countdown human-readable)
++    // Business logic (buildSessions + runEngine) dijalankan terpisah
+     this.timerId = setInterval(() => {
+-      this.buildSessions();
+-      this.runEngine();
++      this.updateCountdownsOnly();
+       this.cdr.markForCheck();
+-    }, 100);
+-    // Slow poll: pull published results + bet aggregates from Supabase.
+-    this.dataId = setInterval(() => this.loadData(), 3000);
++    }, 1000);
++    // Business logic: rebuild session rows + engine settle
++    this.buildSessions();
++    this.runEngine();
++    // Slow poll: pull published results + bet aggregates dari Supabase
++    // Dikurangi dari 3s ke 15s untuk mengurangi beban DB
++    this.dataId = setInterval(() => this.loadData(), 15000);
+   }
+ 
+   ngOnDestroy() {
+@@ -291,6 +296,59 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
+     if (this.dataId) clearInterval(this.dataId);
+   }
+ 
++  /** Update countdown display tanpa rebuild seluruh session rows */
++  private updateCountdownsOnly() {
++    const utc = this.nowUtc();
++    let updated = false;
++    for (const s of this.sessions) {
++      const resultMs = this.parseCodeToMs(s.code);
++      if (!resultMs) continue;
++      const startMs = resultMs - SESSION_MS;
++      const lockMs = resultMs - LOCK_MS;
++      const sStart = resultMs + RESULT_MS;
++      let newStatus = s.status;
++      let newCd = s.countdown;
++      if (utc < startMs) { newStatus = 'NEXT'; newCd = startMs - utc; }
++      else if (utc < lockMs) { newStatus = 'OPEN'; newCd = lockMs - utc; }
++      else if (utc < resultMs) { newStatus = 'LOCKED'; newCd = resultMs - utc; }
++      else if (utc < sStart) { newStatus = 'RESULTING'; newCd = 0; }
++      else { newStatus = 'SETTLED'; newCd = 0; }
++      if (newStatus !== s.status || newCd !== s.countdown) {
++        s.status = newStatus;
++        s.countdown = newCd;
++        s.editable = newStatus === 'NEXT' || newStatus === 'OPEN';
++        updated = true;
++      }
++    }
++    // Update header countdown
++    const active = this.sessions.find(s => s.status === 'OPEN' || s.status === 'LOCKED');
++    if (active) {
++      this.currentCode = active.code;
++      this.currentDisplay = displayCode(active.code);
++      this.currentStatus = active.status;
++      this.currentCountdown = active.countdown;
++    }
++    // Rebuild hanya jika ada perubahan status signifikan
++    if (updated) {
++      const nowBoundary = Math.floor(utc / SESSION_MS) * SESSION_MS;
++      const lastBoundary = Math.floor((utc - 1000) / SESSION_MS) * SESSION_MS;
++      if (nowBoundary !== lastBoundary) {
++        this.buildSessions();
++        this.runEngine();
++      }
++    }
++  }
++
++  private parseCodeToMs(code: string): number | null {
++    if (!code || code.length !== 12) return null;
++    try {
++      return Date.UTC(
++        +code.slice(0,4), +code.slice(4,6)-1, +code.slice(6,8),
++        +code.slice(8,10), +code.slice(10,12)
++      );
++    } catch { return null; }
++  }
++
+   private nowUtc(): number {
+     const d = new Date();
+     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
+diff --git a/src/app/modules/dashboard/pages/bets/bets.component.ts b/src/app/modules/dashboard/pages/bets/bets.component.ts
+index ebb8f20..6fcd2b1 100644
+--- a/src/app/modules/dashboard/pages/bets/bets.component.ts
++++ b/src/app/modules/dashboard/pages/bets/bets.component.ts
+@@ -91,7 +91,7 @@ export class BetsComponent implements OnInit, OnDestroy {
+ 
+   ngOnInit() {
+     this.load();
+-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
++    // Hapus polling timer — realtime subscription sudah cukup
+     this.realtime.subscribeBets();
+     this.realtime.bets$
+       .pipe(takeUntil(this.destroy$))
+@@ -101,7 +101,7 @@ export class BetsComponent implements OnInit, OnDestroy {
+   }
+ 
+   ngOnDestroy() {
+-    if (this.refreshTimer) clearInterval(this.refreshTimer);
++    this.realtime.unsubscribeBets();
+     this.destroy$.next();
+     this.destroy$.complete();
+   }
+diff --git a/src/app/modules/dashboard/pages/deposits/deposits.component.ts b/src/app/modules/dashboard/pages/deposits/deposits.component.ts
+index e4af4b1..102c2a8 100644
+--- a/src/app/modules/dashboard/pages/deposits/deposits.component.ts
++++ b/src/app/modules/dashboard/pages/deposits/deposits.component.ts
+@@ -178,7 +178,7 @@ export class DepositsComponent implements OnInit, OnDestroy {
+ 
+   ngOnInit() {
+     this.load();
+-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
++    // Hapus polling timer — realtime subscription sudah cukup
+     this.realtime.subscribeTransactions();
+     this.realtime.transactions$
+       .pipe(takeUntil(this.destroy$))
+@@ -188,7 +188,7 @@ export class DepositsComponent implements OnInit, OnDestroy {
+   }
+ 
+   ngOnDestroy() {
+-    if (this.refreshTimer) clearInterval(this.refreshTimer);
++    this.realtime.unsubscribeTransactions();
+     this.destroy$.next();
+     this.destroy$.complete();
+   }
+diff --git a/src/app/modules/dashboard/pages/kyc/kyc.component.ts b/src/app/modules/dashboard/pages/kyc/kyc.component.ts
+index bf47006..7cc8efd 100644
+--- a/src/app/modules/dashboard/pages/kyc/kyc.component.ts
++++ b/src/app/modules/dashboard/pages/kyc/kyc.component.ts
+@@ -158,6 +158,7 @@ export class KycComponent implements OnInit, OnDestroy {
+   }
+ 
+   ngOnDestroy() {
++    this.realtime.unsubscribeKyc();
+     this.destroy$.next();
+     this.destroy$.complete();
+   }
+diff --git a/src/app/modules/dashboard/pages/session-monitor/session-monitor.component.ts b/src/app/modules/dashboard/pages/session-monitor/session-monitor.component.ts
+index 674dbd9..0bb2d6c 100644
+--- a/src/app/modules/dashboard/pages/session-monitor/session-monitor.component.ts
++++ b/src/app/modules/dashboard/pages/session-monitor/session-monitor.component.ts
+@@ -87,7 +87,8 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
+ 
+   ngOnInit() {
+     this.load();
+-    this.interval = setInterval(() => this.load(), 10000);
++    // Dikurangi dari 10s ke 30s — session data tidak berubah secepat itu
++    this.interval = setInterval(() => this.load(), 30000);
+   }
+ 
+   ngOnDestroy() {
+diff --git a/src/app/modules/dashboard/pages/transactions/transactions.component.ts b/src/app/modules/dashboard/pages/transactions/transactions.component.ts
+index cf343ff..d3f696d 100644
+--- a/src/app/modules/dashboard/pages/transactions/transactions.component.ts
++++ b/src/app/modules/dashboard/pages/transactions/transactions.component.ts
+@@ -224,13 +224,13 @@ export class TransactionsComponent implements OnInit, OnDestroy {
+   }
+ 
+   ngOnDestroy() {
+-    if (this.refreshTimer) clearInterval(this.refreshTimer);
++    this.realtime.unsubscribeTransactions();
+     this.destroy$.next();
+     this.destroy$.complete();
+   }
+ 
+   private subscribeTransactions() {
+-    // Subscribe to realtime transaction updates
++    // Subscribe to realtime transaction updates — hapus polling timer
+     this.realtime.subscribeTransactions();
+     this.realtime.transactions$
+       .pipe(takeUntil(this.destroy$))
+diff --git a/src/app/modules/dashboard/pages/wallets/wallets.component.ts b/src/app/modules/dashboard/pages/wallets/wallets.component.ts
+index dfa03d6..52aaab2 100644
+--- a/src/app/modules/dashboard/pages/wallets/wallets.component.ts
++++ b/src/app/modules/dashboard/pages/wallets/wallets.component.ts
+@@ -344,7 +344,7 @@ export class WalletsComponent implements OnInit, OnDestroy {
+   ngOnInit() {
+     this.isSuperadmin = this.auth.getCurrentUser()?.role === 'superadmin';
+     this.load();
+-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
++    // Hapus polling timer — realtime subscription sudah cukup
+     this.realtime.subscribeWallets();
+     this.realtime.wallets$
+       .pipe(takeUntil(this.destroy$))
+@@ -354,7 +354,7 @@ export class WalletsComponent implements OnInit, OnDestroy {
+   }
+ 
+   ngOnDestroy() {
+-    if (this.refreshTimer) clearInterval(this.refreshTimer);
++    this.realtime.unsubscribeWallets();
+     this.destroy$.next();
+     this.destroy$.complete();
+   }
+diff --git a/src/app/modules/dashboard/pages/withdrawals/withdrawals.component.ts b/src/app/modules/dashboard/pages/withdrawals/withdrawals.component.ts
+index 906bd70..e7246d9 100644
+--- a/src/app/modules/dashboard/pages/withdrawals/withdrawals.component.ts
++++ b/src/app/modules/dashboard/pages/withdrawals/withdrawals.component.ts
+@@ -174,7 +174,7 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
+ 
+   ngOnInit() {
+     this.load();
+-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
++    // Hapus polling timer — realtime subscription sudah cukup
+     this.realtime.subscribeTransactions();
+     this.realtime.transactions$
+       .pipe(takeUntil(this.destroy$))
+@@ -184,7 +184,7 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
+   }
+ 
+   ngOnDestroy() {
+-    if (this.refreshTimer) clearInterval(this.refreshTimer);
++    this.realtime.unsubscribeTransactions();
+     this.destroy$.next();
+     this.destroy$.complete();
+   }
+diff --git a/src/app/modules/layout/components/sidebar/sidebar.component.ts b/src/app/modules/layout/components/sidebar/sidebar.component.ts
+index 6745532..42e6cb7 100644
+--- a/src/app/modules/layout/components/sidebar/sidebar.component.ts
++++ b/src/app/modules/layout/components/sidebar/sidebar.component.ts
+@@ -23,7 +23,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
+ 
+   ngOnInit(): void {
+     this.refreshBadges();
+-    this.badgeTimer = setInterval(() => this.refreshBadges(), 30_000);
++    // Dikurangi dari 30s ke 60s + pakai cache di AdminService
++    this.badgeTimer = setInterval(() => this.refreshBadges(), 60_000);
+   }
+ 
+   ngOnDestroy(): void {

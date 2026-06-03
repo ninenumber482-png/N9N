@@ -32,90 +32,129 @@ export class RealtimeService implements OnDestroy {
   engineStatus$ = this.engineStatusSubject.asObservable();
 
   private channels: Map<string, any> = new Map();
+  private channelRefs: Map<string, number> = new Map();
 
+  /** Subscribe dengan reference counting — aman dipanggil dari multiple components */
   subscribeTransactions() {
-    if (this.channels.has('transactions')) return;
+    this._addRef('transactions', () => {
+      const channel = this.supabase
+        .channel('transactions-all')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+        }, (payload: any) => {
+          this.handleTransactionChange(payload);
+        })
+        .subscribe();
+      this.channels.set('transactions', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('transactions-all')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'transactions',
-      }, (payload: any) => {
-        this.handleTransactionChange(payload);
-      })
-      .subscribe();
-
-    this.channels.set('transactions', channel);
+  unsubscribeTransactions() {
+    this._removeRef('transactions');
   }
 
   subscribeWallets() {
-    if (this.channels.has('wallets')) return;
+    this._addRef('wallets', () => {
+      const channel = this.supabase
+        .channel('wallets-all')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'wallet',
+        }, (payload: any) => {
+          this.handleWalletChange(payload);
+        })
+        .subscribe();
+      this.channels.set('wallets', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('wallets-all')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'wallet',
-      }, (payload: any) => {
-        this.handleWalletChange(payload);
-      })
-      .subscribe();
-
-    this.channels.set('wallets', channel);
+  unsubscribeWallets() {
+    this._removeRef('wallets');
   }
 
   subscribeBets() {
-    if (this.channels.has('bets')) return;
+    this._addRef('bets', () => {
+      const channel = this.supabase
+        .channel('bets-all')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'bets',
+        }, (payload: any) => {
+          this.handleBetChange(payload);
+        })
+        .subscribe();
+      this.channels.set('bets', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('bets-all')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'bets',
-      }, (payload: any) => {
-        this.handleBetChange(payload);
-      })
-      .subscribe();
-
-    this.channels.set('bets', channel);
+  unsubscribeBets() {
+    this._removeRef('bets');
   }
 
   subscribeKyc() {
-    if (this.channels.has('kyc')) return;
+    this._addRef('kyc', () => {
+      const channel = this.supabase
+        .channel('kyc-all')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'kyc_documents',
+        }, (payload: any) => {
+          this.handleKycChange(payload);
+        })
+        .subscribe();
+      this.channels.set('kyc', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('kyc-all')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'kyc_documents',
-      }, (payload: any) => {
-        this.handleKycChange(payload);
-      })
-      .subscribe();
-
-    this.channels.set('kyc', channel);
+  unsubscribeKyc() {
+    this._removeRef('kyc');
   }
 
   subscribeReferrals() {
-    if (this.channels.has('referrals')) return;
+    this._addRef('referrals', () => {
+      const channel = this.supabase
+        .channel('referrals-all')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'referrals',
+        }, (payload: any) => {
+          this.handleReferralChange(payload);
+        })
+        .subscribe();
+      this.channels.set('referrals', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('referrals-all')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'referrals',
-      }, (payload: any) => {
-        this.handleReferralChange(payload);
-      })
-      .subscribe();
+  unsubscribeReferrals() {
+    this._removeRef('referrals');
+  }
 
-    this.channels.set('referrals', channel);
+  private _addRef(key: string, factory: () => void) {
+    const refs = (this.channelRefs.get(key) || 0) + 1;
+    this.channelRefs.set(key, refs);
+    if (refs === 1 && !this.channels.has(key)) {
+      factory();
+    }
+  }
+
+  private _removeRef(key: string) {
+    const refs = (this.channelRefs.get(key) || 1) - 1;
+    if (refs <= 0) {
+      const ch = this.channels.get(key);
+      if (ch) {
+        this.supabase.removeChannel(ch);
+        this.channels.delete(key);
+      }
+      this.channelRefs.delete(key);
+    } else {
+      this.channelRefs.set(key, refs);
+    }
   }
 
   private capArray(arr: any[], maxSize = this.MAX_ARRAY_SIZE): any[] {
@@ -227,37 +266,43 @@ export class RealtimeService implements OnDestroy {
   }
 
   subscribeUsers() {
-    if (this.channels.has('users')) return;
+    this._addRef('users', () => {
+      const channel = this.supabase
+        .channel('users-all')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'users',
+        }, () => {
+          this.usersSubject.next();
+        })
+        .subscribe();
+      this.channels.set('users', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('users-all')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'users',
-      }, () => {
-        this.usersSubject.next();
-      })
-      .subscribe();
-
-    this.channels.set('users', channel);
+  unsubscribeUsers() {
+    this._removeRef('users');
   }
 
   subscribeEngineStatus() {
-    if (this.channels.has('engine_status')) return;
+    this._addRef('engine_status', () => {
+      const channel = this.supabase
+        .channel('engine-results')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'king_results',
+        }, (payload: any) => {
+          this.engineStatusSubject.next(payload.new);
+        })
+        .subscribe();
+      this.channels.set('engine_status', channel);
+    });
+  }
 
-    const channel = this.supabase
-      .channel('engine-results')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'king_results',
-      }, (payload: any) => {
-        this.engineStatusSubject.next(payload.new);
-      })
-      .subscribe();
-
-    this.channels.set('engine_status', channel);
+  unsubscribeEngineStatus() {
+    this._removeRef('engine_status');
   }
 
   unsubscribeAll() {
@@ -265,6 +310,7 @@ export class RealtimeService implements OnDestroy {
       this.supabase.removeChannel(channel);
     });
     this.channels.clear();
+    this.channelRefs.clear();
   }
 
   ngOnDestroy() {

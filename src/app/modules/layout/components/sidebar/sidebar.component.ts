@@ -23,7 +23,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.refreshBadges();
-    this.badgeTimer = setInterval(() => this.refreshBadges(), 30_000);
+    // Dikurangi dari 30s ke 60s + pakai cache di AdminService
+    this.badgeTimer = setInterval(() => this.refreshBadges(), 60_000);
   }
 
   ngOnDestroy(): void {

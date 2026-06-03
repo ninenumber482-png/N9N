@@ -6,7 +6,22 @@ import { AuthService } from './auth.service';
 export class AdminService {
   private proxyUrl = `${environment.supabaseUrl}/functions/v1/admin-proxy`;
 
+  /** Simple in-memory cache dengan TTL 5 detik untuk mengurangi duplicate requests */
+  private cache = new Map<string, { data: any; ts: number }>();
+  private readonly CACHE_TTL = 5000;
+
   constructor(private auth: AuthService) {}
+
+  private cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
+      return Promise.resolve(cached.data as T);
+    }
+    return fetcher().then(data => {
+      this.cache.set(key, { data, ts: Date.now() });
+      return data;
+    });
+  }
 
   private getToken(): string {
     return this.auth.getCurrentUser()?.token || environment.supabaseKey;
@@ -37,11 +52,17 @@ export class AdminService {
   private async get<T>(table: string, query = ''): Promise<T[]> {
     const sep = table.includes('?') ? '&' : '?';
     const path = query ? `/${table}${sep}${query}` : `/${table}`;
-    return this.proxy<T[]>('GET', path);
+    const cacheKey = `GET:${path}`;
+    return this.cached(cacheKey, () => this.proxy<T[]>('GET', path));
   }
 
   async count(table: string, query = ''): Promise<number> {
     const path = `/${table}?${query}&select=count`;
+    const cacheKey = `COUNT:${path}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
+      return Promise.resolve(cached.data as number);
+    }
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
       headers: {
@@ -53,7 +74,9 @@ export class AdminService {
       body: JSON.stringify({ method: 'GET', path, prefer: 'count=exact' }),
     });
     if (!res.ok) return 0;
-    return Number(res.headers.get('content-range')?.split('/')[1] || 0);
+    const val = Number(res.headers.get('content-range')?.split('/')[1] || 0);
+    this.cache.set(cacheKey, { data: val, ts: Date.now() });
+    return val;
   }
 
   private async updateRow<T>(table: string, id: string, data: Partial<T>): Promise<T[]> {

@@ -277,18 +277,76 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     // Fast clock: rebuild rows + advance the engine. markForCheck is required
     // because this is a zoneless app — a bare setInterval won't trigger CD, so
     // the table/countdowns would otherwise freeze after first paint.
+    // OPTIMIZED: UI ticker 1 detik (cukup untuk countdown human-readable)
+    // Business logic (buildSessions + runEngine) dijalankan terpisah
     this.timerId = setInterval(() => {
-      this.buildSessions();
-      this.runEngine();
+      this.updateCountdownsOnly();
       this.cdr.markForCheck();
-    }, 100);
-    // Slow poll: pull published results + bet aggregates from Supabase.
-    this.dataId = setInterval(() => this.loadData(), 3000);
+    }, 1000);
+    // Business logic: rebuild session rows + engine settle
+    this.buildSessions();
+    this.runEngine();
+    // Slow poll: pull published results + bet aggregates dari Supabase
+    // Dikurangi dari 3s ke 15s untuk mengurangi beban DB
+    this.dataId = setInterval(() => this.loadData(), 15000);
   }
 
   ngOnDestroy() {
     if (this.timerId) clearInterval(this.timerId);
     if (this.dataId) clearInterval(this.dataId);
+  }
+
+  /** Update countdown display tanpa rebuild seluruh session rows */
+  private updateCountdownsOnly() {
+    const utc = this.nowUtc();
+    let updated = false;
+    for (const s of this.sessions) {
+      const resultMs = this.parseCodeToMs(s.code);
+      if (!resultMs) continue;
+      const startMs = resultMs - SESSION_MS;
+      const lockMs = resultMs - LOCK_MS;
+      const sStart = resultMs + RESULT_MS;
+      let newStatus = s.status;
+      let newCd = s.countdown;
+      if (utc < startMs) { newStatus = 'NEXT'; newCd = startMs - utc; }
+      else if (utc < lockMs) { newStatus = 'OPEN'; newCd = lockMs - utc; }
+      else if (utc < resultMs) { newStatus = 'LOCKED'; newCd = resultMs - utc; }
+      else if (utc < sStart) { newStatus = 'RESULTING'; newCd = 0; }
+      else { newStatus = 'SETTLED'; newCd = 0; }
+      if (newStatus !== s.status || newCd !== s.countdown) {
+        s.status = newStatus;
+        s.countdown = newCd;
+        s.editable = newStatus === 'NEXT' || newStatus === 'OPEN';
+        updated = true;
+      }
+    }
+    // Update header countdown
+    const active = this.sessions.find(s => s.status === 'OPEN' || s.status === 'LOCKED');
+    if (active) {
+      this.currentCode = active.code;
+      this.currentDisplay = displayCode(active.code);
+      this.currentStatus = active.status;
+      this.currentCountdown = active.countdown;
+    }
+    // Rebuild hanya jika ada perubahan status signifikan
+    if (updated) {
+      const nowBoundary = Math.floor(utc / SESSION_MS) * SESSION_MS;
+      const lastBoundary = Math.floor((utc - 1000) / SESSION_MS) * SESSION_MS;
+      if (nowBoundary !== lastBoundary) {
+        this.buildSessions();
+        this.runEngine();
+      }
+    }
+  }
+
+  private parseCodeToMs(code: string): number | null {
+    if (!code || code.length !== 12) return null;
+    try {
+      return Date.UTC(
+        +code.slice(0,4), +code.slice(4,6)-1, +code.slice(6,8),
+        +code.slice(8,10), +code.slice(10,12)
+      );
+    } catch { return null; }
   }
 
   private nowUtc(): number {

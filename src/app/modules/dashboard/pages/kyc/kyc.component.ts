@@ -158,6 +158,7 @@ export class KycComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.realtime.unsubscribeKyc();
     this.destroy$.next();
     this.destroy$.complete();
   }

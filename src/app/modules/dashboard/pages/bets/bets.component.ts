@@ -91,7 +91,7 @@ export class BetsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.load();
-    this.refreshTimer = setInterval(() => this.silentRefresh(), 30_000);
+    // Hapus polling timer — realtime subscription sudah cukup
     this.realtime.subscribeBets();
     this.realtime.bets$
       .pipe(takeUntil(this.destroy$))
@@ -101,7 +101,7 @@ export class BetsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    this.realtime.unsubscribeBets();
     this.destroy$.next();
     this.destroy$.complete();
   }
