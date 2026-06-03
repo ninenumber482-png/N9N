@@ -1,22 +1,9 @@
-# dependencies
-node_modules
-
-# build output
-dist
-
-# env files - contain real credentials
-.env
-.env.user
-.env.*.user
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# logs
+node_modules/
+dist/
+.temp/
+.playwright-mcp/
 *.log
-npm-debug.log*
+.claude/
+.temp/
+.env
+.env.*

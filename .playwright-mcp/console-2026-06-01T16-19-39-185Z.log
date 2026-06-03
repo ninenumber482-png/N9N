@@ -1,5 +1,0 @@
-[      75ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/chunk-AIJGJ7NI.js?v=83241eeb:13930
-[     295ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4200/assets/icons/heroicons/outline/arrow-left-on-rectangle.svg:0
-[     296ms] [ERROR] HttpErrorResponse @ http://localhost:4200/@fs/home/hemo/WEBSITE/N9NY-tailwind-N9/.angular/cache/21.0.4/number9systemd/vite/deps/angular-svg-icon.js?v=83241eeb:110
-[     316ms] HttpErrorResponse
-[     316ms] HttpErrorResponse

@@ -41,6 +41,11 @@ yarn-error.log
 testem.log
 /typings
 
+# Dev artifacts
+.playwright-mcp/
+.temp/
+*.log
+
 # System Files
 .DS_Store
 Thumbs.db
