@@ -178,11 +178,11 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                         <button type="button" (click)="overrideCategory(s.code,'bs','BIG')" title="Force BIG"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
                           [class.bg-muted]="s.bs!=='BIG'" [class.text-foreground]="s.bs!=='BIG'"
-                          [class.bg-foreground/10]="s.bs==='BIG'" [class.text-foreground]="s.bs==='BIG'">B</button>
+                          [class.bg-amber-400]="s.bs==='BIG'" [class.text-background]="s.bs==='BIG'" [class.font-bold]="s.bs==='BIG'">B</button>
                         <button type="button" (click)="overrideCategory(s.code,'bs','SMALL')" title="Force SMALL"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
                           [class.bg-muted]="s.bs!=='SMALL'" [class.text-foreground]="s.bs!=='SMALL'"
-                          [class.bg-foreground/10]="s.bs==='SMALL'" [class.text-foreground]="s.bs==='SMALL'">S</button>
+                          [class.bg-amber-400]="s.bs==='SMALL'" [class.text-background]="s.bs==='SMALL'" [class.font-bold]="s.bs==='SMALL'">S</button>
                       </div>
                     } @else {
                       <span class="text-muted-foreground">{{ s.hasResult ? s.bs : '—' }}</span>
@@ -194,11 +194,11 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                         <button type="button" (click)="overrideCategory(s.code,'oe','ODD')" title="Force ODD"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
                           [class.bg-muted]="s.oe!=='ODD'" [class.text-foreground]="s.oe!=='ODD'"
-                          [class.bg-foreground/10]="s.oe==='ODD'" [class.text-foreground]="s.oe==='ODD'">O</button>
+                          [class.bg-amber-400]="s.oe==='ODD'" [class.text-background]="s.oe==='ODD'" [class.font-bold]="s.oe==='ODD'">O</button>
                         <button type="button" (click)="overrideCategory(s.code,'oe','EVEN')" title="Force EVEN"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
                           [class.bg-muted]="s.oe!=='EVEN'" [class.text-foreground]="s.oe!=='EVEN'"
-                          [class.bg-foreground/10]="s.oe==='EVEN'" [class.text-foreground]="s.oe==='EVEN'">E</button>
+                          [class.bg-amber-400]="s.oe==='EVEN'" [class.text-background]="s.oe==='EVEN'" [class.font-bold]="s.oe==='EVEN'">E</button>
                       </div>
                     } @else {
                       <span class="text-muted-foreground">{{ s.hasResult ? s.oe : '—' }}</span>
@@ -465,6 +465,11 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     this.filling.add(code);
     const rolled = rollDigits(bs, oe);
     this.planned.set(code, rolled);
+    // Zoneless: reflect the new category/digits in the table immediately —
+    // otherwise the row (highlight + Digits column) won't change until the next
+    // 5-min boundary, making the Force buttons look like they do nothing.
+    this.buildSessions();
+    this.cdr.markForCheck();
     this.pendingPlanWrites.add(code);
     this.admin.setPlanned(code, rolled.d1, rolled.d2, rolled.d3)
       .then(() => this.pendingPlanWrites.delete(code))
@@ -480,6 +485,11 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadData() {
     await Promise.all([this.loadResults(), this.loadBets(), this.loadPlanned()]);
+    // Reflect freshly-loaded results/plans/bets into the visible session rows
+    // immediately — otherwise the Digits column stays "—" until the next
+    // 5-minute boundary rebuilds sessions.
+    this.buildSessions();
+    this.cdr.markForCheck();
   }
 
   private async loadPlanned() {
