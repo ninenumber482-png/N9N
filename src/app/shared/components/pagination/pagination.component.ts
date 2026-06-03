@@ -6,40 +6,38 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (totalPages() > 1) {
-      <div class="flex items-center justify-between border-t border-border px-4 py-3">
-        <span class="text-xs text-muted-foreground">
-          {{ firstItem() }}–{{ lastItem() }} of {{ totalItems() }}
-        </span>
-        <div class="flex items-center gap-1">
-          <button (click)="goTo(currentPage() - 1)" [disabled]="currentPage() <= 1"
-            class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30
-                   bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
-            ‹ Prev
-          </button>
-          @for (p of pageNumbers(); track p) {
-            @if (p === -1) {
-              <span class="px-1 text-muted-foreground text-xs">…</span>
-            } @else {
-              <button (click)="goTo(p)"
-                class="w-7 h-7 rounded text-xs font-medium transition-colors"
-                [class.bg-primary]="p === currentPage()"
-                [class.text-primary-foreground]="p === currentPage()"
-                [class.bg-muted]="p !== currentPage()"
-                [class.text-foreground]="p !== currentPage()"
-                [class.hover:bg-muted/80]="p !== currentPage()">
-                {{ p }}
-              </button>
-            }
+    <div class="flex items-center justify-between border-t border-border px-4 py-3">
+      <span class="text-xs text-muted-foreground">
+        {{ firstItem() }}–{{ lastItem() }} of {{ totalItems() }}
+      </span>
+      <div class="flex items-center gap-1">
+        <button (click)="goTo(currentPage() - 1)" [disabled]="currentPage() <= 1"
+          class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30
+                 bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
+          ‹ Prev
+        </button>
+        @for (p of pageNumbers(); track p) {
+          @if (p === -1) {
+            <span class="px-1 text-muted-foreground text-xs">…</span>
+          } @else {
+            <button (click)="goTo(p)"
+              class="w-7 h-7 rounded text-xs font-medium transition-colors"
+              [class.bg-primary]="p === currentPage()"
+              [class.text-primary-foreground]="p === currentPage()"
+              [class.bg-muted]="p !== currentPage()"
+              [class.text-foreground]="p !== currentPage()"
+              [class.hover:bg-muted/80]="p !== currentPage()">
+              {{ p }}
+            </button>
           }
-          <button (click)="goTo(currentPage() + 1)" [disabled]="currentPage() >= totalPages()"
-            class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30
-                   bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
-            Next ›
-          </button>
-        </div>
+        }
+        <button (click)="goTo(currentPage() + 1)" [disabled]="currentPage() >= totalPages()"
+          class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30
+                 bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
+          Next ›
+        </button>
       </div>
-    }
+    </div>
   `,
 })
 export class PaginationComponent {

@@ -1,27 +1,9 @@
 import { Injectable } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SecurityService {
-  constructor(private sanitizer: DomSanitizer) {}
-
-  /**
-   * Simple password hash simulation (for demo only)
-   * In production, use bcrypt or server-side hashing
-   */
-  hashPassword(password: string): string {
-    return btoa(password); // Base64 encode (NOT secure for production)
-  }
-
-  /**
-   * Verify password against hash
-   */
-  verifyPassword(password: string, hash: string): boolean {
-    return btoa(password) === hash;
-  }
-
   /**
    * Sanitize user input to prevent XSS
    */
@@ -40,18 +22,13 @@ export class SecurityService {
   }
 
   /**
-   * Validate password strength
-   */
-  isStrongPassword(password: string): boolean {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return passwordRegex.test(password);
-  }
-
-  /**
-   * Generate secure token (for session management)
+   * Generate a cryptographically secure token (fallback session id when the
+   * server does not return one). Uses the Web Crypto API, not Math.random().
    */
   generateToken(): string {
-    return Math.random().toString(36).substr(2) + Date.now().toString(36);
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   /**
@@ -62,14 +39,8 @@ export class SecurityService {
   }
 
   /**
-   * Prevent XSS in HTML content
-   */
-  sanitizeHtml(html: string) {
-    return this.sanitizer.sanitize(1, html);
-  }
-
-  /**
-   * Rate limiting check (simple client-side)
+   * Rate limiting check (client-side UX guard only — server enforces the real
+   * limit via the user_rpc_rate_limit migration).
    */
   checkRateLimit(key: string, maxAttempts: number = 5, windowMs: number = 60000): boolean {
     const storageKey = `ratelimit_${key}`;
@@ -80,7 +51,14 @@ export class SecurityService {
       return true;
     }
 
-    const { count, timestamp } = JSON.parse(data);
+    let count: number;
+    let timestamp: number;
+    try {
+      ({ count, timestamp } = JSON.parse(data));
+    } catch {
+      localStorage.setItem(storageKey, JSON.stringify({ count: 1, timestamp: Date.now() }));
+      return true;
+    }
     const now = Date.now();
 
     if (now - timestamp > windowMs) {

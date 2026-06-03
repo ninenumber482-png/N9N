@@ -107,6 +107,14 @@ export class AuthService {
 
   private getStoredUser(): User | null {
     const stored = localStorage.getItem('auth_user');
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) return null;
+    try {
+      return JSON.parse(stored) as User;
+    } catch {
+      // Corrupted auth_user would otherwise throw during service construction
+      // (userSubject is initialised from this) and break app bootstrap.
+      localStorage.removeItem('auth_user');
+      return null;
+    }
   }
 }

@@ -8,11 +8,12 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { RealtimeService } from '../../../../core/services/realtime.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent, PaginationComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -125,34 +126,11 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
           </table>
         </div>
 
-        <div class="flex items-center justify-between border-t border-border px-4 py-3">
-            <span class="text-xs text-muted-foreground">{{ firstItem }}\u2013{{ lastItem }} of {{ filtered.length }}</span>
-            <div class="flex items-center gap-1">
-              <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1"
-                class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
-                \u2039 Prev
-              </button>
-              @for (p of pageNumbers; track p) {
-                @if (p === -1) {
-                  <span class="px-1 text-muted-foreground text-xs">\u2026</span>
-                } @else {
-                  <button (click)="goToPage(p)"
-                    class="w-7 h-7 rounded text-xs font-medium transition-colors"
-                    [class.bg-primary]="p === currentPage"
-                    [class.text-primary-foreground]="p === currentPage"
-                    [class.bg-muted]="p !== currentPage"
-                    [class.text-foreground]="p !== currentPage"
-                    [class.hover:bg-muted/80]="p !== currentPage">
-                    {{ p }}
-                  </button>
-                }
-              }
-              <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages"
-                class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30 bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
-                Next \u203A
-              </button>
-            </div>
-          </div>
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalItems]="filtered.length"
+          [pageSize]="pageSize"
+          (pageChange)="goToPage($event)"></app-pagination>
       </div>
 
       @if (previewImage) {
@@ -639,35 +617,9 @@ export class UsersComponent implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(this.filtered.length / this.pageSize));
   }
 
-  get firstItem() {
-    return this.filtered.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
-  }
-
-  get lastItem() {
-    return Math.min(this.currentPage * this.pageSize, this.filtered.length);
-  }
-
   get paginatedUsers() {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filtered.slice(start, start + this.pageSize);
-  }
-
-  get pageNumbers(): number[] {
-    const total = this.totalPages;
-    const cur = this.currentPage;
-    if (total <= 7) {
-      const pages: number[] = [];
-      for (let i = 1; i <= total; i++) pages.push(i);
-      return pages;
-    }
-    const pages: number[] = [1];
-    if (cur > 3) pages.push(-1);
-    const start = Math.max(2, cur - 1);
-    const end = Math.min(total - 1, cur + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (cur < total - 2) pages.push(-1);
-    pages.push(total);
-    return pages;
   }
 
   goToPage(p: number) {
