@@ -25,7 +25,7 @@ export default function TurnoverPage() {
   ], [t])
   const auth = useStore(s => s.auth)
   const _rtTick = useStore((s) => s._rtTick)
-  const [data, setData] = useState({ required: 0, achieved: 0, remaining: 0, pct: 0, totalDeposited: 0, isUnlocked: false })
+  const [data, setData] = useState({ required: 0, achieved: 0, remaining: 0, pct: 0, totalDeposited: 0, locks: [], isUnlocked: false })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -52,13 +52,22 @@ export default function TurnoverPage() {
           </div>
         </div>
         <div className="px-3 py-3 lg:px-4 lg:py-4">
-          <p className="text-3xl font-black leading-none tabular-nums text-white lg:text-5xl">{pct}<span className="text-2xl text-yellow-400">{t('turnover.percent')}</span></p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('turnover.to_unlock')}</p>
+          {data.isUnlocked ? (
+            <>
+              <p className="text-2xl font-black leading-tight text-yellow-400 lg:text-3xl">✓ {t('turnover.unlocked')}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('turnover.unlocked_sub')}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-3xl font-black leading-none tabular-nums text-white lg:text-5xl">{pct}<span className="text-2xl text-yellow-400">{t('turnover.percent')}</span></p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('turnover.to_unlock')}</p>
+            </>
+          )}
           <div className="mt-3 h-2.5 overflow-hidden rounded-lg bg-[#1f2128]">
-            <div className="h-full bg-yellow-400 transition-all duration-700" style={{ width: `${pct}%` }} />
+            <div className="h-full bg-yellow-400 transition-all duration-700" style={{ width: `${data.isUnlocked ? 100 : pct}%` }} />
           </div>
           <div className="mt-3 grid grid-cols-4 gap-1.5">
-            {[[t('turnover.deposit'), totalDeposit.toLocaleString()], [t('turnover.required'), totalRequired.toLocaleString()], [t('turnover.done'), totalAchieved.toLocaleString(), true], [t('turnover.left'), Math.max(0, totalRequired - totalAchieved).toLocaleString()]].map(([l, v, a]) => (
+            {[[t('turnover.deposit'), totalDeposit.toLocaleString()], [t('turnover.required'), totalRequired.toLocaleString()], [t('turnover.done'), totalAchieved.toLocaleString(), true], [t('turnover.left'), data.remaining.toLocaleString()]].map(([l, v, a]) => (
               <div key={l} className="rounded-lg border border-[#1f2128] bg-[#13151c] px-1.5 py-1.5 lg:px-2">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{l}</p>
                 <p className={`mt-0.5 text-[12px] font-extrabold tabular-nums lg:text-sm ${a ? 'text-yellow-400' : 'text-white'}`}>{v} {t('common.points')}</p>
@@ -74,27 +83,28 @@ export default function TurnoverPage() {
           {loading && (
             <Spinner size="sm" />
           )}
-          {!loading && totalDeposit === 0 && (
+          {!loading && (data.locks?.length ?? 0) === 0 && (
             <div className="px-3 py-4 text-center text-[11px] text-zinc-500">{t('turnover.no_activity')}</div>
           )}
-          {!loading && totalDeposit > 0 && (
-            <div className="px-2.5 py-2 lg:px-3">
+          {!loading && data.locks?.map((l, i) => (
+            <div key={i} className="px-2.5 py-2 lg:px-3">
               <div className="flex items-center gap-2">
                 <p className="flex-1 text-[12px] font-bold text-white lg:text-[13px]">
-                  {t('turnover.deposit')} {totalDeposit.toLocaleString()} P × 1×
+                  {t('turnover.deposit')} {l.amount.toLocaleString()} P × 1×
                 </p>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${data.isUnlocked ? 'text-yellow-400' : 'text-zinc-400'}`}>
-                  {totalAchieved.toLocaleString()} / {totalRequired.toLocaleString()} · {pct}%
-                </span>
+                {l.done ? (
+                  <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400">✓ {t('turnover.done')}</span>
+                ) : (
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                    {l.applied.toLocaleString()} / {l.required.toLocaleString()} · {l.pct}%
+                  </span>
+                )}
               </div>
               <div className="mt-1 h-1 overflow-hidden rounded-full bg-[#1f2128]">
-                <div className={`h-full transition-all duration-700 ${data.isUnlocked ? 'bg-yellow-400' : 'bg-zinc-500'}`} style={{ width: `${pct}%` }} />
+                <div className={`h-full transition-all duration-700 ${l.done ? 'bg-yellow-400' : 'bg-zinc-500'}`} style={{ width: `${l.pct}%` }} />
               </div>
-              {data.isUnlocked && (
-                <p className="mt-1 text-[10px] font-bold text-yellow-400">✓ Turnover selesai — penarikan diizinkan</p>
-              )}
             </div>
-          )}
+          ))}
         </div>
       </section>
 

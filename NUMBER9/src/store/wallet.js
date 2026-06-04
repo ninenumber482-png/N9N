@@ -76,26 +76,25 @@ export function isWithdrawalLocked(tx) { return getWithdrawalLockRemaining(tx) >
 /* ---------- turnover (Supabase-based) ---------- */
 export async function checkWithdrawEligibility(userId) {
   try {
-    // Turnover gate: cumulative wagered (wallet.total_turnover) must cover the
-    // total requirement (1x of all deposits = SUM of deposit_locks.turnover_required).
-    // We use total_turnover as the source of truth — NOT the per-lock turnover_applied
-    // counter, which can drift from historical bugs. Required counts ALL locks, not
-    // just incomplete ones, so completed deposits aren't dropped from the total.
-    const [walletRes, locksRes] = await Promise.all([
-      supabase.from('wallet').select('total_turnover').eq('user_id', userId).single(),
-      supabase.from('deposit_locks').select('turnover_required').eq('user_id', userId),
-    ]);
+    // Per-deposit turnover (1x each): every deposit must be turned over once.
+    // Bets fill the earliest incomplete deposit lock first (FIFO); excess beyond
+    // the current locks is wasted and does NOT carry to future deposits. A deposit
+    // resets out once complete. Withdrawal is allowed only when NO lock still has
+    // outstanding turnover (turnover_applied < turnover_required).
+    const { data: locks, error } = await supabase
+      .from('deposit_locks')
+      .select('turnover_required, turnover_applied')
+      .eq('user_id', userId);
 
-    if (locksRes.error) {
+    if (error) {
       return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
     }
 
-    const totalRequired = (locksRes.data || []).reduce((s, r) => s + Number(r.turnover_required), 0);
-    const totalTurnover = Number(walletRes.data?.total_turnover ?? 0);
-    const achieved = Math.min(totalTurnover, totalRequired);
-    const remaining = Math.max(0, totalRequired - totalTurnover);
-    const isUnlocked = totalTurnover >= totalRequired;
-    return { isUnlocked, required: totalRequired, achieved, remaining };
+    const outstanding = (locks || []).filter(r => Number(r.turnover_applied) < Number(r.turnover_required));
+    const required = outstanding.reduce((s, r) => s + Number(r.turnover_required), 0);
+    const achieved = outstanding.reduce((s, r) => s + Number(r.turnover_applied), 0);
+    const remaining = Math.max(0, required - achieved);
+    return { isUnlocked: remaining <= 0, required, achieved, remaining };
   } catch {
     return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
   }
@@ -216,28 +215,44 @@ export async function fetchTurnoverSummary(userId) {
   try {
     const walletRes = await supabase
       .from('wallet')
-      .select('total_deposited, total_turnover')
+      .select('total_deposited')
       .eq('user_id', userId)
       .single();
 
     const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
-    const totalTurnover = Number(walletRes.data?.total_turnover ?? 0);
 
-    // Required = 1x of ALL deposits (sum every lock, not only incomplete ones).
-    // Progress = cumulative wagered (total_turnover), the authoritative source —
-    // the per-lock turnover_applied counter can be stale, so we ignore it here.
-    const { data: locks } = await supabase
+    // Per-deposit turnover (1x each). Each deposit is its own lock; we expose every
+    // lock so the UI can show a per-deposit breakdown (done deposits "reset out",
+    // outstanding ones show their own progress). The withdrawal gate only counts
+    // outstanding (incomplete) locks — completed deposits no longer require anything.
+    const { data: lockRows } = await supabase
       .from('deposit_locks')
-      .select('turnover_required')
-      .eq('user_id', userId);
+      .select('amount, turnover_required, turnover_applied, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
 
-    const totalRequired = (locks || []).reduce((s, r) => s + Number(r.turnover_required), 0);
-    const achieved = Math.min(totalTurnover, totalRequired);
-    const remaining = Math.max(0, totalRequired - totalTurnover);
-    const pct = totalRequired > 0 ? Math.min(100, Math.round((totalTurnover / totalRequired) * 100)) : 0;
-    return { required: totalRequired, achieved, remaining, pct, totalDeposited, totalTurnover, isUnlocked: totalTurnover >= totalRequired };
+    const locks = (lockRows || []).map(r => {
+      const required = Number(r.turnover_required);
+      const applied = Math.min(Number(r.turnover_applied), required);
+      const remaining = Math.max(0, required - applied);
+      return {
+        amount: Number(r.amount),
+        required,
+        applied,
+        remaining,
+        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100,
+        done: remaining <= 0,
+      };
+    });
+
+    const outstanding = locks.filter(l => !l.done);
+    const required = outstanding.reduce((s, l) => s + l.required, 0);
+    const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
+    const remaining = Math.max(0, required - achieved);
+    const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
+    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
   } catch {
-    return { required: 0, achieved: 0, remaining: 0, pct: 0, totalDeposited: 0, totalTurnover: 0, isUnlocked: true };
+    return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: true };
   }
 }
 

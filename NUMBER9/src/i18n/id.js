@@ -498,6 +498,8 @@ export const id = {
     achieved: '{done} / {req}',
     percent: '%',
     to_unlock: 'untuk buka penarikan',
+    unlocked: 'Penarikan Terbuka',
+    unlocked_sub: 'Tidak ada omzet tersisa',
     deposit: 'Deposit',
     required: 'Diperlukan',
     done: 'Selesai',

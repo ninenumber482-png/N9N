@@ -491,6 +491,8 @@ export const en = {
     achieved: '{done} / {req}',
     percent: '%',
     to_unlock: 'to unlock withdraw',
+    unlocked: 'Withdrawal Unlocked',
+    unlocked_sub: 'No turnover remaining',
     deposit: 'Deposit',
     required: 'Required',
     done: 'Done',
