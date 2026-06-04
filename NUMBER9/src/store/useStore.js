@@ -445,33 +445,6 @@ export const useStore = create((set, get) => ({
   fetchProfile: async () => {
     const authData = readJSON(LS.auth, null);
     if (!authData?.id) return null;
-    try {
-      if (!supabase) return null;
-      const { data, error } = await supabase.rpc('get_my_profile');
-      if (error || !data || data.error) return _fallbackProfile(authData);
-
-      let referredByCode = null;
-      if (data.referralCode) {
-        const { data: ref } = await supabase
-          .from('referrals')
-          .select('code')
-          .eq('code', data.referralCode)
-          .maybeSingle();
-        referredByCode = ref?.code || null;
-      }
-
-      return {
-        uuid: data.uuid, id: data.uuid,
-        username: data.username, displayName: data.displayName,
-        email: data.email || '', phone: data.phone || '',
-        country: data.country || '', role: data.role || 'user',
-        accountStatus: data.accountStatus, registrationStatus: data.registrationStatus,
-        loginStatus: data.loginStatus, kycStatus: data.kycStatus,
-        referralCode: data.referralCode || '', referredByCode,
-        bankName: data.bankName || '', bankAccountNumber: data.bankAccountNumber || '', bankAccountName: data.bankAccountName || '',
-        createdAt: data.createdAt, approvedAt: data.approvedAt,
-      };
-    } catch {}
     return _fallbackProfile(authData);
   },
 

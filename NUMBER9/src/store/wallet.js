@@ -206,8 +206,12 @@ export async function fetchUserBank(userId) {
 
 export async function fetchTurnoverSummary(userId) {
   try {
-    const { data, error } = await supabase.rpc('get_my_profile');
-    if (error || !data || data.error) return defaultTurnover();
+    const walletRes = await supabase
+      .from('wallet')
+      .select('total_deposited')
+      .eq('user_id', userId)
+      .single();
+    const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
 
     const { data: lockRows } = await supabase
       .from('deposit_locks')
@@ -230,7 +234,7 @@ export async function fetchTurnoverSummary(userId) {
     const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
     const remaining = Math.max(0, required - achieved);
     const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
-    return { required, achieved, remaining, pct, totalDeposited: 0, locks, isUnlocked: remaining <= 0 };
+    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
   } catch {
     return defaultTurnover();
   }
