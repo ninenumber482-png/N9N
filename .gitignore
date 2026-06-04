@@ -54,3 +54,32 @@ Thumbs.db
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Tooling debug artifacts
+/.claude-terminal
+/.claude/settings.json
+/.claude/settings.local.json
+/blackbox_mcp_settings.json
+/logs/
+/NUMBER9/dist.old/
+
+# Python bytecode
+/scripts/__pycache__/
+*.pyc
+
+# Top-level debug screenshots / one-off HTML
+/*.png
+/3dking-dashboard.png
+/dashboard-overview.png
+/login-page.png
+/database-server-verification.html
+/runtime-validation-dashboard.html
+
+# Pre-migration SQL drafts (replaced by /supabase/migrations/)
+/supabase-setup.sql
+/supabase-audit-enhancement.sql
+
+# Old test runners (replaced by Vitest/Playwright)
+/NUMBER9/tests.js
+/NUMBER9/tests.mjs
+/NUMBER9/vite.config.user.js

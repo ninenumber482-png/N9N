@@ -1,7 +1,0 @@
-[2026-06-03 00:20:09] HTTP from 127.0.0.1: GET /status -> 200
-[2026-06-03 00:20:51] HTTP from 127.0.0.1: GET /status -> 200
-[2026-06-03 00:20:51] UNAUTHORIZED from 127.0.0.1: Invalid key on /maintenance/on
-[2026-06-03 00:20:51] HTTP from 127.0.0.1: POST /maintenance/on -> 401
-[2026-06-03 00:21:34] HTTP from 127.0.0.1: GET /status -> 200
-[2026-06-03 00:23:51] HTTP from 127.0.0.1: GET /status -> 200
-[2026-06-03 00:43:20] HTTP from 127.0.0.1: GET /status -> 200
