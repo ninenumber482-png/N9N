@@ -154,6 +154,18 @@ export const useStore = create((set, get) => ({
               return;
             }
 
+            // Notify any subscribers (e.g. ProfilePage) so they can re-pull
+            // the latest user data. The payload already contains the new
+            // row, so subscribers can merge selectively without a refetch.
+            try {
+              const handlers = get()._userChangeHandlers;
+              if (handlers && handlers.size > 0) {
+                handlers.forEach((fn) => {
+                  try { fn(newStatus); } catch {}
+                });
+              }
+            } catch {}
+
             // If registration approved → show notification
             const oldStatus = payload.old?.registration_status;
             if (oldStatus !== 'APPROVED' && newStatus.registration_status === 'APPROVED') {
@@ -580,6 +592,16 @@ export const useStore = create((set, get) => ({
   setAvailableBalance: (balance) => set({ availableBalance: balance }),
   lockedBalance: 0,
   setLockedBalance: (balance) => set({ lockedBalance: balance }),
+
+  /* USER CHANGE LISTENERS — registered by ProfilePage etc to react to
+     realtime row updates from subscribeUserStatus() without doing a
+     full refetch (the new row is in the payload). */
+  _userChangeHandlers: new Set(),
+  onUserChange: (fn) => {
+    const set = get()._userChangeHandlers;
+    set.add(fn);
+    return () => set.delete(fn);
+  },
   referralBonus: 0,
   setReferralBonus: (bonus) => set({ referralBonus: bonus }),
   lastDepositAt: null,
@@ -660,6 +682,12 @@ export const clearAllData = () => {
       if (!supabase) { useStore.setState({ auth: null }); }
       (async () => {
         if (!supabase) return;
+        // Abort signal: capture the session ID at start; if the user logs
+        // out (or another tab changes auth) before this chain completes,
+        // the `stillValid` check below short-circuits so we don't subscribe
+        // realtime channels / fire notifications on a dead session.
+        const sessionId = _auth.id;
+        const stillValid = () => useStore.getState().auth?.id === sessionId;
         setUserToken(_auth.token);
         // Cross-tab sync: when another tab logs in/out, sync this tab's in-memory token.
         // This prevents stale globalUserToken from blocking RLS queries.
@@ -680,6 +708,7 @@ export const clearAllData = () => {
           });
         }
         useStore.getState().fetchProfile().then(prof => {
+          if (!stillValid()) return; // user logged out / switched session mid-fetch
           if (!prof) {
             // Token may be stale (RLS blocks all reads). Cross-check by attempting
             // a low-cost wallet query — if that also returns null, the session
@@ -729,6 +758,7 @@ export const clearAllData = () => {
           writeJSON(LS.byUuid, byUuid);
           useStore.setState({ users: { ...users } });
         }).catch(() => {});
+        if (!stillValid()) return; // logout happened during profile fetch
         subscribeWalletRealtime(
           _auth.id, _auth.username,
           () => useStore.getState().fetchBalances(),
@@ -768,7 +798,8 @@ export const clearAllData = () => {
             }
           }
         );
-        // Start session heartbeat on auto-login
+        // Start session heartbeat on auto-login (only if session still alive)
+        if (!stillValid()) return;
         startHeartbeat(_auth.id);
       })();
     }

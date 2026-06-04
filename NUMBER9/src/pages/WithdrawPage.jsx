@@ -83,7 +83,13 @@ export default function WithdrawPage() {
       setAmount("");
     } catch (err) {
       setLoading(false);
-      setToast({ type: "err", text: t('common.network_error') });
+      // Timeout vs genuine network error — show "may still be processing"
+      // for timeouts so user doesn't blindly retry a successful submit.
+      if (err?.message === 'Request timeout') {
+        setToast({ type: 'warn', text: t('common.request_timeout') });
+      } else {
+        setToast({ type: "err", text: t('common.network_error') });
+      }
     }
   };
 

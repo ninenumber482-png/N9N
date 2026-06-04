@@ -290,10 +290,11 @@ export default function RegisterPage() {
               {step === 1 && (
                 <>
                   <div>
-                    <label className={lbl}>
+                    <label className={lbl} htmlFor="reg-referral">
                       {t('register.referral_code')} <span className="text-yellow-400">*</span>
                     </label>
                     <input
+                      id="reg-referral"
                       className={inp}
                       value={form.referral}
                       onChange={(e) => onRefChange(e.target.value)}
@@ -312,32 +313,32 @@ export default function RegisterPage() {
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className={lbl}>{t('register.full_name')}</label>
-                      <input className={inp} value={form.fullName}
+                      <label className={lbl} htmlFor="reg-fullname">{t('register.full_name')}</label>
+                      <input id="reg-fullname" className={inp} value={form.fullName}
                         onChange={(e) => set("fullName", e.target.value)}
                         placeholder={t('register.full_name_placeholder')} autoComplete="name" />
                     </div>
                     <div>
-                      <label className={lbl}>{t('register.username')}</label>
-                      <input className={inp} value={form.username}
+                      <label className={lbl} htmlFor="reg-username">{t('register.username')}</label>
+                      <input id="reg-username" className={inp} value={form.username}
                         onChange={(e) => set("username", e.target.value)}
                         placeholder={t('register.username_placeholder')} autoComplete="username" />
                     </div>
                     <div>
-                      <label className={lbl}>{t('register.email')}</label>
-                      <input className={inp} type="email" value={form.email}
+                      <label className={lbl} htmlFor="reg-email">{t('register.email')}</label>
+                      <input id="reg-email" className={inp} type="email" value={form.email}
                         onChange={(e) => set("email", e.target.value)}
                         placeholder={t('register.email_placeholder')} autoComplete="email" />
                     </div>
                     <div>
-                      <label className={lbl}>{t('register.phone')}</label>
-                      <input className={inp} type="tel" value={form.phone}
+                      <label className={lbl} htmlFor="reg-phone">{t('register.phone')}</label>
+                      <input id="reg-phone" className={inp} type="tel" value={form.phone}
                         onChange={(e) => set("phone", e.target.value)}
                         placeholder={t('register.phone_placeholder')} autoComplete="tel" />
                     </div>
                     <div>
-                      <label className={lbl}>{t('register.country')}</label>
-                      <select className={inp} value={form.country}
+                      <label className={lbl} htmlFor="reg-country">{t('register.country')}</label>
+                      <select id="reg-country" className={inp} value={form.country}
                         onChange={(e) => set("country", e.target.value)}>
                         {["Indonesia","Singapore","Malaysia","Thailand","Philippines","Vietnam","Hong Kong","Japan","Other"]
                           .map((c) => {
@@ -348,9 +349,9 @@ export default function RegisterPage() {
                     </div>
                     <div className="hidden sm:block" />
                     <div>
-                      <label className={lbl}>{t('register.password')}</label>
+                      <label className={lbl} htmlFor="reg-password">{t('register.password')}</label>
                       <div className="relative">
-                        <input className={inp} type={showPassword ? 'text' : 'password'} value={form.password}
+                        <input id="reg-password" className={inp} type={showPassword ? 'text' : 'password'} value={form.password}
                           onChange={(e) => set("password", e.target.value)}
                           placeholder={t('register.password_placeholder')} autoComplete="new-password" minLength={6} />
                         <button
@@ -365,9 +366,9 @@ export default function RegisterPage() {
                       <p className="mt-1 text-[9px] text-zinc-600">{t('register.password_hint') || 'Min. 6 characters'}</p>
                     </div>
                     <div>
-                      <label className={lbl}>{t('register.confirm_password')}</label>
+                      <label className={lbl} htmlFor="reg-confirm">{t('register.confirm_password')}</label>
                       <div className="relative">
-                        <input className={inp} type={showConfirmPassword ? 'text' : 'password'} value={form.confirmPassword}
+                        <input id="reg-confirm" className={inp} type={showConfirmPassword ? 'text' : 'password'} value={form.confirmPassword}
                           onChange={(e) => set("confirmPassword", e.target.value)}
                           placeholder={t('register.confirm_password_placeholder')} autoComplete="new-password" />
                         <button
@@ -398,18 +399,18 @@ export default function RegisterPage() {
                     </p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       <div>
-                        <label className={lbl}>{t('register.bank_name')} <span className="text-yellow-400">*</span></label>
-                        <input className={inp} value={form.bankName}
+                        <label className={lbl} htmlFor="reg-bankname">{t('register.bank_name')} <span className="text-yellow-400">*</span></label>
+                        <input id="reg-bankname" className={inp} value={form.bankName}
                           onChange={(e) => set("bankName", e.target.value)} placeholder={t('register.bank_name_placeholder')} />
                       </div>
                       <div>
-                        <label className={lbl}>{t('register.account_number')} <span className="text-yellow-400">*</span></label>
-                        <input className={inp} value={form.bankAccountNumber}
+                        <label className={lbl} htmlFor="reg-banknum">{t('register.account_number')} <span className="text-yellow-400">*</span></label>
+                        <input id="reg-banknum" className={inp} value={form.bankAccountNumber}
                           onChange={(e) => set("bankAccountNumber", e.target.value)} placeholder={t('register.account_number_placeholder')} />
                       </div>
                       <div>
-                        <label className={lbl}>{t('register.account_holder')} <span className="text-yellow-400">*</span></label>
-                        <input className={inp} value={form.bankAccountName}
+                        <label className={lbl} htmlFor="reg-bankholder">{t('register.account_holder')} <span className="text-yellow-400">*</span></label>
+                        <input id="reg-bankholder" className={inp} value={form.bankAccountName}
                           onChange={(e) => set("bankAccountName", e.target.value)} placeholder={t('register.account_holder_placeholder')} />
                       </div>
                     </div>

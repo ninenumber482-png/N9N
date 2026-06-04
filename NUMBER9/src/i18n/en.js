@@ -41,6 +41,7 @@ export const en = {
     failed: 'Failed',
     network_error: 'Network error. Try again.',
     connection_error: 'Connection error. Please try again.',
+    request_timeout: 'Request timed out. Your request may still be processing — check your history in a moment.',
     upload: 'Upload',
     attached: 'Attached',
     file_selected: 'File selected',

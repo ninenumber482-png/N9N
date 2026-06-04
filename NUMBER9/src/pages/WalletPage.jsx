@@ -330,8 +330,17 @@ export default function WalletPage() {
             )
           })}
           {txsLoading ? (
-            <div className="px-3 py-6 text-center">
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
+            <div className="space-y-2 px-3 py-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 py-3">
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-zinc-800" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 w-24 animate-pulse rounded bg-zinc-800" />
+                    <div className="h-2 w-16 animate-pulse rounded bg-zinc-800/60" />
+                  </div>
+                  <div className="h-3 w-12 animate-pulse rounded bg-zinc-800" />
+                </div>
+              ))}
             </div>
           ) : txsError ? (
             <div className="px-3 py-4 text-center text-[11px] text-red-400">

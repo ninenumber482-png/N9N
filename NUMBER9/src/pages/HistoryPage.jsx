@@ -8,7 +8,7 @@ import PageShell from "../components/ui/PageShell";
 import useAlive from "../hooks/useAlive";
 import { useI18n } from '../i18n';
 import { wibDateTime } from '../utils/wib';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 export default function HistoryPage() {
   const auth = useStore((s) => s.auth);
@@ -16,7 +16,14 @@ export default function HistoryPage() {
   const { clientUuid } = useParams();
   const p = (path) => `/c/${clientUuid}${path}`;
   const { t } = useI18n();
-  const [type, setType] = useState("All");
+  const [searchParams] = useSearchParams();
+  // Honor ?type=Deposit|Withdraw|Bet|Result|All on deep link (used by
+  // DepositPage "See All" → auto-filter to deposits).
+  const initialType = (() => {
+    const q = searchParams.get('type');
+    return ['All', 'Deposit', 'Withdraw', 'Bet', 'Result'].includes(q) ? q : 'All';
+  })();
+  const [type, setType] = useState(initialType);
   const [range, setRange] = useState("30d");
   const [txs, setTxs] = useState([]);
   const [turnoverData, setTurnoverData] = useState({ required: 0, achieved: 0, isUnlocked: true });

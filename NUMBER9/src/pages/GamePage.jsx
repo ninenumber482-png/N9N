@@ -70,8 +70,12 @@ export default function GamePage() {
   const { t } = useI18n();
   const { clientUuid } = useParams();
   const cp = (path) => `/c/${clientUuid}${path}`;
+  /* Marketplace entry disclosure: versioned so admin can re-show the
+     dialog by bumping the key. v2 introduced a disclaimer about
+     virtual-currency rules. */
+  const ENTRY_LS_KEY = 'n9_marketplace_entry_v2_shown';
   const [showEntry, setShowEntry] = useState(() => {
-    try { return localStorage.getItem('n9_marketplace_entry_shown') !== 'true'; } catch { return true; }
+    try { return localStorage.getItem(ENTRY_LS_KEY) !== 'true'; } catch { return true; }
   });
   const [entryLoading, setEntryLoading] = useState(false);
   const now = useTimer(); // Shared timer from context
@@ -243,13 +247,13 @@ export default function GamePage() {
           onConfirm={() => {
             setEntryLoading(true);
             setTimeout(() => {
-              try { localStorage.setItem('n9_marketplace_entry_shown', 'true'); } catch {}
+              try { localStorage.setItem(ENTRY_LS_KEY, 'true'); } catch {}
               setEntryLoading(false);
               setShowEntry(false);
             }, 1200);
           }}
           onCancel={() => {
-            try { localStorage.setItem('n9_marketplace_entry_shown', 'true'); } catch {}
+            try { localStorage.setItem(ENTRY_LS_KEY, 'true'); } catch {}
             setShowEntry(false);
           }}
         />

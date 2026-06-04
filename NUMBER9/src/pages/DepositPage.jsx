@@ -5,7 +5,7 @@ import {
   fetchUserTransactions, getDepositLockRemaining,
 } from "../store/wallet";
 import { Icon } from "../components/icons";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { AmountInput } from "../components/ui/AmountInput";
 import { EmptyState } from "../components/ui/EmptyState";
 import Spinner from "../components/ui/Spinner";
@@ -131,7 +131,14 @@ export default function DepositPage() {
       }, 500);
     } catch (err) {
       setLoading(false);
-      setToast({ type:"err", text: t('common.network_error') });
+      // If client timed out, the server may have processed the request.
+      // Idempotency key prevents a true duplicate, but show a "may still
+      // be processing" notice so user doesn't immediately retry blindly.
+      if (err?.message === 'Request timeout') {
+        setToast({ type: 'warn', text: t('common.request_timeout') });
+      } else {
+        setToast({ type: 'err', text: t('common.network_error') });
+      }
     }
   };
 
@@ -276,8 +283,20 @@ export default function DepositPage() {
       {/* HISTORY — full width */}
       {depositHistory.length > 0 && (
         <div className="mt-8 border-t border-[#1f2128] pt-6">
-          <p className="mb-1 text-sm font-semibold text-white">{t('deposit.history')}</p>
-          <p className="mb-4 text-xs text-zinc-500">{t('deposit.history_desc')}</p>
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold text-white">{t('deposit.history')}</p>
+              <p className="text-xs text-zinc-500">{t('deposit.history_desc')}</p>
+            </div>
+            {depositHistory.length > 6 && (
+              <Link
+                to={cp('/wallet/history') + '?type=Deposit'}
+                className="text-xs font-semibold text-yellow-400 hover:text-yellow-300 transition"
+              >
+                {t('common.see_all')} →
+              </Link>
+            )}
+          </div>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {depositHistory.slice(0, 6).map((tx) => (
               <div key={tx.id} className="rounded-lg border border-[#1f2128] bg-[#0c0e14] px-4 py-3 space-y-2">

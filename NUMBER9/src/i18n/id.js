@@ -41,6 +41,7 @@ export const id = {
     failed: 'Gagal',
     network_error: 'Kesalahan jaringan. Coba lagi.',
     connection_error: 'Koneksi error. Silakan coba lagi.',
+    request_timeout: 'Permintaan kehabisan waktu. Permintaan Anda mungkin sedang diproses — periksa riwayat sebentar lagi.',
     upload: 'Unggah',
     attached: 'Terlampir',
     file_selected: 'File dipilih',

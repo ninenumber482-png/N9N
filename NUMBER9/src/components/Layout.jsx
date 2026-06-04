@@ -96,7 +96,7 @@ export default function Layout({ children }) {
             >
               {lang === 'id' ? 'EN' : 'ID'}
             </button>
-            <span className="rounded-lg bg-yellow-400/10 border border-yellow-400/20 px-3 py-1.5 text-xs font-bold text-yellow-400">
+            <span className="max-w-[120px] truncate rounded-lg bg-yellow-400/10 border border-yellow-400/20 px-3 py-1.5 text-xs font-bold text-yellow-400">
               {balanceMain.toLocaleString()} {t('common.points')}
             </span>
             <button

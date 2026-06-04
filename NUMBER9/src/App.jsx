@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet, useParams, useNavigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { useStore, isDemoMode, clearAllData, setDemoMode } from "./store/useStore";
 import { subscribeToWalletAndTransactions, subscribeToSettledBets } from "./store/realtimeManager";
 import { usePolling } from "./hooks/usePolling";
@@ -9,12 +10,10 @@ import { I18nProvider } from "./i18n";
 import Layout from "./components/Layout";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import WalletPage from "./pages/WalletPage";
 import DepositPage from "./pages/DepositPage";
 import WithdrawPage from "./pages/WithdrawPage";
-import GamePage from "./pages/GamePage";
 import TradingPage from "./pages/TradingPage";
 import TurnoverPage from "./pages/TurnoverPage";
 import ReferralPage from "./pages/ReferralPage";
@@ -22,6 +21,12 @@ import MyNetworkPage from "./pages/MyNetworkPage";
 import HistoryPage from "./pages/HistoryPage";
 import ProfilePage from "./pages/ProfilePage";
 import SupportPage from "./pages/SupportPage";
+/* Lazy-load the 2 heaviest pages so the initial bundle stays small.
+   GamePage is ~1k lines (ArenaStage + 3 useEffect timers + market chart).
+   RegisterPage is the multi-step form with bank/KYC uploads.
+   They split into separate chunks via dynamic import(). */
+const GamePage = lazy(() => import("./pages/GamePage"));
+const RegisterPageLazy = lazy(() => import("./pages/RegisterPage"));
 
 function ClientRoute() {
   const { clientUuid } = useParams();
@@ -40,34 +45,46 @@ function ClientRoute() {
   return <Outlet />;
 }
 
+/* Suspense fallback for lazy-loaded pages. Renders a centered spinner
+   inside the same dark shell so the transition feels seamless. */
+function PageFallback() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
+    </div>
+  );
+}
+
 function AppContent() {
   const auth = useStore(s => s.auth);
 
   return (
-    <Routes>
-      <Route path="/" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <LandingPage />} />
-      <Route path="/login" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <LoginPage />} />
-      <Route path="/register" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <RegisterPage />} />
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route path="/" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <LandingPage />} />
+        <Route path="/login" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <LoginPage />} />
+        <Route path="/register" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <RegisterPageLazy />} />
 
-      <Route path="/c/:clientUuid" element={<ClientRoute />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Layout><DashboardPage /></Layout>} />
-        <Route path="wallet" element={<Layout><WalletPage /></Layout>} />
-        <Route path="deposit" element={<Layout><DepositPage /></Layout>} />
-        <Route path="withdraw" element={<Layout><WithdrawPage /></Layout>} />
-        <Route path="king" element={<Layout><GamePage /></Layout>} />
-        <Route path="trading" element={<Layout><TradingPage /></Layout>} />
-        <Route path="turnover" element={<Layout><TurnoverPage /></Layout>} />
-        <Route path="referral" element={<Layout><ReferralPage /></Layout>} />
-        <Route path="network" element={<Layout><MyNetworkPage /></Layout>} />
-        <Route path="history" element={<Layout><HistoryPage /></Layout>} />
-        <Route path="profile" element={<Layout><ProfilePage /></Layout>} />
-        <Route path="support" element={<Layout><SupportPage /></Layout>} />
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
-      </Route>
+        <Route path="/c/:clientUuid" element={<ClientRoute />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Layout><DashboardPage /></Layout>} />
+          <Route path="wallet" element={<Layout><WalletPage /></Layout>} />
+          <Route path="deposit" element={<Layout><DepositPage /></Layout>} />
+          <Route path="withdraw" element={<Layout><WithdrawPage /></Layout>} />
+          <Route path="king" element={<Layout><GamePage /></Layout>} />
+          <Route path="trading" element={<Layout><TradingPage /></Layout>} />
+          <Route path="turnover" element={<Layout><TurnoverPage /></Layout>} />
+          <Route path="referral" element={<Layout><ReferralPage /></Layout>} />
+          <Route path="network" element={<Layout><MyNetworkPage /></Layout>} />
+          <Route path="history" element={<Layout><HistoryPage /></Layout>} />
+          <Route path="profile" element={<Layout><ProfilePage /></Layout>} />
+          <Route path="support" element={<Layout><SupportPage /></Layout>} />
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 

@@ -100,8 +100,9 @@ export async function checkWithdrawEligibility(userId) {
   }
 }
 
-const newIdempotencyKey = () =>
-  crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+/* crypto.randomUUID() is universally available in modern browsers
+   (all targets in Vite's browserslist) — no fallback needed. */
+const newIdempotencyKey = () => crypto.randomUUID();
 
 export async function requestDeposit(params) {
   const amt = Number(params.amount);

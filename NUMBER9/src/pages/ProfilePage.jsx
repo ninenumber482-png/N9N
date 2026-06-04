@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const { clientUuid } = useParams();
   const p = (path) => `/c/${clientUuid}${path}`;
   const fetchProfile = useStore((s) => s.fetchProfile);
+  const onUserChange = useStore((s) => s.onUserChange);
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState({});
   const { t } = useI18n();
@@ -31,8 +32,15 @@ export default function ProfilePage() {
       .catch(() => {
         if (isMounted) setLoading(false);
       });
-    return () => { isMounted = false; };
-  }, [auth?.id, fetchProfile]);
+    // Merge realtime updates from subscribeUserStatus() into local `me`.
+    // The handler is called with the new row, so we can patch specific
+    // fields (email, phone, kyc_status, etc.) without a network round-trip.
+    const unsub = onUserChange((newRow) => {
+      if (!isMounted) return;
+      setMe((prev) => ({ ...prev, ...newRow }));
+    });
+    return () => { isMounted = false; unsub(); };
+  }, [auth?.id, fetchProfile, onUserChange]);
 
   const userName = me.displayName || auth?.displayName || auth?.username || "User";
   const uid      = me.uuid || auth?.id || "";
