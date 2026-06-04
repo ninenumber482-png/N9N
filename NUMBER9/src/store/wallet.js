@@ -228,7 +228,7 @@ export async function fetchTurnoverSummary(_userId) { // eslint-disable-line no-
 }
 
 function defaultTurnover() {
-  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: false };
+  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: true };
 }
 
 export async function fetchUserTransactions(userId, limit = 100) {

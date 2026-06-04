@@ -31,11 +31,15 @@ BEGIN
       AND session_expires_at > NOW();
   IF v_user_id IS NULL THEN RAISE EXCEPTION 'UNAUTHORIZED'; END IF;
 
-  -- Get wallet data
-  SELECT balance_main, balance_bonus, total_deposited, total_withdrawn, total_turnover
+  -- Get wallet data (handle NULL wallet gracefully)
+  SELECT COALESCE(balance_main, 0), COALESCE(balance_bonus, 0),
+         COALESCE(total_deposited, 0), COALESCE(total_withdrawn, 0),
+         COALESCE(total_turnover, 0)
     INTO v_wallet FROM wallet WHERE user_id = v_user_id;
   IF v_wallet.balance_main IS NULL THEN
-    RETURN jsonb_build_object('error', 'WALLET_NOT_FOUND');
+    v_wallet.balance_main := 0; v_wallet.balance_bonus := 0;
+    v_wallet.total_deposited := 0; v_wallet.total_withdrawn := 0;
+    v_wallet.total_turnover := 0;
   END IF;
 
   -- Get deposit lock summary
