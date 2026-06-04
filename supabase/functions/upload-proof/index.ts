@@ -18,22 +18,14 @@ async function sha256(msg: string): Promise<string> {
 
 const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "http://localhost:5175"];
 
-const json = (body: unknown, status = 200, origin = "") => {
+const corsHeaders = (origin = "") => {
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": allow,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
-    },
-  });
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
+  };
 };
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
 
 const ALLOWED_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -46,8 +38,12 @@ const ALLOWED_KINDS = new Set(["deposit", "kyc"]);
 
 export default {
   fetch: async (req: Request) => {
+    const o = req.headers.get("origin") || "";
+    const ch = () => corsHeaders(o);
+    const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...ch() } });
+
     if (req.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return new Response(null, { status: 204, headers: ch() });
     }
     if (req.method !== "POST") {
       return json({ error: "Method not allowed" }, 405);
