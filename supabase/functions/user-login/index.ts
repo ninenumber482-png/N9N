@@ -39,10 +39,16 @@ export default {
         .eq('username', username.trim().toLowerCase())
         .single()
 
-      if (userErr || !user) return json({ error: 'Invalid username or password' }, 401)
+      if (userErr || !user) {
+        await supabase.from('failed_logins').insert({ username: username.trim().toLowerCase(), ip_address, reason: 'user_not_found' }).catch(() => {});
+        return json({ error: 'Invalid username or password' }, 401)
+      }
 
       const passwordOk = await bcrypt.compare(password, user.password_hash || '')
-      if (!passwordOk) return json({ error: 'Invalid username or password' }, 401)
+      if (!passwordOk) {
+        await supabase.from('failed_logins').insert({ username: username.trim().toLowerCase(), ip_address, reason: 'wrong_password' }).catch(() => {});
+        return json({ error: 'Invalid username or password' }, 401)
+      }
 
       if (user.registration_status !== 'APPROVED') {
         return json({ error: 'Account not approved yet', pending: true, display_name: user.display_name }, 403)
