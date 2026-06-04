@@ -7,7 +7,7 @@
    to auth lifecycle (subscribe on login, cleanup on logout).
 */
 
-import { supabase } from '../utils/supabase';
+import { supabase, realtimeEnabled } from '../utils/supabase';
 
 let _walletChannel = null;
 let _userStatusChannel = null;
@@ -22,6 +22,7 @@ export async function subscribeToWalletAndTransactions(
   onError          // (error) => void (optional)
 ) {
   if (!userId) return () => {};
+  if (!realtimeEnabled) return () => {};
 
   try {
     if (!supabase) return () => {};
@@ -78,6 +79,7 @@ export async function subscribeToUserStatus(
   onError          // (error) => void (optional)
 ) {
   if (!userId) return () => {};
+  if (!realtimeEnabled) return () => {};
 
   try {
     if (!supabase) return () => {};
@@ -131,6 +133,7 @@ export async function subscribeToPlatformConfig(
 ) {
   try {
     if (!supabase) return () => {};
+    if (!realtimeEnabled) return () => {};
     _platformConfigChannel = supabase.channel('platform_config');
 
     _platformConfigChannel
@@ -167,6 +170,7 @@ export async function subscribeToSettledBets(
   onError        // (error) => void (optional)
 ) {
   if (!userId) return () => {};
+  if (!realtimeEnabled) return () => {};
 
   try {
     if (!supabase) return () => {};

@@ -1,7 +1,8 @@
 /* eslint-disable no-empty */
-import { supabase, setUserToken } from "../utils/supabase";
+import { supabase, setUserToken, realtimeEnabled } from "../utils/supabase";
 import { create } from "zustand";
 import { subscribeWalletRealtime, unsubscribeWalletRealtime } from "./wallet";
+import { startHeartbeat, stopHeartbeat } from "../utils/heartbeat";
 
 /* ============================================================
    NUMBER9 — Dashboard global store (MINIMAL FUNCTIONAL VERSION)
@@ -62,6 +63,7 @@ export const useStore = create((set, get) => ({
 
   subscribePlatformConfig: () => {
     if (DEMO_MODE) return () => {};
+    if (!realtimeEnabled) return () => {};
     let channel;
     const setup = async () => {
       try {
@@ -86,7 +88,9 @@ export const useStore = create((set, get) => ({
             });
           })
           .subscribe();
-      } catch {};
+      } catch (e) {
+        if (import.meta.env.DEV) console.warn('[store] platform config subscription failed:', e);
+      }
     };
     setup();
     return () => { if (channel) channel.unsubscribe(); };
@@ -122,6 +126,7 @@ export const useStore = create((set, get) => ({
   /* REALTIME — subscribe to user status changes */
   subscribeUserStatus: (userId) => {
     if (!userId || DEMO_MODE) return () => {};
+    if (!realtimeEnabled) return () => {};
     let channel;
     const setup = async () => {
       try {
@@ -302,6 +307,9 @@ export const useStore = create((set, get) => ({
         }
       } catch {}
 
+      // Start session heartbeat (updates last_activity + fingerprint)
+      startHeartbeat(user.id);
+
       return { ok: true };
     } catch {
       return { ok: false, error: "Connection error. Please try again." };
@@ -309,6 +317,7 @@ export const useStore = create((set, get) => ({
   },
 
   logout: () => {
+    stopHeartbeat();
     unsubscribeWalletRealtime();
 
     // Clear localStorage
@@ -634,7 +643,9 @@ export const useStore = create((set, get) => ({
 export const isDemoMode = () => DEMO_MODE;
 export const setDemoMode = () => {};
 export const clearAllData = () => {
-  localStorage.clear();
+  // Only clear NUMBER9 keys, not all localStorage
+  const n9Keys = ['n9_auth', 'n9_users', 'n9_users_by_uuid', 'n9_users_by_code'];
+  n9Keys.forEach(k => localStorage.removeItem(k));
   useStore.setState({ auth: null, users: {}, availableBalance: 0 });
 };
 
@@ -710,6 +721,8 @@ export const clearAllData = () => {
             }
           }
         );
+        // Start session heartbeat on auto-login
+        startHeartbeat(_auth.id);
       })();
     }
   }

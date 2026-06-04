@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../../core/services/admin.service';
+import { environment } from '../../../../../environments/environment';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
 
@@ -288,7 +289,9 @@ export class OverviewComponent implements OnInit {
       this.csActive = map['cs_active'] === 'true';
       this.csWaNumber = map['cs_wa_number'] || '';
       this.csDisplayName = map['cs_display_name'] || 'Customer Service';
-    } catch {}
+    } catch (e) {
+      if (environment.production) console.error('[overview] loadCsConfig failed:', e);
+    }
     this.csLoading = false;
     this.cdr.markForCheck();
   }

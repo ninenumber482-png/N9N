@@ -43,8 +43,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
         '/kyc': pendingKyc,
         '/bets': pendingBets,
       });
-    } catch {
-      // silent
+    } catch (e) {
+      // Badge refresh failed — non-critical, next interval will retry
     }
   }
 

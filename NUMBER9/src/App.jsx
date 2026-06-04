@@ -169,12 +169,12 @@ function App() {
     };
   }, [auth?.id, subscribeUserStatus]);
 
-  // Polling fallback — refresh wallet & transactions every 5s
+  // Polling fallback — refresh wallet & transactions every 15s
   // (WebSocket realtime is disabled due to Cloudflare error 1101)
   usePolling(async () => {
     if (!auth?.id || !supabase) return;
     try {
-      // Refresh wallet
+      // Refresh wallet (minimal columns)
       const { data: wallet } = await supabase
         .from('wallet')
         .select('balance_main, balance_bonus')
@@ -185,32 +185,29 @@ function App() {
         const bonus = Number(wallet.balance_bonus || 0);
         useStore.setState({ availableBalance: main, totalBalance: main + bonus });
       }
-      // Refresh transactions
+      // Refresh transactions (minimal columns, fewer rows)
       const { data: txs } = await supabase
         .from('transactions')
-        .select('*')
+        .select('id, type, status, amount, created_at')
         .eq('user_id', auth.id)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
       if (txs?.length) {
         useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
       }
-      // Refresh bets for 3D King
-      const { data: bets } = await supabase
-        .from('bets')
-        .select('*')
-        .eq('user_id', auth.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (bets?.length) {
-        useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
-      }
-    } catch {}
-  }, 5000, [auth?.id]);
+      // Refresh bets via king.js cache (updates _bets + triggers UI re-render)
+      const { refreshKingData } = await import("./store/king");
+      await refreshKingData(auth.id);
+      useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+    } catch (e) {
+      // Polling error — silent in production, log in dev
+      if (import.meta.env.DEV) console.warn('[Polling]', e);
+    }
+  }, 15000, [auth?.id]);
 
   useEffect(() => {
-    // Expose utilities to browser console for development/admin use
-    if (typeof window !== 'undefined') {
+    // Dev tools only in development mode
+    if (typeof window !== 'undefined' && import.meta.env.DEV) {
       window.NUMBER9 = {
         clearAllData: () => {
           clearAllData();

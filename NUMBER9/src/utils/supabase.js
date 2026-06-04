@@ -6,6 +6,7 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 let globalUserToken = null
 
 let supabaseInstance
+export let realtimeEnabled = false
 
 if (supabaseUrl && supabaseKey) {
   try {
@@ -30,6 +31,7 @@ if (supabaseUrl && supabaseKey) {
         enabled: false
       }
     })
+    realtimeEnabled = false // must match realtime.enabled above
   } catch {}
 }
 

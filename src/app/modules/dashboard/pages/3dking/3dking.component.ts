@@ -446,7 +446,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       .then(() => this.pendingPlanWrites.delete(code))
       .catch((err: any) => {
         this.pendingPlanWrites.delete(code);
-        console.warn('[3dking] fillPlan failed', code, err?.message || err);
+        // fillPlan failed
         if (!this.fillPlanErrorNotified.has(code)) {
           this.fillPlanErrorNotified.add(code);
           this.notification.error('Plan save failed', `Session ${code}: ${(err?.message || String(err)).slice(0, 60)}`);
@@ -474,7 +474,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       .then(() => this.pendingPlanWrites.delete(code))
       .catch((err: any) => {
         this.pendingPlanWrites.delete(code);
-        console.warn('[3dking] overrideCategory failed', code, err?.message || err);
+        // overrideCategory failed
         if (!this.overrideErrorNotified.has(code)) {
           this.overrideErrorNotified.add(code);
           this.notification.error('Override failed', `Session ${code}: ${(err?.message || String(err)).slice(0, 60)}`);
@@ -511,7 +511,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       // The engine must always generate local draws so the admin UI stays alive.
       this.planLoaded = true;
       const msg = err?.message || String(err);
-      console.warn('[3dking] loadPlanned failed (attempt', this.planLoadAttempts + ')', msg);
+      // loadPlanned failed
       // Show a toast once so the admin knows the DB is unreachable.
       if (!this.dbErrorShown && this.planLoadAttempts <= 3) {
         this.dbErrorShown = true;
@@ -536,7 +536,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     this.admin.settleSession(code, d1, d2, d3)
       .then(() => this.loadResults())
       .catch((err: any) => {
-        console.warn('[3dking] settle failed', code, err?.message || err);
+        // settle failed
         // Only notify once per batch of failures to avoid toast spam.
         if (!this.dbErrorShown) {
           this.dbErrorShown = true;
@@ -562,7 +562,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       this.results = map;
       this.lastResult = rows.length ? Number(rows[0].total) : this.lastResult;
     } catch (err: any) {
-      console.warn('[3dking] loadResults failed', err?.message || err);
+      // loadResults failed
       if (!this.dbErrorShown) {
         this.dbErrorShown = true;
         this.notification.error(
@@ -586,7 +586,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       this.betAgg = agg;
       this.betsErrorNotified = false;
     } catch (err: any) {
-      console.warn('[3dking] loadBets failed', err?.message || err);
+      // loadBets failed
       if (!this.betsErrorNotified) {
         this.betsErrorNotified = true;
         this.notification.error('Bet sync failed', `Could not load bet aggregates: ${(err?.message || String(err)).slice(0, 60)}`);

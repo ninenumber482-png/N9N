@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -17,26 +17,54 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { code, created_by, max_uses, expires_at } = await req.json();
-
-    if (!code || !created_by) {
+    // Verify caller is admin via session token (not user-supplied created_by)
+    const token = req.headers.get("x-session-token") || "";
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: code, created_by" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify creator is an admin
+    const { data: session, error: sessErr } = await supabase
+      .from("sessions")
+      .select("id, user_id, logged_out_at, expires_at")
+      .eq("token_hash", token)
+      .single();
+
+    if (sessErr || !session || session.logged_out_at) {
+      return new Response(
+        JSON.stringify({ error: "Invalid session" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (session.expires_at && new Date(session.expires_at) < new Date()) {
+      return new Response(
+        JSON.stringify({ error: "Session expired" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: adminUser, error: adminErr } = await supabase
       .from("users")
       .select("role")
-      .eq("id", created_by)
+      .eq("id", session.user_id)
       .single();
 
     if (adminErr || !adminUser || adminUser.role !== "admin") {
       return new Response(
-        JSON.stringify({ error: "Unauthorized: Admin access required" }),
+        JSON.stringify({ error: "Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const created_by = session.user_id;
+    const { code, max_uses, expires_at } = await req.json();
+
+    if (!code) {
+      return new Response(
+        JSON.stringify({ error: "Missing required field: code" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

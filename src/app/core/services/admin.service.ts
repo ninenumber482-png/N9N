@@ -43,7 +43,7 @@ export class AdminService {
     });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`${method} ${path}: ${res.status} ${text}`);
+      throw new Error(`${res.status}`);
     }
     const text = await res.text();
     return text ? JSON.parse(text) : (undefined as any);
@@ -116,14 +116,18 @@ export class AdminService {
   }
 
   // ── USERS ──
-  getUsers() { return this.get<any>('users', 'order=created_at.desc'); }
-  getUsersWithWallets() { return this.get<any>('users', 'select=*,wallet(*)&order=created_at.desc'); }
+  getUsers(limit = 100) { return this.get<any>('users', `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at&order=created_at.desc&limit=${limit}`); }
+  getUsersWithWallets(limit = 100) { return this.get<any>('users', `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`); }
   getUser(id: string) { return this.get<any>(`users?id=eq.${id}`, 'limit=1'); }
   updateUser(id: string, data: any) { return this.updateRow('users', id, data); }
   deleteUser(id: string) { return this.deleteRow('users', id); }
   countUsers() { return this.count('users'); }
   getUserSessionsForUser(userId: string, limit = 5) {
     return this.get<any>(`sessions?user_id=eq.${userId}&order=last_activity.desc&limit=${limit}`);
+  }
+  getActiveSessionsForUsers(userIds: string[]) {
+    const filter = userIds.map(id => `user_id=eq.${id}`).join(',');
+    return this.get<any>(`sessions?or=(${filter})&logged_out_at=is.null&order=last_activity.desc`);
   }
   getAuditLogsByResource(resourceId: string, limit = 10) {
     return this.get<any>(`audit_log?resource_id=eq.${resourceId}&order=created_at.desc&limit=${limit}`);
@@ -133,7 +137,7 @@ export class AdminService {
   }
 
   // ── WALLET ──
-  getWallets() { return this.get<any>('wallet', 'select=*,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc'); }
+  getWallets(limit = 100) { return this.get<any>('wallet', `select=user_id,balance_main,balance_bonus,updated_at,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc&limit=${limit}`); }
   getWallet(userId: string) { return this.get<any>(`wallet?user_id=eq.${userId}`, 'limit=1'); }
   updateWalletRow(userId: string, data: any) {
     return this.proxy<any>('PATCH', `/wallet?user_id=eq.${userId}`, data);
@@ -184,8 +188,8 @@ export class AdminService {
   getTransactionsByUser(userId: string, limit = 50) {
     return this.get<any>(`transactions?user_id=eq.${userId}&order=created_at.desc&limit=${limit}`);
   }
-  getBetsBySession(sessionCode: string) {
-    return this.get<any>(`bets?session_code=eq.${sessionCode}&order=created_at.desc`);
+  getBetsBySession(sessionCode: string, limit = 200) {
+    return this.get<any>(`bets?session_code=eq.${sessionCode}&order=created_at.desc&limit=${limit}`);
   }
   updateBet(id: string, data: any) { return this.updateRow('bets', id, data); }
   countBets() { return this.count('bets'); }

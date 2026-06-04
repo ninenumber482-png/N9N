@@ -292,7 +292,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.cdr.markForCheck();
     } catch (e: any) {
-      console.warn('[transactions] silent refresh failed', e?.message || e);
+      // silent refresh failed
     }
   }
 

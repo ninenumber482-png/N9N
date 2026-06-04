@@ -5,7 +5,7 @@
    100% SUPABASE SOURCE OF TRUTH — NO LOCALSTORAGE DEPENDENCY
    ============================================================ */
 
-import { supabase } from "../utils/supabase";
+import { supabase, realtimeEnabled } from "../utils/supabase";
 import { DEPOSIT_LOCK_MS, WITHDRAWAL_LOCK_MS } from "../constants";
 
 const now = () => new Date().toISOString();
@@ -76,22 +76,26 @@ export function isWithdrawalLocked(tx) { return getWithdrawalLockRemaining(tx) >
 /* ---------- turnover (Supabase-based) ---------- */
 export async function checkWithdrawEligibility(userId) {
   try {
-    // Only count deposits still LOCKED (turnover_applied < turnover_required)
-    const { data: locks, error } = await supabase
-      .from('deposit_locks')
-      .select('turnover_required, turnover_applied')
-      .eq('user_id', userId);
+    // Turnover gate: cumulative wagered (wallet.total_turnover) must cover the
+    // total requirement (1x of all deposits = SUM of deposit_locks.turnover_required).
+    // We use total_turnover as the source of truth — NOT the per-lock turnover_applied
+    // counter, which can drift from historical bugs. Required counts ALL locks, not
+    // just incomplete ones, so completed deposits aren't dropped from the total.
+    const [walletRes, locksRes] = await Promise.all([
+      supabase.from('wallet').select('total_turnover').eq('user_id', userId).single(),
+      supabase.from('deposit_locks').select('turnover_required').eq('user_id', userId),
+    ]);
 
-    if (error) {
+    if (locksRes.error) {
       return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
     }
 
-    const lockedLocks = (locks || []).filter(r => Number(r.turnover_applied) < Number(r.turnover_required));
-    const totalRequired = lockedLocks.reduce((s, r) => s + Number(r.turnover_required), 0);
-    const totalApplied = lockedLocks.reduce((s, r) => s + Number(r.turnover_applied), 0);
-    const remaining = Math.max(0, totalRequired - totalApplied);
-    const isUnlocked = remaining <= 0;
-    return { isUnlocked, required: totalRequired, achieved: totalApplied, remaining };
+    const totalRequired = (locksRes.data || []).reduce((s, r) => s + Number(r.turnover_required), 0);
+    const totalTurnover = Number(walletRes.data?.total_turnover ?? 0);
+    const achieved = Math.min(totalTurnover, totalRequired);
+    const remaining = Math.max(0, totalRequired - totalTurnover);
+    const isUnlocked = totalTurnover >= totalRequired;
+    return { isUnlocked, required: totalRequired, achieved, remaining };
   } catch {
     return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
   }
@@ -219,18 +223,19 @@ export async function fetchTurnoverSummary(userId) {
     const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
     const totalTurnover = Number(walletRes.data?.total_turnover ?? 0);
 
-    // Only count deposits still LOCKED (turnover_applied < turnover_required)
+    // Required = 1x of ALL deposits (sum every lock, not only incomplete ones).
+    // Progress = cumulative wagered (total_turnover), the authoritative source —
+    // the per-lock turnover_applied counter can be stale, so we ignore it here.
     const { data: locks } = await supabase
       .from('deposit_locks')
-      .select('turnover_required, turnover_applied')
+      .select('turnover_required')
       .eq('user_id', userId);
 
-    const lockedLocks = (locks || []).filter(r => Number(r.turnover_applied) < Number(r.turnover_required));
-    const totalRequired = lockedLocks.reduce((s, r) => s + Number(r.turnover_required), 0);
-    const totalApplied = lockedLocks.reduce((s, r) => s + Number(r.turnover_applied), 0);
-    const remaining = totalRequired - totalApplied;
-    const pct = totalRequired > 0 ? Math.min(100, Math.round((totalApplied / totalRequired) * 100)) : 0;
-    return { required: totalRequired, achieved: totalApplied, remaining, pct, totalDeposited, totalTurnover, isUnlocked: remaining <= 0 };
+    const totalRequired = (locks || []).reduce((s, r) => s + Number(r.turnover_required), 0);
+    const achieved = Math.min(totalTurnover, totalRequired);
+    const remaining = Math.max(0, totalRequired - totalTurnover);
+    const pct = totalRequired > 0 ? Math.min(100, Math.round((totalTurnover / totalRequired) * 100)) : 0;
+    return { required: totalRequired, achieved, remaining, pct, totalDeposited, totalTurnover, isUnlocked: totalTurnover >= totalRequired };
   } catch {
     return { required: 0, achieved: 0, remaining: 0, pct: 0, totalDeposited: 0, totalTurnover: 0, isUnlocked: true };
   }
@@ -268,6 +273,7 @@ export async function fetchUserTransactions(userId, limit = 100) {
 }
 
 export async function subscribeWalletRealtime(userUuid, username, onWalletUpdate, onTxUpdate) {
+  if (!realtimeEnabled) return;
   if (_realtimeChannel) {
     supabase.removeChannel(_realtimeChannel);
     _realtimeChannel = null;

@@ -230,7 +230,7 @@ export class DepositsComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.cdr.markForCheck();
     } catch (e: any) {
-      console.warn('[deposits] silent refresh failed', e?.message || e);
+      // silent refresh failed
     }
   }
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AdminService } from '../../../../core/services/admin.service';
+import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { RealtimeService } from '../../../../core/services/realtime.service';
@@ -76,10 +77,22 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
               @for (u of paginatedUsers; track u.id) {
                 <tr class="border-border hover:bg-muted/30 border-b transition-colors cursor-pointer" (click)="openModal(u)">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
-                    <p class="font-semibold text-foreground">{{ u.display_name || u.username }}</p>
-                    <p class="text-muted-foreground text-[10px]">&#64;{{ u.username }} &middot; {{ u.email }}</p>
-                    <p class="text-muted-foreground text-[9px]">{{ u.country }} &middot; {{ u.phone }}</p>
-                    <p class="text-muted-foreground text-[9px] font-mono mt-0.5 select-all">{{ u.id }}</p>
+                    <div class="flex items-center gap-2">
+                      <span class="relative flex h-2.5 w-2.5 shrink-0">
+                        @if (isOnline(u.id)) {
+                          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                        } @else {
+                          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-zinc-500"></span>
+                        }
+                      </span>
+                      <div>
+                        <p class="font-semibold text-foreground">{{ u.display_name || u.username }}</p>
+                        <p class="text-muted-foreground text-[10px]">&#64;{{ u.username }} &middot; {{ u.email }}</p>
+                        <p class="text-muted-foreground text-[9px]">{{ u.country }} &middot; {{ u.phone }}</p>
+                        <p class="text-muted-foreground text-[9px] font-mono mt-0.5 select-all">{{ u.id }}</p>
+                      </div>
+                    </div>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
                     <span class="bg-muted text-foreground rounded px-2 py-0.5 text-[10px] font-medium">{{ u.role }}</span>
@@ -461,6 +474,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   previewImage: string | null = null;
   isSuperadmin = false;
   private destroy$ = new Subject<void>();
+  private onlineTimer: ReturnType<typeof setInterval> | null = null;
 
   currentPage = 1;
   pageSize = 20;
@@ -487,6 +501,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   ];
 
   walletMap: Record<string, { balance_main: number; balance_bonus: number }> = {};
+  sessionMap: Record<string, { last_activity: string; device_info: any; ip_address: string }> = {};
 
   editModal = {
     open: false,
@@ -528,9 +543,14 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.load();
     this.realtime.subscribeUsers();
     this.realtime.users$.pipe(takeUntil(this.destroy$)).subscribe(() => this.silentRefresh());
+    // Refresh online status every 30s
+    this.onlineTimer = setInterval(() => {
+      if (this.users.length) this.loadOnlineStatus(this.users);
+    }, 30000);
   }
 
   ngOnDestroy() {
+    if (this.onlineTimer) clearInterval(this.onlineTimer);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -542,7 +562,9 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.buildWalletMap(fresh);
       this.applyFilter();
       this.cdr.markForCheck();
-    } catch {}
+    } catch (e) {
+      if (environment.production) console.error('[users] refresh failed:', e);
+    }
   }
 
   async load() {
@@ -553,6 +575,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       const data = await this.admin.getUsersWithWallets();
       this.users = data;
       this.buildWalletMap(data);
+      this.loadOnlineStatus(data);
       this.applyFilter();
     } catch (e: any) {
       this.error = e?.message || 'Unknown error';
@@ -561,6 +584,33 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.loading = false;
       this.cdr.markForCheck();
     }
+  }
+
+  private async loadOnlineStatus(users: any[]) {
+    try {
+      const userIds = users.map(u => u.id);
+      if (!userIds.length) return;
+      const sessions = await this.admin.getActiveSessionsForUsers(userIds);
+      if (sessions) {
+        this.sessionMap = {};
+        for (const s of sessions) {
+          // Keep the most recent session per user
+          if (!this.sessionMap[s.user_id] || new Date(s.last_activity) > new Date(this.sessionMap[s.user_id].last_activity)) {
+            this.sessionMap[s.user_id] = s;
+          }
+        }
+      }
+    } catch (e) {
+      if (environment.production) console.error('[users] loadOnlineStatus failed:', e);
+    }
+  }
+
+  isOnline(userId: string): boolean {
+    const session = this.sessionMap[userId];
+    if (!session) return false;
+    const lastActive = new Date(session.last_activity).getTime();
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    return lastActive > fiveMinAgo;
   }
 
   private buildWalletMap(data: any[]) {

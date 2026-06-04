@@ -12,7 +12,12 @@ export default class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch() {}
+  componentDidCatch(error, info) {
+    // Log error for debugging (production-safe — no sensitive data)
+    if (import.meta.env.DEV) {
+      console.error('[ErrorBoundary]', error, info?.componentStack);
+    }
+  }
 
   render() {
     if (this.state.hasError) {

@@ -224,7 +224,7 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.cdr.markForCheck();
     } catch (e: any) {
-      console.warn('[withdrawals] silent refresh failed', e?.message || e);
+      // silent refresh failed
     }
   }
 

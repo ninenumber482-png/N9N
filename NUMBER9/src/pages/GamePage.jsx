@@ -92,6 +92,7 @@ export default function GamePage() {
   const auth = useStore((s) => s.auth);
   const balance = useStore((s) => s.availableBalance);
   const fetchBalances = useStore((s) => s.fetchBalances);
+  const kingVersion = useStore((s) => s._kingVersion || 0);
   const { price, prev: prevPrice, up, down, series } = useMarketPrice();
 
   /* Prefer backend session (fetched from API) over local clock computation */
@@ -105,6 +106,13 @@ export default function GamePage() {
     refreshKingData(auth.id).then(() => setVersion((v) => v + 1));
     fetchBalances();
   }, [auth?.id, fetchBalances]);
+
+  // Sync king.js cache updates (from App.jsx polling) to local version counter
+  useEffect(() => {
+    if (kingVersion > 0) {
+      refreshKingData(auth?.id).then(() => setVersion((v) => v + 1));
+    }
+  }, [kingVersion]);
 
   // Subscribe to realtime bet settlements via App.jsx (App.jsx watches _kingVersion)
 
@@ -714,28 +722,27 @@ function ArenaStage({ session, now }) {
   const prevR = getSettled(prev);
   const prevDisplay = "N9K-" + toWIBCode(prev);
 
-  /* previous session is live-drawing */
-  if (prevSt === "RESULTING")
-    return <DrawingView code={prevDisplay} />;
-
-  /* previous session result exists (settled or ended) */
-  if ((prevSt === "SETTLED" || prevSt === "ENDED") && prevR)
-    return <ResultReveal result={prevR} />;
-
-  /* previous session ended but backend hasn't published result yet
-     — show "pending" instead of falling back to an older result     */
-  if (prevSt === "ENDED" && !prevR)
-    return <PendingResult code={prevDisplay} />;
-
-  /* current session is drawing */
+  /* 1. Current session is drawing — always show drawing first */
   if (session.status === "RESULTING")
     return <DrawingView code={session.displayCode} />;
 
-  /* current session already has a result */
-  if (cur) return <ResultReveal result={cur} />;
+  /* 2. Current session already has a result — show it */
+  if (cur) return <ResultReveal key={cur.sessionCode} result={cur} />;
 
-  /* latest settled result (only shown when no prev session has ended yet) */
-  if (latest) return <ResultReveal result={latest} />;
+  /* 3. Previous session is live-drawing (current session hasn't settled yet) */
+  if (prevSt === "RESULTING")
+    return <DrawingView code={prevDisplay} />;
+
+  /* 4. Previous session result exists — brief transition display */
+  if ((prevSt === "SETTLED" || prevSt === "ENDED") && prevR)
+    return <ResultReveal key={prevR.sessionCode} result={prevR} />;
+
+  /* 5. Previous session ended but no result yet */
+  if (prevSt === "ENDED" && !prevR)
+    return <PendingResult code={prevDisplay} />;
+
+  /* 6. Latest settled result (fallback) */
+  if (latest) return <ResultReveal key={latest.sessionCode} result={latest} />;
 
   return <EngineState session={session} />;
 }

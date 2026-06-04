@@ -2,9 +2,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
 };
 
 const json = (body: unknown, status = 200) =>
@@ -24,6 +24,27 @@ export default {
       if (!supabaseUrl || !serviceRoleKey) return json({ error: 'Server misconfiguration' }, 500)
 
       const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+      // Auth check: require valid admin session token
+      const token = req.headers.get('x-session-token') || ''
+      if (!token) return json({ error: 'Unauthorized' }, 401)
+
+      const { data: session, error: sessErr } = await supabase
+        .from('sessions')
+        .select('id, user_id, logged_out_at, expires_at')
+        .eq('token_hash', token)
+        .single()
+
+      if (sessErr || !session || session.logged_out_at) return json({ error: 'Invalid session' }, 401)
+      if (session.expires_at && new Date(session.expires_at) < new Date()) return json({ error: 'Session expired' }, 401)
+
+      const { data: adminUser } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user_id)
+        .single()
+
+      if (!adminUser || adminUser.role !== 'admin') return json({ error: 'Admin access required' }, 403)
 
       const dupIds = [
         '6bf60024-6d81-4a42-8c73-8d5b54f93a56',

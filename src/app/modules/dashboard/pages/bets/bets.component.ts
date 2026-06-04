@@ -131,7 +131,7 @@ export class BetsComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.cdr.markForCheck();
     } catch (e: any) {
-      console.warn('Bets silentRefresh failed', e);
+      // silent refresh failed
     }
   }
 

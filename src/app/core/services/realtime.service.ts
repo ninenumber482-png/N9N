@@ -50,16 +50,13 @@ export class RealtimeService implements OnDestroy {
       const channel = this.supabase.channel('health-check');
       channel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] WebSocket connected');
           this.wsEnabled = true;
           this.supabase.removeChannel(channel);
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          console.warn('[Realtime] WebSocket failed, using polling fallback');
           this.wsEnabled = false;
         }
       });
     } catch (e) {
-      console.warn('[Realtime] WebSocket error, using polling fallback');
       this.wsEnabled = false;
     }
   }
@@ -312,7 +309,6 @@ export class RealtimeService implements OnDestroy {
         }
       }
     }
-    console.log('[Realtime] Transaction updated:', payload.eventType, tx?.id?.slice(0, 8));
   }
 
   private async handleWalletChange(payload: any) {
@@ -329,7 +325,6 @@ export class RealtimeService implements OnDestroy {
         this.walletsSubject.next(updated);
       }
     }
-    console.log('[Realtime] Wallet updated:', payload.eventType, payload.new?.user_id?.slice(0, 8));
   }
 
   private async handleBetChange(payload: any) {
@@ -357,7 +352,6 @@ export class RealtimeService implements OnDestroy {
         }
       }
     }
-    console.log('[Realtime] Bet updated:', payload.eventType, bet?.id?.slice(0, 8));
   }
 
   private async handleKycChange(payload: any) {
@@ -385,7 +379,6 @@ export class RealtimeService implements OnDestroy {
         }
       }
     }
-    console.log('[Realtime] KYC updated:', payload.eventType, kyc?.id?.slice(0, 8));
   }
 
   private async handleReferralChange(payload: any) {
@@ -402,7 +395,6 @@ export class RealtimeService implements OnDestroy {
         this.referralsSubject.next(updated);
       }
     }
-    console.log('[Realtime] Referral updated:', payload.eventType, payload.new?.id?.slice(0, 8));
   }
 
   unsubscribeAll() {

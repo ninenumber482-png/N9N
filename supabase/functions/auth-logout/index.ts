@@ -20,6 +20,18 @@ export default {
     }
 
     try {
+      // Invalidate session — delete from sessions table so token can't be reused
+      await supabase
+        .from("sessions")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Also clear session token on users table
+      await supabase
+        .from("users")
+        .update({ session_token: null, session_expires_at: null })
+        .eq("id", user.id);
+
       // Log logout event
       await supabase.from("n9_audit_logs").insert({
         user_id: user.id,

@@ -18,7 +18,7 @@ function checkRateLimit(token: string): boolean {
 }
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
   "Access-Control-Expose-Headers": "content-range",
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
   if (!supabaseUrl || !serviceRoleKey) {
     return new Response(
-      JSON.stringify({ error: 'Server misconfiguration: missing N9_SERVICE_ROLE_KEY' }),
+      JSON.stringify({ error: 'Server misconfiguration' }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     )
   }

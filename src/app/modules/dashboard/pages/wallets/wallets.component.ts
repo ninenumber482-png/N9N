@@ -405,7 +405,7 @@ export class WalletsComponent implements OnInit, OnDestroy {
       if (a) { this.accounts = a; this.accountsError = false; }
       this.cdr.markForCheck();
     } catch (e: any) {
-      console.warn('[wallets] silent refresh failed', e?.message || e);
+      // silent refresh failed
     }
   }
 
