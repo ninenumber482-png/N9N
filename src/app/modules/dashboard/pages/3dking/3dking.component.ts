@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { AdminService } from '../../../../core/services/admin.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 
@@ -109,7 +108,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
 @Component({
   selector: 'app-3dking',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule],
+  imports: [CommonModule],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">

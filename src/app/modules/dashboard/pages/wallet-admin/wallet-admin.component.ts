@@ -321,7 +321,7 @@ type TabId = 'deposits' | 'withdrawals' | 'turnover';
 
     <!-- CONFIRM DIALOG -->
     <app-confirm-dialog [open]="!!confirmAction" [title]="confirmTitle" [message]="confirmMessage"
-      (confirm)="onConfirm()" (cancel)="confirmAction = null" />
+      (onConfirm)="onConfirm()" (onCancel)="confirmAction = null" />
   `,
 })
 export class WalletAdminComponent implements OnInit {

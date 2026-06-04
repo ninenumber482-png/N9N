@@ -59,7 +59,7 @@ function mapBetRow(row) {
     result: row.result,
     createdAt: row.created_at,
     placedAt: row.created_at,
-    settledAt: row.updated_at || null,
+    settledAt: row.settled_at || null,
   });
 }
 
@@ -201,7 +201,7 @@ export async function refreshKingData(userId = _userId) {
     const [resultsRes, betsRes] = await Promise.all([
       supabase.from("king_results").select("session_code,d1,d2,d3,total,big_small,odd_even,created_at").order("session_code", { ascending: false }).limit(100),
       userId
-        ? supabase.from("bets").select("id,session_code,bet_code,selection,stake,potential_payout,actual_payout,status,result,created_at,updated_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(200)
+        ? supabase.from("bets").select("id,session_code,bet_code,selection,stake,potential_payout,actual_payout,status,result,created_at,settled_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(200)
         : Promise.resolve({ data: [], error: null }),
     ]);
 

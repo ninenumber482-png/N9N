@@ -116,11 +116,11 @@ export class AdminService {
   }
 
   // ── USERS ──
-  getUsers(limit = 100) { return this.get<any>('users', `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at&order=created_at.desc&limit=${limit}`); }
+  // getUsers unused — getUsersWithWallets is used instead
   getUsersWithWallets(limit = 100) { return this.get<any>('users', `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`); }
-  getUser(id: string) { return this.get<any>(`users?id=eq.${id}`, 'limit=1'); }
+  // getUser unused — queries by UUID
   updateUser(id: string, data: any) { return this.updateRow('users', id, data); }
-  deleteUser(id: string) { return this.deleteRow('users', id); }
+  // deleteUser unused — no delete UI
   countUsers() { return this.count('users'); }
   getUserSessionsForUser(userId: string, limit = 5) {
     return this.get<any>(`sessions?user_id=eq.${userId}&order=last_activity.desc&limit=${limit}`);
@@ -160,9 +160,7 @@ export class AdminService {
   updateTransaction(id: string, data: any) { return this.updateRow('transactions', id, data); }
   countTransactions() { return this.count('transactions'); }
   countPending(type: string) { return this.count('transactions', `type=eq.${type}&status=eq.PENDING`); }
-  async resolveUserId(usernameOrId: string): Promise<string> {
-    return this.resolveAdminId(usernameOrId);
-  }
+  // resolveUserId unused (identical to resolveAdminId)
   async approveDeposit(txId: string, usernameOrId: string) {
     const adminId = await this.resolveAdminId(usernameOrId);
     return this.rpc('approve_deposit', { p_tx_id: txId, p_admin_id: adminId });
@@ -188,11 +186,8 @@ export class AdminService {
   getTransactionsByUser(userId: string, limit = 50) {
     return this.get<any>(`transactions?user_id=eq.${userId}&order=created_at.desc&limit=${limit}`);
   }
-  getBetsBySession(sessionCode: string, limit = 200) {
-    return this.get<any>(`bets?session_code=eq.${sessionCode}&order=created_at.desc&limit=${limit}`);
-  }
-  updateBet(id: string, data: any) { return this.updateRow('bets', id, data); }
-  countBets() { return this.count('bets'); }
+  // getBetsBySession unused
+  // updateBet unused — bets are read-only
 
   // ── 3D KING ENGINE ──
   getKingResults(limit = 50) {
@@ -227,7 +222,7 @@ export class AdminService {
 
   // ── REFERRALS ──
   getReferrals() { return this.get<any>('referrals', 'select=*,creator:users!referrals_created_by_fkey(username,display_name)&order=created_at.desc'); }
-  getReferralStats() { return this.rpc('get_referral_stats'); }
+  // getReferralStats unused — data from referrals table directly
   async generateReferralCode(usernameOrId: string): Promise<string> {
     const adminId = await this.resolveAdminId(usernameOrId);
     const result = await this.rpc('generate_referral_code', { p_admin_id: adminId });
@@ -287,9 +282,8 @@ export class AdminService {
   getUserAudit(limit = 50) { return this.get<any>(`user_audit?order=created_at.desc&limit=${limit}`); }
   getSecurityAlerts(limit = 50) { return this.get<any>(`security_alerts?order=created_at.desc&limit=${limit}`); }
   getFailedLogins(limit = 50) { return this.get<any>(`failed_logins?order=attempted_at.desc&limit=${limit}`); }
-
-  // ── METRICS ──
-  getMetrics() { return this.get<any>('metrics', 'order=recorded_at.desc'); }
+  // getTransactionAudit unused — audit_component uses getUserAudit instead
+  // getMetrics unused
 
   // ── GAME SESSIONS (grouped from bets table by session_code) ──
   async getGameSessions(): Promise<any[]> {
