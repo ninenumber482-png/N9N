@@ -5,6 +5,7 @@ import { RoleGuard } from '../../core/guards/role.guard';
 import { OverviewComponent } from './pages/overview/overview.component';
 import { UsersComponent } from './pages/users/users.component';
 import { TransactionsComponent } from './pages/transactions/transactions.component';
+import { WalletAdminComponent } from './pages/wallet-admin/wallet-admin.component';
 import { DepositsComponent } from './pages/deposits/deposits.component';
 import { WithdrawalsComponent } from './pages/withdrawals/withdrawals.component';
 import { WalletsComponent } from './pages/wallets/wallets.component';
@@ -31,8 +32,10 @@ const routes: Routes = [
       { path: 'gaming', component: GamingComponent },
       { path: 'users', component: UsersComponent },
       { path: 'transactions', component: TransactionsComponent },
-      { path: 'deposits', component: DepositsComponent },
-      { path: 'withdrawals', component: WithdrawalsComponent },
+      { path: 'wallet', component: WalletAdminComponent },
+      { path: 'deposits', redirectTo: 'wallet', pathMatch: 'full' },
+      { path: 'withdrawals', redirectTo: 'wallet', pathMatch: 'full' },
+      { path: 'turnover', redirectTo: 'wallet', pathMatch: 'full' },
       { path: 'wallets', component: WalletsComponent },
       { path: 'bets', component: BetsComponent },
       { path: 'kyc', component: KycComponent },
