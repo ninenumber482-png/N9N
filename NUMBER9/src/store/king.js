@@ -16,6 +16,7 @@
 
 
 import { supabase } from '../utils/supabase';
+import { apiRpc } from '../utils/api';
 import { useStore } from './useStore';
 
 /* ---- Supabase backend (100% LIVE) ---- */
@@ -259,8 +260,6 @@ const codeFor3 = (sel) => (typeof sel === "number" ? `TOTAL_${sel}` : sel);
 export async function placeBid({ sessionCode, selections, stake, userId = _userId }) {
   if (hasBackend() && userId) {
     try {
-      if (!supabase) return { ok: false, error: "Backend unavailable. Cannot place bet." };
-
       const p_selections = selections.map((selection) => ({
         bet_code: codeFor3(selection),
         selection: String(selection),
@@ -268,13 +267,11 @@ export async function placeBid({ sessionCode, selections, stake, userId = _userI
         potential_payout: payoutFor(selection, stake),
       }));
 
-      const { error } = await supabase.rpc("place_bet", {
+      await apiRpc("place_bet", {
         p_user_id: userId,
         p_session_code: sessionCode,
         p_selections,
       });
-
-      if (error) throw error;
 
       await refreshKingData(userId);
       // Bump _kingVersion so App.jsx polling observer (and any subscribers

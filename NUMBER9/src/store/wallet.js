@@ -6,7 +6,7 @@
    ============================================================ */
 
 import { supabase, realtimeEnabled } from "../utils/supabase";
-import { apiSelect, apiSelectAll } from "../utils/api";
+import { apiSelect, apiSelectAll, apiRpc, apiInvoke } from "../utils/api";
 import { DEPOSIT_LOCK_MS } from "../constants";
 
 
@@ -105,7 +105,7 @@ export async function requestDeposit(params) {
     const proofUrl = await uploadProof(params.userUuid, params.proof);
     const idempotencyKey = newIdempotencyKey();
 
-    const { data, error } = await supabase.rpc('submit_deposit', {
+    const data = await apiRpc('submit_deposit', {
       p_user_id: params.userUuid,
       p_amount: amt,
       p_method: params.method || 'Transfer Bank',
@@ -113,30 +113,18 @@ export async function requestDeposit(params) {
       p_idempotency_key: idempotencyKey,
     });
 
-    if (error) {
-      if (error.code === '23505') {
-        return { ok: false, error: "Deposit already pending (duplicate detected)" };
-      }
-      return { ok: false, error: "Failed to create deposit request" };
-    }
-
     return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
   } catch (e) {
-    return { ok: false, error: e?.message || "Network error" };
+    const msg = e?.message || "Network error";
+    if (msg.includes('23505')) return { ok: false, error: "Deposit already pending (duplicate detected)" };
+    return { ok: false, error: "Failed to create deposit request" };
   }
 }
 
 async function uploadProof(userUuid, base64DataUrl) {
   if (!base64DataUrl || !base64DataUrl.startsWith('data:')) return null;
   try {
-    // Storage RLS can't see our custom x-user-token identity, so direct uploads are
-    // rejected. The upload-proof Edge Function verifies the token server-side and
-    // uploads with the service role into proofs/<userId>/. (userUuid is enforced
-    // server-side from the token, not trusted from the client.)
-    const { data, error } = await supabase.functions.invoke('upload-proof', {
-      body: { dataUrl: base64DataUrl, kind: 'deposit' },
-    });
-    if (error) { return null; }
+    const data = await apiInvoke('upload-proof', { dataUrl: base64DataUrl, kind: 'deposit' });
     return data?.url || null;
   } catch {
     return null;
@@ -161,7 +149,7 @@ export async function requestWithdraw(params) {
     }
 
     const idempotencyKey = newIdempotencyKey();
-    const { data, error } = await supabase.rpc('submit_withdrawal', {
+    const data = await apiRpc('submit_withdrawal', {
       p_user_id: params.userUuid,
       p_amount: amt,
       p_method: params.method || 'Bank Transfer',
@@ -171,16 +159,11 @@ export async function requestWithdraw(params) {
       p_idempotency_key: idempotencyKey,
     });
 
-    if (error) {
-      if (error.code === '23505') {
-        return { ok: false, error: "Withdrawal already pending (duplicate)" };
-      }
-      return { ok: false, error: "Failed to create withdrawal request" };
-    }
-
     return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
   } catch (e) {
-    return { ok: false, error: e?.message || "Network error" };
+    const msg = e?.message || "Network error";
+    if (msg.includes('23505')) return { ok: false, error: "Withdrawal already pending (duplicate)" };
+    return { ok: false, error: "Failed to create withdrawal request" };
   }
 }
 

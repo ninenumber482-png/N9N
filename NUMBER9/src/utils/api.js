@@ -33,3 +33,31 @@ export async function apiSelectAll(table, query = '') {
   if (!res.ok) return null;
   return res.json();
 }
+
+export async function apiRpc(name, params = {}) {
+  const h = getHeaders();
+  const res = await fetch(`${url}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: h,
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error || body?.message || `RPC ${name} failed`);
+  }
+  return res.json();
+}
+
+export async function apiInvoke(functionName, body = {}) {
+  const h = getHeaders();
+  const res = await fetch(`${url}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: h,
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `Function ${functionName} failed`);
+  }
+  return res.json();
+}
