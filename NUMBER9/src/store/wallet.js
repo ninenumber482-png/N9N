@@ -6,6 +6,7 @@
    ============================================================ */
 
 import { supabase, realtimeEnabled } from "../utils/supabase";
+import { apiSelect, apiSelectAll } from "../utils/api";
 import { DEPOSIT_LOCK_MS } from "../constants";
 
 
@@ -206,19 +207,10 @@ export async function fetchUserBank(userId) {
 
 export async function fetchTurnoverSummary(userId) {
   try {
-    const walletRes = await supabase
-      .from('wallet')
-      .select('total_deposited')
-      .eq('user_id', userId)
-      .single();
-    const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
+    const walletRow = await apiSelect('wallet', 'total_deposited', 'user_id', userId);
+    const totalDeposited = Number(walletRow?.total_deposited ?? 0);
 
-    const { data: lockRows } = await supabase
-      .from('deposit_locks')
-      .select('amount, turnover_required, turnover_applied, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
-
+    const lockRows = await apiSelectAll('deposit_locks', `user_id=eq.${userId}&select=amount,turnover_required,turnover_applied,created_at&order=created_at.asc`);
     if (!lockRows || lockRows.length === 0) return defaultTurnover();
 
     const locks = (lockRows || []).map(r => {

@@ -1,5 +1,6 @@
 /* eslint-disable no-empty */
 import { supabase, setUserToken, realtimeEnabled } from "../utils/supabase";
+import { apiSelect } from "../utils/api";
 import { create } from "zustand";
 import { subscribeWalletRealtime, unsubscribeWalletRealtime } from "./wallet";
 import { startHeartbeat, stopHeartbeat } from "../utils/heartbeat";
@@ -445,6 +446,21 @@ export const useStore = create((set, get) => ({
   fetchProfile: async () => {
     const authData = readJSON(LS.auth, null);
     if (!authData?.id) return null;
+    try {
+      const data = await apiSelect('users', 'id,username,display_name,email,phone,country,role,bank_name,bank_account_number,bank_account_name,kyc_status,referral_code,created_at,approved_at', 'id', authData.id);
+      if (data) {
+        return {
+          uuid: data.id, id: data.id,
+          username: data.username, displayName: data.display_name,
+          email: data.email || '', phone: data.phone || '',
+          country: data.country || '', role: data.role || 'user',
+          accountStatus: data.account_status, kycStatus: data.kyc_status,
+          referralCode: data.referral_code || '',
+          bankName: data.bank_name || '', bankAccountNumber: data.bank_account_number || '', bankAccountName: data.bank_account_name || '',
+          createdAt: data.created_at, approvedAt: data.approved_at,
+        };
+      }
+    } catch {}
     return _fallbackProfile(authData);
   },
 
