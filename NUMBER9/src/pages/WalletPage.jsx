@@ -254,7 +254,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
           <div className="flex justify-between"><span className="text-zinc-400">{t('deposit.proof')}</span><span className={`font-semibold ${proof ? "text-emerald-400" : "text-zinc-500"}`}>{proof ? t('common.attached') : t('common.required')}</span></div>
         </div>
         <button type="button" onClick={() => setShowConfirm(true)} disabled={loading || lockRemaining > 0}
-          className="mt-4 w-full rounded-lg bg-yellow-400 py-3.5 text-base font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50">
+          className="mt-4 w-full rounded-lg bg-yellow-400 py-3.5 text-sm font-extrabold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50">
           {loading ? t('common.processing') : lockRemaining > 0 ? t('deposit.locked_timer_btn', { timer: fmtTimer(lockRemaining) }) : t('deposit.confirm')}
         </button>
       </div>
@@ -428,7 +428,7 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
           <div className="flex justify-between"><span className="text-zinc-400">{t('withdraw.fee')}</span><span className="font-semibold text-white">{(sel?.note?.split("·") ?? [])[1]?.trim?.() || t('withdraw.fee_free')}</span></div>
         </div>
         <button type="button" onClick={() => setShowConfirm(true)} disabled={loading || !amount || Number(amount) <= 0 || hasActiveTurnover || (showBank && !hasFinalBank)}
-          className="mt-4 w-full rounded-lg bg-yellow-400 py-3.5 text-base font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50">
+          className="mt-4 w-full rounded-lg bg-yellow-400 py-3.5 text-sm font-extrabold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50">
           {loading ? t('common.processing') : hasActiveTurnover ? t('withdraw.locked_required', { amount: fmt(remainingTurnover) }) : !hasFinalBank && showBank ? t('withdraw.add_bank') : t('withdraw.request')}
         </button>
       </div>

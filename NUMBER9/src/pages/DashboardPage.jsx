@@ -156,7 +156,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-wrap gap-3 pt-4 border-t border-[#1f2128]">
-          <Link to={p('/deposit')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-400 text-black font-semibold text-sm hover:bg-yellow-300 transition">
+          <Link to={p('/deposit')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-400 text-black font-extrabold text-sm hover:bg-yellow-300 transition">
             <Icon.ArrowDown size={14} /> {t('dashboard.deposit')}
           </Link>
           <Link to={p('/withdraw')} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#1f2128] text-white font-semibold text-sm hover:border-white/30 transition">
