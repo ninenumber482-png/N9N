@@ -28,7 +28,7 @@ export async function apiSelect(table, columns, eqField, eqValue) {
 
 export async function apiSelectAll(table, query = '') {
   const h = getHeaders();
-  const sep = query ? '&' : '';
+  const sep = query ? '?' : '';
   const res = await fetch(`${url}/rest/v1/${table}${sep}${query}`, { headers: h });
   if (!res.ok) return null;
   return res.json();
