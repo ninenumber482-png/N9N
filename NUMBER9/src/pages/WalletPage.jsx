@@ -507,7 +507,7 @@ function TurnoverTab({ auth, _rtTick, aliveRef, t, setToast }) {
           <div className="mt-3 h-2.5 overflow-hidden rounded-lg bg-[#1f2128]">
             <div className="h-full bg-yellow-400 transition-all duration-700" style={{ width: `${data.isUnlocked ? 100 : data.pct}%` }} />
           </div>
-          <div className="mt-3 grid grid-cols-4 gap-1.5">
+          <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
             {[[t('turnover.deposit'), fmt(data.totalDeposited)], [t('turnover.required'), fmt(data.required)], [t('turnover.done'), fmt(data.achieved), true], [t('turnover.left'), fmt(data.remaining)]].map(([l, v, a]) => (
               <div key={l} className="rounded-lg border border-[#1f2128] bg-[#13151c] px-1.5 py-1.5 lg:px-2">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{l}</p>

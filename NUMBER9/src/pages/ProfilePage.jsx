@@ -151,7 +151,7 @@ export default function ProfilePage() {
         )}
 
         <Section icon={Icon.Shield} title={t('profile.verification')}>
-          <div className="grid grid-cols-4 gap-0">
+          <div className="grid grid-cols-2 gap-0 sm:grid-cols-4">
             {KYC.map((s) => (
               <div key={s.l} className="flex flex-col items-center gap-1.5 py-3 px-1 border-r last:border-r-0 border-[#1f2128]">
                 <span className={`grid h-7 w-7 rounded-full place-items-center text-xs font-extrabold ${s.done ? "bg-yellow-400 text-black" : "border border-[#1f2128] text-zinc-600"}`}>

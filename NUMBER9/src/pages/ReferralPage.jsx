@@ -46,7 +46,7 @@ export default function ReferralPage() {
                   {copied ? <><Icon.Check size={14} /> {t('referral.copied')}</> : <><Icon.Copy size={14} /> {t('referral.copy')}</>}
                 </button>
               </div>
-              <div className="mt-3 grid grid-cols-4 gap-1.5">
+              <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                 {[
                   [t('referral.total'), '—'],
                   [t('referral.active_users'), '—'],

@@ -136,7 +136,7 @@ export default function LandingPage() {
       <section id="about" className="px-4 py-20 md:py-32 bg-[#0c0e14] border-t border-[#1f2128]">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-sm font-black tracking-widest text-yellow-400 mb-4 uppercase">{t('landing.about_badge')}</p>
-          <h2 className="text-5xl font-black mb-8 leading-tight">
+          <h2 className="text-3xl sm:text-5xl font-black mb-8 leading-tight">
             <div>{t('landing.about_headline_1')}</div>
             <div>{t('landing.about_headline_2')}</div>
             <div>{t('landing.about_headline_3')}</div>
