@@ -448,6 +448,7 @@ export const id = {
     deposit: 'Deposit',
     required: 'Diperlukan',
     done: 'Selesai',
+    achieved: 'Tercapai',
     left: 'Sisa',
     breakdown: 'Rincian per Aktivitas',
     no_activity: 'Belum ada aktivitas.',

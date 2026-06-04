@@ -448,6 +448,7 @@ export const en = {
     deposit: 'Deposit',
     required: 'Required',
     done: 'Done',
+    achieved: 'Achieved',
     left: 'Left',
     breakdown: 'Breakdown by Activity',
     no_activity: 'No activity yet.',
