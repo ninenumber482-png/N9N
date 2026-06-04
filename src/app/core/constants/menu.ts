@@ -15,11 +15,9 @@ export class Menu {
       group: 'Finance',
       separator: true,
       items: [
-        { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposits', route: '/deposits' },
-        { icon: 'assets/icons/heroicons/outline/arrow-sm-up.svg', label: 'Withdrawals', route: '/withdrawals' },
+        { icon: 'assets/icons/heroicons/outline/credit-card.svg', label: 'Wallet', route: '/wallet' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Transactions', route: '/transactions' },
         { icon: 'assets/icons/heroicons/outline/cube.svg', label: 'Wallets', route: '/wallets' },
-        { icon: 'assets/icons/heroicons/outline/scale.svg', label: 'Turnover Analytics', route: '/turnover' },
       ],
     },
     {
