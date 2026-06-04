@@ -204,49 +204,32 @@ export async function fetchUserBank(userId) {
   return { bankName: '', bankAccountNumber: '', bankAccountName: '' };
 }
 
-export async function fetchTurnoverSummary(userId) {
+export async function fetchTurnoverSummary(_userId) { // eslint-disable-line no-unused-vars
   try {
-    const walletRes = await supabase
-      .from('wallet')
-      .select('total_deposited')
-      .eq('user_id', userId)
-      .single();
+    const { data, error } = await supabase.rpc('get_my_wallet_summary');
+    if (error || !data || data.error) return defaultTurnover();
 
-    const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
-
-    // Per-deposit turnover (1x each). Each deposit is its own lock; we expose every
-    // lock so the UI can show a per-deposit breakdown (done deposits "reset out",
-    // outstanding ones show their own progress). The withdrawal gate only counts
-    // outstanding (incomplete) locks — completed deposits no longer require anything.
-    const { data: lockRows } = await supabase
-      .from('deposit_locks')
-      .select('amount, turnover_required, turnover_applied, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
-
-    const locks = (lockRows || []).map(r => {
-      const required = Number(r.turnover_required);
-      const applied = Math.min(Number(r.turnover_applied), required);
-      const remaining = Math.max(0, required - applied);
-      return {
-        amount: Number(r.amount),
-        required,
-        applied,
-        remaining,
-        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100,
-        done: remaining <= 0,
-      };
-    });
-
-    const outstanding = locks.filter(l => !l.done);
-    const required = outstanding.reduce((s, l) => s + l.required, 0);
-    const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
-    const remaining = Math.max(0, required - achieved);
-    const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
-    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
+    const totalDeposited = Number(data.total_deposited ?? 0);
+    const lockRemaining = Number(data.lock_remaining ?? 0);
+    const totalTurnover = Number(data.total_turnover ?? 0);
+    const totalRequired = lockRemaining + totalTurnover;
+    const pct = totalRequired > 0 ? Math.min(100, Math.round((totalTurnover / totalRequired) * 100)) : 100;
+    return {
+      required: totalRequired,
+      achieved: totalTurnover,
+      remaining: lockRemaining,
+      pct,
+      totalDeposited,
+      locks: [],
+      isUnlocked: data.is_unlocked !== false,
+    };
   } catch {
-    return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: true };
+    return defaultTurnover();
   }
+}
+
+function defaultTurnover() {
+  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: true };
 }
 
 export async function fetchUserTransactions(userId, limit = 100) {
