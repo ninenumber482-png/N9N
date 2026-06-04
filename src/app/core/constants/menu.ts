@@ -17,7 +17,6 @@ export class Menu {
       items: [
         { icon: 'assets/icons/heroicons/outline/credit-card.svg', label: 'Wallet', route: '/wallet' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Transactions', route: '/transactions' },
-        { icon: 'assets/icons/heroicons/outline/cube.svg', label: 'Wallets', route: '/wallets' },
       ],
     },
     {

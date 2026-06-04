@@ -6,7 +6,6 @@ import { OverviewComponent } from './pages/overview/overview.component';
 import { UsersComponent } from './pages/users/users.component';
 import { TransactionsComponent } from './pages/transactions/transactions.component';
 import { WalletAdminComponent } from './pages/wallet-admin/wallet-admin.component';
-import { WalletsComponent } from './pages/wallets/wallets.component';
 import { BetsComponent } from './pages/bets/bets.component';
 import { KycComponent } from './pages/kyc/kyc.component';
 import { AuditComponent } from './pages/audit/audit.component';
@@ -33,7 +32,7 @@ const routes: Routes = [
       { path: 'deposits', redirectTo: 'wallet', pathMatch: 'full' },
       { path: 'withdrawals', redirectTo: 'wallet', pathMatch: 'full' },
       { path: 'turnover', redirectTo: 'wallet', pathMatch: 'full' },
-      { path: 'wallets', component: WalletsComponent },
+      { path: 'wallets', redirectTo: 'wallet', pathMatch: 'full' },
       { path: 'bets', component: BetsComponent },
       { path: 'kyc', component: KycComponent },
       { path: 'audit', component: AuditComponent },

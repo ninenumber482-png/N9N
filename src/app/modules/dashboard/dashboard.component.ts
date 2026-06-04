@@ -8,7 +8,6 @@ const PAGE_ORDER = [
   { route: '/users', label: 'Users' },
   { route: '/transactions', label: 'Transactions' },
   { route: '/wallet', label: 'Wallet' },
-  { route: '/wallets', label: 'Wallets' },
   { route: '/bets', label: 'Bets' },
   { route: '/kyc', label: 'KYC' },
   { route: '/audit', label: 'Audit' },
