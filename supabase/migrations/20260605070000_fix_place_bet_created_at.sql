@@ -1,15 +1,12 @@
--- NUMBER9 — Fix place_bet: add created_at to locked CTE SELECT
+-- NUMBER9 — Final fix for place_bet: use LEAST/GREATEST algorithm (no SUM in SET)
 --
--- Error: "column 'created_at' does not exist"
--- Cause: CTE `locked` selected id, turnover_required, turnover_applied but
--- NOT created_at. The downstream CTE `cumulative` uses ORDER BY created_at
--- in a window function, which failed because the column wasn't available.
+-- The previous version used SUM(d2.xxx) FILTER (WHERE ...) in the UPDATE SET
+-- clause, which PostgreSQL rejects with "aggregate functions are not allowed in UPDATE".
+-- This version uses the original working algorithm from 20260603180000:
+-- window function in CTE + LEAST/GREATEST in SET (no aggregates in SET).
+-- Also adds SHA-256 hashed token comparison + extensions search_path.
 
-CREATE OR REPLACE FUNCTION public.place_bet(
-  p_user_id uuid,
-  p_session_code character varying,
-  p_selections jsonb
-)
+CREATE OR REPLACE FUNCTION public.place_bet(p_user_id uuid, p_session_code character varying, p_selections jsonb)
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -58,24 +55,26 @@ BEGIN
      ORDER BY created_at ASC
      FOR UPDATE
   ),
-  cumulative AS (
+  locks AS (
     SELECT id, turnover_required, turnover_applied,
-           LEAST(v_total, SUM(turnover_required - turnover_applied) OVER (ORDER BY created_at)) AS total_to_apply
+           SUM(turnover_required - turnover_applied) OVER (ORDER BY created_at ASC) AS cumulative_unlock
       FROM locked
   ),
   applied AS (
     UPDATE deposit_locks d
-       SET turnover_applied = d.turnover_applied +
-           LEAST(d.turnover_required - d.turnover_applied,
-                 c.total_to_apply - COALESCE(SUM(d2.turnover_required - d2.turnover_applied)
-                       FILTER (WHERE d2.created_at < d.created_at), 0))
-      FROM cumulative c
-      LEFT JOIN deposit_locks d2 ON d2.user_id = p_user_id
-        AND d2.turnover_applied < d2.turnover_required
-        AND d2.created_at < c.created_at
-     WHERE d.id = c.id
-       AND c.total_to_apply > 0
-     RETURNING 1
+       SET turnover_applied = LEAST(
+             d.turnover_applied + GREATEST(0,
+               LEAST(
+                 l.turnover_required - l.turnover_applied,
+                 v_total - (l.cumulative_unlock - (l.turnover_required - l.turnover_applied))
+               )
+             ),
+             d.turnover_required
+           )
+      FROM locks l
+     WHERE d.id = l.id
+       AND l.cumulative_unlock - (l.turnover_required - l.turnover_applied) < v_total
+    RETURNING d.id
   )
   SELECT COUNT(*) INTO v_lock_rows FROM applied;
 
