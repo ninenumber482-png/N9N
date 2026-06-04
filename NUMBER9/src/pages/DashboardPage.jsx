@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const tb = useStore(s => s.totalBalance)
   const ab = useStore(s => s.availableBalance)
   const lb = useStore(s => s.lockedBalance)
+  const _rtTick = useStore(s => s._rtTick)
   const fetchBalances = useStore(s => s.fetchBalances)
   const p = (path) => `/c/${clientUuid}${path}`
   const who = auth?.displayName || auth?.username || 'User'
@@ -34,7 +35,7 @@ export default function DashboardPage() {
     ]).then(([, txs]) => {
       setUserTxs(txs || [])
     }).catch(() => {}).finally(() => setLoading(false))
-  }, [fetchBalances, auth?.id])
+  }, [fetchBalances, auth?.id, _rtTick])
 
   const acts = useMemo(() => {
     if (!auth?.username) return []

@@ -233,20 +233,11 @@ export const useStore = create((set, get) => ({
       // Set x-user-token header for all subsequent Supabase requests (RLS)
       setUserToken(session.access_token);
 
-      // Fetch initial wallet balance (required for UI to show balance after login)
-      const { data: wallet, error: walletErr } = await supabase
-        .from('wallet')
-        .select('balance_main, balance_bonus')
-        .eq('user_id', user.id)
-        .single();
-      if (!walletErr && wallet) {
-        const main = Number(wallet.balance_main ?? 0);
-        const bonus = Number(wallet.balance_bonus ?? 0);
-        set({ availableBalance: main, totalBalance: main + bonus });
-      }
+      // Fetch initial balances (main, reserved, buying power) for immediate UI display
+      await get().fetchBalances();
 
       subscribeWalletRealtime(user.id, uname,
-        (main, bonus) => set({ availableBalance: main, totalBalance: main + bonus }),
+        () => get().fetchBalances(),
         (tx) => {
           set(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
           // Show notification for approved deposits
@@ -609,12 +600,24 @@ export const useStore = create((set, get) => ({
         if (!error && data) {
           const main = Number(data.balance_main) ?? 0;
           const bonus = Number(data.balance_bonus) ?? 0;
+          // Reserved = funds in-flight as pending withdrawals (not yet debited
+          // from balance_main, but committed). Portfolio = main; Buying Power = main - reserved.
+          let reserved = 0;
+          try {
+            const { data: pend } = await supabase
+              .from('transactions')
+              .select('amount')
+              .eq('user_id', auth.id)
+              .eq('type', 'WITHDRAWAL')
+              .eq('status', 'PENDING');
+            reserved = (pend || []).reduce((s, r) => s + Number(r.amount || 0), 0);
+          } catch {}
           // Clear stale localStorage balance so it never overrides Supabase
           try { localStorage.removeItem('n9_wallet_balances'); } catch {}
           set({
-            totalBalance: main + bonus,
-            availableBalance: main,
-            lockedBalance: 0,
+            totalBalance: main,                          // Portfolio Value
+            availableBalance: Math.max(0, main - reserved), // Buying Power (spendable)
+            lockedBalance: reserved,                      // Reserved (pending withdrawals)
             referralBonus: bonus,
           });
           return;
@@ -684,7 +687,7 @@ export const clearAllData = () => {
         }).catch(() => {});
         subscribeWalletRealtime(
           _auth.id, _auth.username,
-          (main, bonus) => useStore.setState({ availableBalance: main, totalBalance: main + bonus }),
+          () => useStore.getState().fetchBalances(),
           (tx) => {
             useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
             if (tx.type === 'DEPOSIT' && tx.status === 'COMPLETED') {

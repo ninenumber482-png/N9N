@@ -100,7 +100,7 @@ function App() {
       (async () => {
         unsubWallet = await subscribeToWalletAndTransactions(
           auth.id,
-          (main, bonus) => useStore.setState({ availableBalance: main, totalBalance: main + bonus }),
+          () => useStore.getState().fetchBalances(),
           (tx) => {
             useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
 
@@ -174,17 +174,8 @@ function App() {
   usePolling(async () => {
     if (!auth?.id || !supabase) return;
     try {
-      // Refresh wallet (minimal columns)
-      const { data: wallet } = await supabase
-        .from('wallet')
-        .select('balance_main, balance_bonus')
-        .eq('user_id', auth.id)
-        .single();
-      if (wallet) {
-        const main = Number(wallet.balance_main || 0);
-        const bonus = Number(wallet.balance_bonus || 0);
-        useStore.setState({ availableBalance: main, totalBalance: main + bonus });
-      }
+      // Refresh balances (main = Portfolio, reserved = pending WD, buying power = main - reserved)
+      await useStore.getState().fetchBalances();
       // Refresh transactions (minimal columns, fewer rows)
       const { data: txs } = await supabase
         .from('transactions')
