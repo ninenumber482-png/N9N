@@ -291,7 +291,7 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
   const [bank, setBank] = useState({ bankName: '', bankAccountNumber: '', bankAccountName: '' });
   const [editBank, setEditBank] = useState({ name: '', number: '', holder: '' });
   const [isEditingBank, setIsEditingBank] = useState(false);
-  const [turnoverData, setTurnoverData] = useState({ remaining: 0, isUnlocked: true });
+  const [turnoverData, setTurnoverData] = useState({ remaining: 0, isUnlocked: false });
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
