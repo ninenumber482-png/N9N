@@ -204,7 +204,7 @@ export default function Layout({ children }) {
             onClick={() => setShowMoreMenu(true)}
             aria-label="More navigation"
             className={`flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 ${
-              (pg === 'turnover' || pg === 'network' || pg === 'profile')
+              (pg === 'network' || pg === 'profile')
                 ? "text-yellow-400 bg-yellow-400/10 border border-yellow-400/20"
                 : "text-zinc-600 hover:text-zinc-300 hover:bg-white/5"
             }`}
