@@ -5,7 +5,7 @@
 -- SECURITY DEFINER + verifikasi session_token untuk akses penuh.
 --
 -- Returns: { main, bonus, total_deposited, total_withdrawn, total_turnover,
---            lock_count, lock_remaining, is_unlocked }
+--            lock_count, lock_remaining, lock_required, lock_applied, is_unlocked }
 
 CREATE OR REPLACE FUNCTION get_my_wallet_summary()
 RETURNS JSONB
@@ -19,6 +19,8 @@ DECLARE
   v_wallet RECORD;
   v_lock_remaining DECIMAL(12,2);
   v_lock_count INT;
+  v_lock_required DECIMAL(12,2);
+  v_lock_applied DECIMAL(12,2);
 BEGIN
   -- Verify session token
   v_session_token := current_setting('request.headers', true)::json->>'x-user-token';
@@ -38,8 +40,10 @@ BEGIN
 
   -- Get deposit lock summary
   SELECT COALESCE(SUM(turnover_required - turnover_applied), 0),
-         COUNT(*)
-    INTO v_lock_remaining, v_lock_count
+         COUNT(*),
+         COALESCE(SUM(turnover_required), 0),
+         COALESCE(SUM(turnover_applied), 0)
+    INTO v_lock_remaining, v_lock_count, v_lock_required, v_lock_applied
     FROM deposit_locks
    WHERE user_id = v_user_id AND turnover_applied < turnover_required;
 
@@ -51,6 +55,8 @@ BEGIN
     'total_turnover', v_wallet.total_turnover,
     'lock_count', v_lock_count,
     'lock_remaining', v_lock_remaining,
+    'lock_required', v_lock_required,
+    'lock_applied', v_lock_applied,
     'is_unlocked', v_lock_remaining <= 0
   );
 END;

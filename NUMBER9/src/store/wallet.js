@@ -209,17 +209,16 @@ export async function fetchTurnoverSummary(_userId) { // eslint-disable-line no-
     const { data, error } = await supabase.rpc('get_my_wallet_summary');
     if (error || !data || data.error) return defaultTurnover();
 
-    const totalDeposited = Number(data.total_deposited ?? 0);
+    const lockRequired = Number(data.lock_required ?? 0);
+    const lockApplied = Number(data.lock_applied ?? 0);
     const lockRemaining = Number(data.lock_remaining ?? 0);
-    const totalTurnover = Number(data.total_turnover ?? 0);
-    const totalRequired = lockRemaining + totalTurnover;
-    const pct = totalRequired > 0 ? Math.min(100, Math.round((totalTurnover / totalRequired) * 100)) : 100;
+    const pct = lockRequired > 0 ? Math.min(100, Math.round((lockApplied / lockRequired) * 100)) : 100;
     return {
-      required: totalRequired,
-      achieved: totalTurnover,
+      required: lockRequired,
+      achieved: lockApplied,
       remaining: lockRemaining,
       pct,
-      totalDeposited,
+      totalDeposited: Number(data.total_deposited ?? 0),
       locks: [],
       isUnlocked: data.is_unlocked !== false,
     };
