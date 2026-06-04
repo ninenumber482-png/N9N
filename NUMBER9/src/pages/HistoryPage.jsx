@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useStore } from "../store/useStore";
 import { fetchUserTransactions, fetchTurnoverSummary } from "../store/wallet";
 import { listBids, getSettled, refreshKingData } from "../store/king";
@@ -12,6 +12,7 @@ import { useParams } from 'react-router-dom';
 
 export default function HistoryPage() {
   const auth = useStore((s) => s.auth);
+  const _rtTick = useStore((s) => s._rtTick);
   const { clientUuid } = useParams();
   const p = (path) => `/c/${clientUuid}${path}`;
   const { t } = useI18n();
@@ -20,10 +21,12 @@ export default function HistoryPage() {
   const [txs, setTxs] = useState([]);
   const [turnoverData, setTurnoverData] = useState({ required: 0, achieved: 0, isUnlocked: true });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [kingReady, setKingReady] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [toast, setToast] = useState(null);
   const aliveRef = useAlive();
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 1000);
@@ -53,8 +56,13 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (!auth?.id) return;
-    setLoading(true);
-    setKingReady(false);
+    const isInitial = isInitialLoadRef.current;
+    if (isInitial) {
+      setLoading(true);
+      setKingReady(false);
+    } else {
+      setRefreshing(true);
+    }
     Promise.all([
       fetchUserTransactions(auth.id, 100),
       fetchTurnoverSummary(auth.id),
@@ -65,8 +73,18 @@ export default function HistoryPage() {
       setTurnoverData(tvData || { required: 0, achieved: 0, isUnlocked: true });
       setKingReady(true);
       setLoading(false);
-    }).catch(() => { if (aliveRef.current) { setLoading(false); setToast({ type: 'err', text: 'Failed to load history' }); } });
-  }, [auth?.id]);
+      setRefreshing(false);
+      isInitialLoadRef.current = false;
+    }).catch(() => {
+      if (aliveRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+        setToast({ type: 'err', text: 'Failed to load history' });
+        isInitialLoadRef.current = false;
+      }
+    });
+    // Re-fetch when realtime tick fires (new bet/tx from anywhere)
+  }, [auth?.id, _rtTick]);
 
   const bids = auth && kingReady ? listBids() : [];
 

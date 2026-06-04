@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store/useStore'
 import { fetchTurnoverSummary } from '../store/wallet'
+import { supabase } from '../utils/supabase'
 import { Icon } from '../components/icons'
 import Spinner from '../components/ui/Spinner'
 import Toast from '../components/ui/Toast'
@@ -27,12 +28,55 @@ export default function TurnoverPage() {
   const _rtTick = useStore((s) => s._rtTick)
   const [data, setData] = useState({ required: 0, achieved: 0, remaining: 0, pct: 0, totalDeposited: 0, locks: [], isUnlocked: false })
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastFetchedAt, setLastFetchedAt] = useState(null)
+  const isInitialLoadRef = useRef(true)
+
+  const refetch = useCallback(async () => {
+    if (!auth?.id) return
+    const isInitial = isInitialLoadRef.current
+    if (!isInitial) setRefreshing(true)
+    try {
+      const d = await fetchTurnoverSummary(auth.id)
+      if (aliveRef.current) {
+        setData(d)
+        setLastFetchedAt(new Date())
+        setLoading(false)
+        isInitialLoadRef.current = false
+      }
+    } catch (e) {
+      if (aliveRef.current) {
+        setToast({ type: 'err', text: t('common.network_error') })
+        setLoading(false)
+        isInitialLoadRef.current = false
+      }
+    } finally {
+      if (aliveRef.current) setRefreshing(false)
+    }
+  }, [auth?.id, aliveRef, t])
 
   useEffect(() => {
     if (!auth?.id) return
-    setLoading(true)
-    fetchTurnoverSummary(auth.id).then(d => { if (aliveRef.current) { setData(d); setLoading(false) } }).catch(() => { if (aliveRef.current) { setLoading(false); setToast({ type: 'err', text: t('common.network_error') }) } })
-  }, [auth?.id, _rtTick])
+    if (isInitialLoadRef.current) setLoading(true)
+    refetch()
+  }, [auth?.id, _rtTick, refetch])
+
+  // Subscribe to deposit_locks changes so turnover_applied updates auto-refresh
+  useEffect(() => {
+    if (!auth?.id || !supabase) return
+    const channel = supabase
+      .channel(`deposit_locks_${auth.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'deposit_locks',
+        filter: `user_id=eq.${auth.id}`,
+      }, () => {
+        if (aliveRef.current) refetch()
+      })
+      .subscribe();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [auth?.id, refetch, aliveRef])
 
   const totalDeposit = data.totalDeposited
   const totalRequired = data.required
@@ -48,8 +92,23 @@ export default function TurnoverPage() {
         <div className="border-b border-[#1f2128] px-3 py-2 lg:px-4">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-yellow-400">{t('turnover.title')}</p>
-            <span className="text-[10px] font-bold text-zinc-500">{totalAchieved.toLocaleString()} / {totalRequired.toLocaleString()}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-zinc-500">{totalAchieved.toLocaleString()} / {totalRequired.toLocaleString()}</span>
+              <button
+                onClick={refetch}
+                disabled={refreshing}
+                className="rounded p-1 text-zinc-500 hover:text-yellow-400 disabled:opacity-50"
+                title="Refresh"
+              >
+                <span className={refreshing ? 'inline-block animate-spin' : 'inline-block'}>
+                  <Icon.Refresh size={12} />
+                </span>
+              </button>
+            </div>
           </div>
+          {lastFetchedAt && (
+            <p className="mt-1 text-[9px] text-zinc-600">Updated {lastFetchedAt.toLocaleTimeString()}</p>
+          )}
         </div>
         <div className="px-3 py-3 lg:px-4 lg:py-4">
           {data.isUnlocked ? (
@@ -84,7 +143,12 @@ export default function TurnoverPage() {
             <Spinner size="sm" />
           )}
           {!loading && (data.locks?.length ?? 0) === 0 && (
-            <div className="px-3 py-4 text-center text-[11px] text-zinc-500">{t('turnover.no_activity')}</div>
+            <div className="px-3 py-4 text-center">
+              <p className="text-[11px] text-zinc-500">{t('turnover.no_activity')}</p>
+              {data.totalDeposited > 0 && (
+                <p className="mt-1 text-[10px] text-yellow-500/70">Deposit locks not visible — try refresh button above</p>
+              )}
+            </div>
           )}
           {!loading && data.locks?.map((l, i) => (
             <div key={i} className="px-2.5 py-2 lg:px-3">

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet, useParams, useNavigate } from "react-router-dom";
 import { useStore, isDemoMode, clearAllData, setDemoMode } from "./store/useStore";
 import { subscribeToWalletAndTransactions, subscribeToSettledBets } from "./store/realtimeManager";
@@ -169,6 +169,11 @@ function App() {
     };
   }, [auth?.id, subscribeUserStatus]);
 
+  // Track last-seen "head" IDs to skip redundant _rtTick/_kingVersion bumps
+  // when polling finds no new data — prevents cascading re-renders across the app.
+  const lastSeenTxIdRef = useRef(null);
+  const lastSeenBetIdRef = useRef(null);
+
   // Polling fallback — refresh wallet & transactions every 15s
   // (WebSocket realtime is disabled due to Cloudflare error 1101)
   usePolling(async () => {
@@ -183,13 +188,26 @@ function App() {
         .eq('user_id', auth.id)
         .order('created_at', { ascending: false })
         .limit(5);
-      if (txs?.length) {
-        useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
-      }
-      // Refresh bets via king.js cache (updates _bets + triggers UI re-render)
-      const { refreshKingData } = await import("./store/king");
+
+      // Refresh bets via king.js cache
+      const { refreshKingData, listBids } = await import("./store/king");
       await refreshKingData(auth.id);
-      useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+      const latestBetId = listBids()?.[0]?.id || null;
+
+      // Only bump counters if the head of either stream has actually changed
+      const latestTxId = txs?.[0]?.id || null;
+      const newTxSeen = !!latestTxId && latestTxId !== lastSeenTxIdRef.current;
+      const newBetSeen = !!latestBetId && latestBetId !== lastSeenBetIdRef.current;
+      if (newTxSeen) lastSeenTxIdRef.current = latestTxId;
+      if (newBetSeen) lastSeenBetIdRef.current = latestBetId;
+
+      // Batch into a single setState to avoid two re-renders
+      if (newTxSeen || newBetSeen) {
+        useStore.setState(s => ({
+          _rtTick: newTxSeen ? (s._rtTick || 0) + 1 : s._rtTick,
+          _kingVersion: newBetSeen ? (s._kingVersion || 0) + 1 : s._kingVersion,
+        }));
+      }
     } catch (e) {
       // Polling error — silent in production, log in dev
       if (import.meta.env.DEV) console.warn('[Polling]', e);

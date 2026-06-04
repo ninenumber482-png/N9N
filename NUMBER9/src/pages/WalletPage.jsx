@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { fetchUserTransactions } from "../store/wallet";
@@ -26,6 +26,7 @@ function useWalletBalances() {
 
 export default function WalletPage() {
   const auth = useStore((s) => s.auth);
+  const _rtTick = useStore((s) => s._rtTick);
   const { clientUuid } = useParams();
   const p = (path) => `/c/${clientUuid}${path}`;
   const { t } = useI18n();
@@ -33,24 +34,37 @@ export default function WalletPage() {
   const balances = useWalletBalances();
   const [txs, setTxs] = useState([]);
   const [txsLoading, setTxsLoading] = useState(true);
+  const [txsRefreshing, setTxsRefreshing] = useState(false);
   const [txsError, setTxsError] = useState(null);
   const [kingLoading, setKingLoading] = useState(true);
+  const [kingRefreshing, setKingRefreshing] = useState(false);
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     if (!auth?.id) return;
-    setTxsLoading(true);
+    const isInitial = isInitialLoadRef.current;
+    if (isInitial) setTxsLoading(true);
+    setTxsRefreshing(true);
     setTxsError(null);
     fetchUserTransactions(auth.id).then(setTxs).catch(e => {
       setTxsError('Failed to load transactions');
-    }).finally(() => setTxsLoading(false));
-  }, [auth?.id]);
+    }).finally(() => {
+      setTxsLoading(false);
+      setTxsRefreshing(false);
+      isInitialLoadRef.current = false;
+    });
+  }, [auth?.id, _rtTick]);
 
-  /* refresh king data on mount */
+  /* refresh king data on mount + realtime tick */
   useEffect(() => {
     if (!auth?.id) return;
     setKingLoading(true);
-    refreshKingData(auth.id).then(() => setRefreshCount(c => c + 1)).catch(() => {}).finally(() => setKingLoading(false));
-  }, [auth?.id]);
+    setKingRefreshing(true);
+    refreshKingData(auth.id).then(() => setRefreshCount(c => c + 1)).catch(() => {}).finally(() => {
+      setKingLoading(false);
+      setKingRefreshing(false);
+    });
+  }, [auth?.id, _rtTick]);
 
   const pendingDeposit = txs
     .filter((t) => t.type === "DEPOSIT" && t.status === "PENDING")
@@ -255,7 +269,14 @@ export default function WalletPage() {
 
       {/* ACTIVITY */}
       <section>
-        <SectionHead>Transaction History</SectionHead>
+        <SectionHead>
+          <div className="flex items-center gap-2">
+            <span>Transaction History</span>
+            {txsRefreshing && !txsLoading && (
+              <span className="inline-block animate-spin text-zinc-500"><Icon.Refresh size={11} /></span>
+            )}
+          </div>
+        </SectionHead>
         <div className="divide-y divide-[#1f2128] rounded-xl border border-[#1f2128] bg-[#0c0e14]">
           {lastBid && (
             <div className="flex items-center gap-2.5 px-2.5 py-2 lg:px-3.5">
