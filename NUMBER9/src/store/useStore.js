@@ -435,44 +435,36 @@ export const useStore = create((set, get) => ({
     if (!authData?.id) return null;
     try {
       if (!supabase) return null;
-      const { data, error } = await supabase.rpc('get_my_full_profile');
-      if (error || !data || data.error) return _fallbackProfile(authData);
-
-      let referredByCode = null;
-      if (data.referredByCode) referredByCode = data.referredByCode;
-
-      return {
-        uuid: data.uuid,
-        id: data.uuid,
-        username: data.username,
-        displayName: data.displayName,
-        email: data.email || '',
-        phone: data.phone || '',
-        country: data.country || '',
-        role: data.role || 'user',
-        accountStatus: data.account_status,
-        registrationStatus: data.registration_status,
-        loginStatus: data.login_status,
-        kycStatus: data.kyc_status,
-        referralCode: data.referralCode || '',
-        referredByCode,
-        bankName: data.bankName || '',
-        bankAccountNumber: data.bankAccountNumber || '',
-        bankAccountName: data.bankAccountName || '',
-        createdAt: data.createdAt,
-        approvedAt: data.approvedAt,
-        walletMain: data.wallet_main,
-        walletBonus: data.wallet_bonus,
-        totalDeposited: data.total_deposited,
-        totalWithdrawn: data.total_withdrawn,
-        totalTurnover: data.total_turnover,
-        lockRemaining: data.lock_remaining,
-        lockCount: data.lock_count,
-        isUnlocked: data.is_unlocked,
-      };
+      const { data, error } = await supabase
+        .from('users')
+        .select('id,username,display_name,email,phone,country,role,account_status,registration_status,login_status,bank_name,bank_account_number,bank_account_name,kyc_status,referral_code,referred_by,created_at,approved_at')
+        .eq('id', authData.id)
+        .single();
+      if (!error && data) {
+        let referredByCode = null;
+        if (data.referred_by) {
+          const { data: ref } = await supabase
+            .from('referrals')
+            .select('code')
+            .eq('id', data.referred_by)
+            .maybeSingle();
+          referredByCode = ref?.code || null;
+        }
+        return {
+          uuid: data.id, id: data.id,
+          username: data.username, displayName: data.display_name,
+          email: data.email || '', phone: data.phone || '',
+          country: data.country || '', role: data.role || 'user',
+          accountStatus: data.account_status, registrationStatus: data.registration_status,
+          loginStatus: data.login_status, kycStatus: data.kyc_status,
+          referralCode: data.referral_code || '', referredByCode,
+          bankName: data.bank_name || '', bankAccountNumber: data.bank_account_number || '', bankAccountName: data.bank_account_name || '',
+          createdAt: data.created_at, approvedAt: data.approved_at,
+        };
+      }
     } catch {}
     return _fallbackProfile(authData);
-    },
+  },
 
   // Direct downline = users who registered with me as their referrer (referred_by_user).
   // Queried from the DB, not the local users cache (which only holds locally-seen users).

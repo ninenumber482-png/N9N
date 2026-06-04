@@ -204,24 +204,44 @@ export async function fetchUserBank(userId) {
   return { bankName: '', bankAccountNumber: '', bankAccountName: '' };
 }
 
-export async function fetchTurnoverSummary(_userId) { // eslint-disable-line no-unused-vars
+export async function fetchTurnoverSummary(userId) {
   try {
-    const { data, error } = await supabase.rpc('get_my_wallet_summary');
-    if (error || !data || data.error) return defaultTurnover();
+    const walletRes = await supabase
+      .from('wallet')
+      .select('total_deposited')
+      .eq('user_id', userId)
+      .single();
 
-    const lockRequired = Number(data.lock_required ?? 0);
-    const lockApplied = Number(data.lock_applied ?? 0);
-    const lockRemaining = Number(data.lock_remaining ?? 0);
-    const pct = lockRequired > 0 ? Math.min(100, Math.round((lockApplied / lockRequired) * 100)) : 100;
-    return {
-      required: lockRequired,
-      achieved: lockApplied,
-      remaining: lockRemaining,
-      pct,
-      totalDeposited: Number(data.total_deposited ?? 0),
-      locks: [],
-      isUnlocked: data.is_unlocked !== false,
-    };
+    const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
+
+    const { data: lockRows } = await supabase
+      .from('deposit_locks')
+      .select('amount, turnover_required, turnover_applied, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+
+    if (!lockRows || lockRows.length === 0) {
+      return defaultTurnover();
+    }
+
+    const locks = (lockRows || []).map(r => {
+      const required = Number(r.turnover_required);
+      const applied = Math.min(Number(r.turnover_applied), required);
+      const remaining = Math.max(0, required - applied);
+      return {
+        amount: Number(r.amount),
+        required, applied, remaining,
+        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100,
+        done: remaining <= 0,
+      };
+    });
+
+    const outstanding = locks.filter(l => !l.done);
+    const required = outstanding.reduce((s, l) => s + l.required, 0);
+    const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
+    const remaining = Math.max(0, required - achieved);
+    const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
+    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
   } catch {
     return defaultTurnover();
   }
