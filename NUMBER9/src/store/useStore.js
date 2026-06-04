@@ -56,7 +56,14 @@ const DEMO_MODE = false;
 // const getDefaultUsers = () => ({}); // unused
 
 function _fallbackProfile(authData) {
-  return { uuid: authData.id, id: authData.id, username: authData.username, displayName: authData.displayName, email: authData.email, phone: authData.phone };
+  return {
+    uuid: authData.id, id: authData.id,
+    username: authData.username, displayName: authData.displayName,
+    email: authData.email || '', phone: authData.phone || '',
+    country: authData.country || '',
+    bankName: authData.bankName || '', bankAccountNumber: authData.bankAccountNumber || '', bankAccountName: authData.bankAccountName || '',
+    createdAt: authData.createdAt || '',
+  };
 }
 
 /* ---------- store ---------- */
@@ -242,6 +249,11 @@ export const useStore = create((set, get) => ({
         loggedInAt: new Date().toISOString(),
         email: user.email || "",
         phone: user.phone || "",
+        country: user.country || "",
+        bankName: user.bank_name || "",
+        bankAccountNumber: user.bank_account_number || "",
+        bankAccountName: user.bank_account_name || "",
+        createdAt: user.created_at || "",
       };
       writeJSON(LS.auth, authData);
       set({ auth: authData });

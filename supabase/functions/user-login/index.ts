@@ -35,7 +35,7 @@ export default {
 
       const { data: user, error: userErr } = await supabase
         .from('users')
-        .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash')
+        .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, bank_name, bank_account_number, bank_account_name, created_at')
         .eq('username', username.trim().toLowerCase())
         .single()
 
@@ -70,9 +70,25 @@ export default {
 
       return json({
         success: true,
-        user: { id: user.id, username: user.username, display_name: user.display_name, email: user.email, phone: user.phone, role: user.role },
-        session: { access_token: sessionToken, expires_at: expiresAt },
+        user: {
+          id: user.id,
+          username: user.username,
+          display_name: user.display_name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          country: user.country,
+          bank_name: user.bank_name,
+          bank_account_number: user.bank_account_number,
+          bank_account_name: user.bank_account_name,
+          created_at: user.created_at,
+        },
+        session: {
+          access_token: sessionToken,
+          expires_at: expiresAt,
+        },
       })
+
     } catch (error) {
       console.error("[USER-LOGIN] Exception:", error);
       return json({ error: "Internal server error" }, 500);
