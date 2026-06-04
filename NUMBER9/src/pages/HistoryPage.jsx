@@ -79,7 +79,7 @@ export default function HistoryPage() {
       if (aliveRef.current) {
         setLoading(false);
         setRefreshing(false);
-        setToast({ type: 'err', text: 'Failed to load history' });
+        setToast({ type: 'err', text: t('common.history_load_failed') });
         isInitialLoadRef.current = false;
       }
     });
@@ -159,12 +159,18 @@ export default function HistoryPage() {
     const ms = rangeMs(range);
     let r = [...txRows, ...bidRows, ...resultRows].sort((a, b) => b.ts - a.ts);
     if (ms < Infinity) {
+      // For 24h range, `now` ticks every second so the cutoff moves with
+      // the wall clock — include it in deps so the filter re-runs. For
+      // 7d/30d/All Time, the cutoff barely changes (sub-second precision
+      // is invisible) so we compute it once at memo time and skip the
+      // per-second recompute, saving CPU on the long lists.
       const cutoff = now - ms;
       r = r.filter((row) => row.ts >= cutoff);
     }
     if (type !== "All") r = r.filter((row) => row.type === type);
     return r;
-  }, [txRows, bidRows, resultRows, range, type, now]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txRows, bidRows, resultRows, range, type, range === "24h" ? now : null]);
 
   const statusColor = (row) => {
     if (row.won) return "text-emerald-400";

@@ -102,13 +102,13 @@ export default function LandingPage() {
           <h2 className="text-4xl font-black mb-16 text-center">{t('landing.values_title')}</h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             {VALUES.map((value, i) => {
-              const labels = [t('landing.value_integrity'), t('landing.value_collaboration'), t('landing.value_innovation'), t('landing.value_excellence')];
-              const descs = [t('landing.value_integrity_desc'), t('landing.value_collaboration_desc'), t('landing.value_innovation_desc'), t('landing.value_excellence_desc')];
+              const title = t(value.titleKey);
+              const desc = t(value.descKey);
               return (
               <div key={i} className="flex h-full flex-col items-center rounded-xl border border-[#1f2128] bg-[#0c0e14] p-6 text-center transition duration-300 hover:border-yellow-400/30 hover:bg-[#11141c]">
-                <img src={value.icon} alt={labels[i]} loading="lazy" decoding="async" className="h-14 w-14 object-contain mb-4" />
-                <h3 className="text-xl font-bold mb-2">{labels[i]}</h3>
-                <p className="text-zinc-400 text-sm">{descs[i]}</p>
+                <img src={value.icon} alt={title} loading="lazy" decoding="async" className="h-14 w-14 object-contain mb-4" />
+                <h3 className="text-xl font-bold mb-2">{title}</h3>
+                <p className="text-zinc-400 text-sm">{desc}</p>
               </div>
             )})}
           </div>
@@ -120,13 +120,12 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid md:grid-cols-4 gap-8">
             {STATS.map((stat, i) => {
-              const labels = [t('landing.stat_countries'), t('landing.stat_partners'), t('landing.stat_experience'), t('landing.stat_opportunities')];
-              const values = [t('landing.stat_countries_val'), t('landing.stat_partners_val'), t('landing.stat_experience_val'), t('landing.stat_opportunities_val')];
+              const label = t(stat.labelKey);
               return (
               <div key={i} className="text-center">
-                <img src={stat.icon} alt={labels[i]} className="h-16 w-16 mx-auto mb-4 opacity-80" />
-                <div className="text-4xl font-black text-yellow-400 mb-2">{values[i]}</div>
-                <p className="text-zinc-400">{labels[i]}</p>
+                <img src={stat.icon} alt={label} className="h-16 w-16 mx-auto mb-4 opacity-80" />
+                <div className="text-4xl font-black text-yellow-400 mb-2">{stat.value}</div>
+                <p className="text-zinc-400">{label}</p>
               </div>
             )})}
           </div>

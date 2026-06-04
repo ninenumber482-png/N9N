@@ -12,23 +12,23 @@ export const LOGOS = [
 export const VALUES = [
   {
     icon: '/assets/img/icons/integrity.png',
-    title: 'Integrity',
-    desc: 'Honesty, transparency, and professional ethics.',
+    titleKey: 'landing.value_integrity',
+    descKey: 'landing.value_integrity_desc',
   },
   {
     icon: '/assets/img/icons/collaboration.png',
-    title: 'Collaboration',
-    desc: 'Partnerships that create mutual and lasting value.',
+    titleKey: 'landing.value_collaboration',
+    descKey: 'landing.value_collaboration_desc',
   },
   {
     icon: '/assets/img/icons/innovation.png',
-    title: 'Innovation',
-    desc: 'Creative, relevant, and future-ready solutions.',
+    titleKey: 'landing.value_innovation',
+    descKey: 'landing.value_innovation_desc',
   },
   {
     icon: '/assets/img/icons/excellence.png',
-    title: 'Excellence',
-    desc: 'Committed to the highest standards in all we do.',
+    titleKey: 'landing.value_excellence',
+    descKey: 'landing.value_excellence_desc',
   },
 ];
 
@@ -36,22 +36,22 @@ export const STATS = [
   {
     icon: '/assets/img/stats/countries.png',
     value: '50+',
-    label: 'Countries Connected',
+    labelKey: 'landing.stat_countries',
   },
   {
     icon: '/assets/img/stats/partners.png',
     value: '200+',
-    label: 'Strategic Partners',
+    labelKey: 'landing.stat_partners',
   },
   {
     icon: '/assets/img/stats/years.png',
     value: '10+',
-    label: 'Years Experience',
+    labelKey: 'landing.stat_experience',
   },
   {
     icon: '/assets/img/stats/endless.png',
     value: '∞',
-    label: 'Opportunities',
+    labelKey: 'landing.stat_opportunities',
   },
 ];
 

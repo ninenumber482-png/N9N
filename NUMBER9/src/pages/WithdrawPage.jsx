@@ -41,8 +41,8 @@ export default function WithdrawPage() {
   useEffect(() => {
     if (!auth?.id) return;
     setDataLoading(true);
-    const p1 = fetchUserBank(auth.id).then(r => { if (aliveRef.current) setBank(r); }).catch(() => { if (aliveRef.current) setToast({ type: 'err', text: 'Failed to load bank info' }); });
-    const p2 = fetchTurnoverSummary(auth.id).then(r => { if (aliveRef.current) setTurnoverData(r); }).catch(() => { if (aliveRef.current) setToast({ type: 'err', text: 'Failed to load turnover' }); });
+    const p1 = fetchUserBank(auth.id).then(r => { if (aliveRef.current) setBank(r); }).catch(() => { if (aliveRef.current) setToast({ type: 'err', text: t('common.bank_info_load_failed') }); });
+    const p2 = fetchTurnoverSummary(auth.id).then(r => { if (aliveRef.current) setTurnoverData(r); }).catch(() => { if (aliveRef.current) setToast({ type: 'err', text: t('common.turnover_load_failed') }); });
     Promise.allSettled([p1, p2]).finally(() => { if (aliveRef.current) setDataLoading(false); });
   }, [auth?.id, _rtTick]);
 

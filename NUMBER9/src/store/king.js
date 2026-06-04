@@ -16,6 +16,7 @@
 
 
 import { supabase } from '../utils/supabase';
+import { useStore } from './useStore';
 
 /* ---- Supabase backend (100% LIVE) ---- */
 const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -187,36 +188,6 @@ export function getPreviousSessionCode(sessionCode) {
    ------------------------------------------------------------------ */
 let _bets = [];
 let _results = [];
-let _backendSession = null;
-
-/* Convert backend session response to same shape as sessionAt() */
-function normalizeBackendSession(data, nowMs = Date.now()) {
-  if (!data || !data.session) return null
-  const s = data.session
-  const startMs = new Date(s.startTime).getTime()
-  const lockMs = new Date(s.lockTime).getTime()
-  const resultMs = new Date(s.resultTime).getTime()
-  const settleStartMs = resultMs + RESULTING_DURATION_MS
-  const endMs = resultMs + RESULTING_DURATION_MS + SETTLED_DURATION_MS
-
-  return {
-    sessionCode: s.id,
-    displayCode: "N9K-" + toWIBCode(s.id),
-    status: s.status,
-    openTime: new Date(startMs),
-    lockTime: new Date(lockMs),
-    resultTime: new Date(resultMs),
-    settleTime: new Date(settleStartMs),
-    endTime: new Date(endMs),
-    msToLock: Math.max(0, lockMs - nowMs),
-    msToResult: Math.max(0, resultMs - nowMs),
-    msToSettle: Math.max(0, settleStartMs - nowMs),
-    msToEnd: Math.max(0, endMs - nowMs),
-    msSinceOpen: Math.max(0, nowMs - startMs),
-    totalBets: s.totalBets || 0,
-    totalWagered: s.totalWagered || 0,
-  }
-}
 
 const withDisplay = (o) => ({ ...o, displayCode: "N9K-" + toWIBCode(o.sessionCode) });
 
@@ -224,10 +195,10 @@ const withDisplay = (o) => ({ ...o, displayCode: "N9K-" + toWIBCode(o.sessionCod
    from Supabase king_results table. */
 export async function refreshKingData(userId = _userId) {
   if (userId) _userId = userId;
-  if (!hasBackend()) return { bets: _bets, results: _results, backendSession: _backendSession };
+  if (!hasBackend()) return { bets: _bets, results: _results };
 
   try {
-    if (!supabase) return { bets: _bets, results: _results, backendSession: _backendSession };
+    if (!supabase) return { bets: _bets, results: _results };
     const [resultsRes, betsRes] = await Promise.all([
       supabase.from("king_results").select("session_code,d1,d2,d3,total,big_small,odd_even,created_at").order("session_code", { ascending: false }).limit(100),
       userId
@@ -251,7 +222,7 @@ export async function refreshKingData(userId = _userId) {
     if (import.meta.env.DEV) console.warn('[king] refreshKingData failed:', e);
   }
 
-  return { bets: _bets, results: _results, backendSession: _backendSession };
+  return { bets: _bets, results: _results };
 }
 
 /* ---- bids (read from cache; already scoped to the logged-in user) ---- */
@@ -276,10 +247,6 @@ export function listSettledRecent(limit = 10) {
 
 export function getSettled(sessionCode) {
   return _results.find((r) => r.sessionCode === sessionCode) || null;
-}
-
-export function getBackendSession() {
-  return _backendSession;
 }
 
 /* payout multiplier — identical to 3D King rules (2x line bets, 3x number). */
@@ -311,6 +278,11 @@ export async function placeBid({ sessionCode, selections, stake, username, userI
       if (error) throw error;
 
       await refreshKingData(userId);
+      // Bump _kingVersion so App.jsx polling observer (and any subscribers
+      // listening on the store) notice that a new bet landed — otherwise
+      // the 15s poll cycle would not see the new head-of-stream bet for
+      // up to 15 seconds, and the local balance refresh would race.
+      try { useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 })); } catch {}
       return { ok: true, count: selections.length };
     } catch (err) {
       return { ok: false, error: err?.message || "Bet failed. Please try again." };

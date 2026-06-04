@@ -9,6 +9,18 @@ import { useParams } from 'react-router-dom'
 
 const inp = 'h-9 w-full rounded border border-[#1f2128] bg-[#0e1117] px-3 text-[12px] text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/60'
 
+/* Category keys are stored as stable identifiers (not translated strings),
+   then translated at display time — so changing language mid-form keeps
+   the dropdown value aligned with the visible label. */
+const CATEGORIES = [
+  { key: 'DEPOSIT',    i18n: 'support.cat_deposit' },
+  { key: 'TRADING',    i18n: 'support.cat_trading' },
+  { key: '3DKING',     i18n: 'support.cat_3dking' },
+  { key: 'KYC',        i18n: 'support.cat_kyc' },
+  { key: 'REFERRAL',   i18n: 'support.cat_referral' },
+  { key: 'OTHER',      i18n: 'support.cat_other' },
+];
+
 export default function SupportPage() {
   const { t } = useI18n()
   const auth = useStore(s => s.auth)
@@ -44,7 +56,7 @@ export default function SupportPage() {
     { q: t('support.faq_5_q'), a: t('support.faq_5_a') },
   ]
   const [ticketSubject, setTicketSubject] = useState('')
-  const [ticketCategory, setTicketCategory] = useState(t('support.cat_deposit'))
+  const [ticketCategory, setTicketCategory] = useState('DEPOSIT')
   const [ticketMessage, setTicketMessage] = useState('')
   const [feedback, setFeedback] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -73,7 +85,7 @@ export default function SupportPage() {
       if (error) throw error
       setFeedback({ type: 'ok', text: t('support.success') })
       setTicketSubject('')
-      setTicketCategory(t('support.cat_deposit'))
+      setTicketCategory('DEPOSIT')
       setTicketMessage('')
     } catch (e) {
       setFeedback({ type: 'err', text: t('support.failed') })
@@ -136,12 +148,9 @@ export default function SupportPage() {
             <Field label={t('support.subject')}><input type="text" placeholder={t('support.subject_placeholder')} className={inp} value={ticketSubject} onChange={e => setTicketSubject(e.target.value)} /></Field>
             <Field label={t('support.category')}>
               <select className={inp} value={ticketCategory} onChange={e => setTicketCategory(e.target.value)}>
-                <option>{t('support.cat_deposit')}</option>
-                <option>{t('support.cat_trading')}</option>
-                <option>{t('support.cat_3dking')}</option>
-                <option>{t('support.cat_kyc')}</option>
-                <option>{t('support.cat_referral')}</option>
-                <option>{t('support.cat_other')}</option>
+                {CATEGORIES.map(c => (
+                  <option key={c.key} value={c.key}>{t(c.i18n)}</option>
+                ))}
               </select>
             </Field>
             <Field label={t('support.message')}>

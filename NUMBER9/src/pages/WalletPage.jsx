@@ -30,7 +30,6 @@ export default function WalletPage() {
   const { clientUuid } = useParams();
   const p = (path) => `/c/${clientUuid}${path}`;
   const { t } = useI18n();
-  const [, setRefreshCount] = useState(0);
   const balances = useWalletBalances();
   const [txs, setTxs] = useState([]);
   const [txsLoading, setTxsLoading] = useState(true);
@@ -47,7 +46,7 @@ export default function WalletPage() {
     setTxsRefreshing(true);
     setTxsError(null);
     fetchUserTransactions(auth.id).then(setTxs).catch(e => {
-      setTxsError('Failed to load transactions');
+      setTxsError(t('common.tx_load_failed'));
     }).finally(() => {
       setTxsLoading(false);
       setTxsRefreshing(false);
@@ -60,7 +59,7 @@ export default function WalletPage() {
     if (!auth?.id) return;
     setKingLoading(true);
     setKingRefreshing(true);
-    refreshKingData(auth.id).then(() => setRefreshCount(c => c + 1)).catch(() => {}).finally(() => {
+    refreshKingData(auth.id).catch(() => {}).finally(() => {
       setKingLoading(false);
       setKingRefreshing(false);
     });

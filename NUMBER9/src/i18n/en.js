@@ -51,6 +51,10 @@ export const en = {
     yes: 'Yes',
     no: 'No',
     logout_confirm: 'Are you sure you want to logout?',
+    more: 'More',
+    close: 'Close',
+    reload: 'Reload Page',
+    back_to_login: 'Back to Login',
   },
 
   /* ─── NAVIGATION ─── */
@@ -126,6 +130,10 @@ export const en = {
     password_placeholder: '••••••••',
     enter_credentials: 'Enter your username and password.',
     login_failed: 'Login failed.',
+    bank_info_load_failed: 'Failed to load bank info.',
+    turnover_load_failed: 'Failed to load turnover.',
+    history_load_failed: 'Failed to load history.',
+    tx_load_failed: 'Failed to load transactions.',
     no_account: "Don't have an account?",
     register_link: 'Register',
     registration_pending: 'Registration Pending',
@@ -632,7 +640,8 @@ export const en = {
 
   /* ─── ERROR BOUNDARY ─── */
   error: {
-    ui_crash: 'UI Crash Detected',
+    ui_crash: 'The page hit an unexpected error. Your session is safe — try reloading.',
+    ui_crash_title: 'Something went wrong',
   },
 
   /* ─── UI COMPONENTS ─── */

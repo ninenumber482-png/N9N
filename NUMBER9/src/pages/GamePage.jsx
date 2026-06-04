@@ -8,7 +8,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ModalOverlay from '../components/ui/ModalOverlay';
 import useTimer, { fmtTimer } from "../hooks/useTimer";
 import {
-  sessionAt, getSettled, refreshKingData, getBackendSession,
+  sessionAt, getSettled, refreshKingData,
   listBidsForSession, listBids, listSettledRecent,
   placeBid, PAYOUT, getPreviousSessionCode,
   sessionStatusAt, toWIBCode, SESSION_DURATION_MS,
@@ -95,8 +95,11 @@ export default function GamePage() {
   const kingVersion = useStore((s) => s._kingVersion || 0);
   const { price, prev: prevPrice, up, down, series } = useMarketPrice();
 
-  /* Prefer backend session (fetched from API) over local clock computation */
-  const session = useMemo(() => getBackendSession() || sessionAt(now), [now]);
+  /* Session is computed locally from UTC clock — matches the backend's
+     session code scheme (YYYYMMDDHHmm at 5-min boundaries). The resultTime
+     is also the lookup key for king_results.session_code, so local computation
+     is sufficient. */
+  const session = useMemo(() => sessionAt(now), [now]);
 
   useEffect(() => { setKingUser(auth?.id); }, [auth?.id]);
 
@@ -198,8 +201,10 @@ export default function GamePage() {
 
       if (!r.ok) {
         if (r.error === 'UNAUTHORIZED') {
-          setToast({ type: "err", text: t('game.session_expired') || "Session expired. Please login again." });
-          setTimeout(() => useStore.getState().logout(), 2000);
+          // Token is stale — show a clear error and let the session validator
+          // (useStore.fetchProfile path) handle the auto-logout. The bet was
+          // never placed; user can simply log in again to retry.
+          setApprovalStatus({ ok: false, error: t('game.session_expired') || "Session expired. Please login again." });
           return;
         }
         setApprovalStatus({ ok: false, error: r.error });
@@ -210,7 +215,9 @@ export default function GamePage() {
       setApprovalStatus({ ok: true, count: r.count });
       fetchBalances();
       setBigSmall(null); setOddEven(null); setNumber(null); setCustom(""); setStakeOpen(false);
-      setVersion((v) => v + 1);
+      // No manual setVersion bump — placeBid() in king.js now bumps
+      // _kingVersion, which triggers the kingVersion useEffect above to
+      // re-run refreshKingData + setVersion. Single refresh path.
     } catch (err) {
       setBidding(false);
       const errorMsg = err.message === 'Request timeout'

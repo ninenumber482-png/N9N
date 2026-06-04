@@ -51,6 +51,10 @@ export const id = {
     yes: 'Ya',
     no: 'Tidak',
     logout_confirm: 'Apakah Anda yakin ingin keluar?',
+    more: 'Lainnya',
+    close: 'Tutup',
+    reload: 'Muat Ulang',
+    back_to_login: 'Kembali ke Login',
   },
 
   /* ─── NAVIGATION ─── */
@@ -126,6 +130,10 @@ export const id = {
     password_placeholder: '••••••••',
     enter_credentials: 'Masukkan nama pengguna dan kata sandi.',
     login_failed: 'Login gagal.',
+    bank_info_load_failed: 'Gagal memuat info bank.',
+    turnover_load_failed: 'Gagal memuat turnover.',
+    history_load_failed: 'Gagal memuat riwayat.',
+    tx_load_failed: 'Gagal memuat transaksi.',
     no_account: 'Belum punya akun?',
     register_link: 'Daftar',
     registration_pending: 'Pendaftaran Tertunda',
@@ -639,7 +647,8 @@ export const id = {
 
   /* ─── ERROR BOUNDARY ─── */
   error: {
-    ui_crash: 'Terjadi Kesalahan UI',
+    ui_crash: 'Halaman mengalami kesalahan tidak terduga. Sesi Anda aman — coba muat ulang.',
+    ui_crash_title: 'Terjadi Kesalahan',
   },
 
   /* ─── UI COMPONENTS ─── */

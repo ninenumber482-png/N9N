@@ -6,6 +6,7 @@ import { useI18n } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SystemNotification from "./ui/SystemNotification";
 import CsWidget from "./ui/CsWidget";
+import ModalOverlay from "./ui/ModalOverlay";
 
 function useLayoutBalance() {
   const availableBalance = useStore((s) => s.availableBalance);
@@ -19,9 +20,9 @@ const NAV = [
   { k: "turnover", l: "nav.turnover", p: "turnover", I: Icon.Turnover },
   { k: "history", l: "nav.history", p: "history", I: Icon.History, bottom: true },
   { k: "deposit", l: "nav.deposit", p: "deposit", I: Icon.Download, bottom: true },
-  { k: "withdraw", l: "nav.withdraw", p: "withdraw", I: Icon.Upload },
-  { k: "trading", l: "nav.media", p: "trading", I: Icon.Bell },
-  { k: "network", l: "nav.network", p: "network", I: Icon.Users },
+  { k: "withdraw", l: "nav.withdraw", p: "withdraw", I: Icon.Upload, bottom: true },
+  { k: "trading", l: "nav.media", p: "trading", I: Icon.Bell, bottom: true },
+  { k: "network", l: "nav.network", p: "network", I: Icon.Users, bottom: true },
   { k: "profile", l: "nav.profile", p: "profile", I: Icon.User },
 ];
 
@@ -38,6 +39,7 @@ export default function Layout({ children }) {
   const bleed = pg === "king";
   const { t, lang, setLang } = useI18n();
   const [showLogout, setShowLogout] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const name = auth?.displayName || auth?.username || "User";
   const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   const balanceMain = useLayoutBalance();
@@ -184,34 +186,88 @@ export default function Layout({ children }) {
       {/* MOBILE BOTTOM NAV */}
       <nav className="fixed bottom-0 inset-x-0 z-30 border-t border-[#1f2128] bg-[#050607]/95 backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div className="h-1 bg-linear-to-r from-transparent via-yellow-400/40 to-transparent" />
-        <div className="grid grid-cols-6 gap-1 px-2 py-3">
+        <div className="grid grid-cols-6 gap-0.5 px-1 py-2.5">
           {NAV_FULL.filter(n => n.bottom).slice(0, 5).map((n) => {
             const active = pg === n.k;
             return (
               <Link
                 key={n.k}
                 to={n.p}
-                className={`flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all duration-200 ${active
+                className={`flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 ${active
                     ? "text-yellow-400 bg-yellow-400/10 border border-yellow-400/20"
                     : "text-zinc-600 hover:text-zinc-300 hover:bg-white/5"
                   }`}
               >
-                <n.I size={22} />
-                <span className="text-[9px] font-bold truncate">{t(n.l)}</span>
+                <n.I size={20} />
+                <span className="text-[8px] font-bold truncate w-full text-center">{t(n.l)}</span>
               </Link>
             );
           })}
           <button
-            onClick={() => setShowLogout(true)}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all duration-200 text-zinc-600 hover:text-red-400 hover:bg-red-400/5"
+            onClick={() => setShowMoreMenu(true)}
+            aria-label="More navigation"
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 ${
+              ['turnover', 'withdraw', 'trading', 'network', 'profile'].includes(pg)
+                ? "text-yellow-400 bg-yellow-400/10 border border-yellow-400/20"
+                : "text-zinc-600 hover:text-zinc-300 hover:bg-white/5"
+            }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span className="text-[9px] font-bold truncate">{t('nav.logout')}</span>
+            <Icon.Menu size={20} />
+            <span className="text-[8px] font-bold truncate w-full text-center">{t('common.more')}</span>
           </button>
         </div>
       </nav>
+
+      {/* MOBILE MORE MENU — overflow pages that don't fit in bottom nav */}
+      {showMoreMenu && (
+        <ModalOverlay open={showMoreMenu} onClose={() => setShowMoreMenu(false)} className="items-end justify-center bg-black/60 p-0">
+          <div className="w-full max-h-[80dvh] overflow-y-auto rounded-t-2xl border-t border-[#1f2128] bg-[#0c0e14] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <div className="h-1 w-full bg-linear-to-r from-yellow-400/40 via-transparent to-transparent" />
+            <div className="flex items-center justify-between border-b border-[#1f2128] px-5 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400">{t('common.more')}</p>
+              <button
+                onClick={() => setShowMoreMenu(false)}
+                aria-label={t('common.close')}
+                className="grid h-7 w-7 place-items-center rounded-lg border border-[#1f2128] text-zinc-500 hover:text-white"
+              >
+                <Icon.Close size={13} />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 p-3">
+              {NAV_FULL.filter(n => !n.bottom).map((n) => (
+                <Link
+                  key={n.k}
+                  to={n.p}
+                  onClick={() => setShowMoreMenu(false)}
+                  className={`flex items-center gap-3 rounded-xl border p-3 transition ${
+                    pg === n.k
+                      ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-400"
+                      : "border-[#1f2128] bg-[#13151c] text-zinc-300 hover:border-yellow-400/30 hover:text-white"
+                  }`}
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-400/10 text-yellow-400">
+                    <n.I size={16} />
+                  </span>
+                  <span className="text-[12px] font-bold truncate">{t(n.l)}</span>
+                </Link>
+              ))}
+            </div>
+            <div className="px-3 pb-3">
+              <button
+                onClick={() => { setShowMoreMenu(false); setShowLogout(true); }}
+                className="flex w-full items-center gap-3 rounded-xl border border-[#1f2128] bg-[#13151c] p-3 text-zinc-300 transition hover:border-red-400/30 hover:text-red-400"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-400/10 text-red-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </span>
+                <span className="text-[12px] font-bold">{t('nav.logout')}</span>
+              </button>
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
 
       <ConfirmDialog
         open={showLogout}
