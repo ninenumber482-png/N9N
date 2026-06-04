@@ -132,15 +132,18 @@ export class TurnoverComponent implements OnInit {
     this.error = null;
     try {
       this.wallets = await this.admin.getWallets();
-      // Fetch deposit_locks for per-deposit locked amounts
+      // Locked remaining = max(0, total required − cumulative turnover).
+      // Required sums ALL deposit_locks (1x of every deposit); progress is the
+      // authoritative wallet.total_turnover, NOT the stale per-lock
+      // turnover_applied counter (which can drift from historical bugs).
       const locks = await this.admin.getDepositLocks();
-      const lockMap = new Map<string, number>();
+      const requiredMap = new Map<string, number>();
       for (const l of locks) {
-        const rem = Number(l.turnover_required) - Number(l.turnover_applied);
-        if (rem > 0) lockMap.set(l.user_id, (lockMap.get(l.user_id) || 0) + rem);
+        requiredMap.set(l.user_id, (requiredMap.get(l.user_id) || 0) + Number(l.turnover_required));
       }
       for (const w of this.wallets) {
-        (w as any).locked_remaining = lockMap.get(w.user_id) || 0;
+        const required = requiredMap.get(w.user_id) || 0;
+        (w as any).locked_remaining = Math.max(0, required - Number(w.total_turnover || 0));
       }
       this.totalTurnover = this.wallets.reduce((s, w) => s + Number(w.total_turnover || 0), 0);
       const totalDeposited = this.wallets.reduce((s, w) => s + Number(w.total_deposited || 0), 0);
