@@ -1,0 +1,3 @@
+-- Stub: this migration was applied directly to the remote DB but its
+-- original SQL file is not in this repo. The schema changes are already
+-- in production. Tracked via `supabase migration repair` to align history.

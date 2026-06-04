@@ -600,33 +600,28 @@ export const useStore = create((set, get) => ({
         if (!error && data) {
           const main = Number(data.balance_main) ?? 0;
           const bonus = Number(data.balance_bonus) ?? 0;
-          // Reserved = funds in-flight as pending withdrawals (not yet debited
-          // from balance_main, but committed). Portfolio = main; Buying Power = main - reserved.
-          let reserved = 0;
-          try {
-            const { data: pend } = await supabase
-              .from('transactions')
-              .select('amount')
-              .eq('user_id', auth.id)
-              .eq('type', 'WITHDRAWAL')
-              .eq('status', 'PENDING');
-            reserved = (pend || []).reduce((s, r) => s + Number(r.amount || 0), 0);
-          } catch {}
-          // Clear stale localStorage balance so it never overrides Supabase
+          // Since 20260604170000: submit_withdrawal ATOMICALLY deducts balance_main
+          // at submission. So balance_main already reflects money in-flight
+          // (deducted, waiting for admin to bank-transfer). No "reserved" sub-bucket
+          // exists in DB — pending WDs do not reserve additional funds on top of main.
+          //
+          //   Portfolio (totalBalance)  = main + bonus
+          //   Available (spendable)     = main
+          //   Locked                    = 0 (no escrow sub-bucket)
           try { localStorage.removeItem('n9_wallet_balances'); } catch {}
           set({
-            totalBalance: main,                          // Portfolio Value
-            availableBalance: Math.max(0, main - reserved), // Buying Power (spendable)
-            lockedBalance: reserved,                      // Reserved (pending withdrawals)
+            totalBalance: main + bonus,    // Portfolio Value (main + bonus)
+            availableBalance: main,         // Spendable = balance_main
+            lockedBalance: 0,               // No separate reserved bucket
             referralBonus: bonus,
           });
           return;
         }
       } catch {
-        // fall through to dummy balances
+        // fall through to zero balances
       }
     }
-    // Fallback: 0 if logged in (will be refreshed by Realtime), dummy if no auth
+    // Fallback: 0 if logged in (will be refreshed by Realtime)
     if (auth?.id) {
       set({ totalBalance: 0, availableBalance: 0, lockedBalance: 0, referralBonus: 0 });
     } else {
@@ -666,8 +661,57 @@ export const clearAllData = () => {
       (async () => {
         if (!supabase) return;
         setUserToken(_auth.token);
+        // Cross-tab sync: when another tab logs in/out, sync this tab's in-memory token.
+        // This prevents stale globalUserToken from blocking RLS queries.
+        if (typeof globalThis !== 'undefined' && globalThis.addEventListener) {
+          globalThis.addEventListener('storage', (e) => {
+            if (e.key === LS.auth) {
+              try {
+                const next = e.newValue ? JSON.parse(e.newValue) : null;
+                if (next?.token) {
+                  setUserToken(next.token);
+                  useStore.setState({ auth: next });
+                } else {
+                  setUserToken(null);
+                  useStore.setState({ auth: null });
+                }
+              } catch {}
+            }
+          });
+        }
         useStore.getState().fetchProfile().then(prof => {
-          if (!prof) return;
+          if (!prof) {
+            // Token may be stale (RLS blocks all reads). Cross-check by attempting
+            // a low-cost wallet query — if that also returns null, the session
+            // token in localStorage is out-of-sync with users.session_token.
+            // Force re-login by clearing auth.
+            if (typeof window !== 'undefined') {
+              (async () => {
+                try {
+                  const { data } = await supabase
+                    .from('wallet')
+                    .select('user_id')
+                    .eq('user_id', _auth.id)
+                    .limit(1);
+                  if (!data || data.length === 0) {
+                    // RLS definitely blocked — token stale
+                    console.warn('[AUTH] Session token stale. Forcing re-login.');
+                    useStore.setState({
+                      systemNotification: {
+                        type: 'warning',
+                        title: 'Session Expired',
+                        message: 'Your session token has expired or changed. Please log in again.',
+                      },
+                    });
+                    writeJSON(LS.auth, null);
+                    useStore.setState({ auth: null });
+                    setUserToken(null);
+                  }
+                } catch {}
+              })();
+            }
+            return;
+          }
 
           // Check if account is suspended or locked
           if (prof.login_status === 'LOCKED' || prof.account_status === 'SUSPENDED') {

@@ -15,10 +15,26 @@ if (supabaseUrl && supabaseKey) {
     // top-level `fetch` key is silently ignored, which previously meant
     // x-user-token was never sent (breaking token-required RPCs like place_bet).
     const originalFetch = globalThis.fetch.bind(globalThis)
+    const AUTH_LS_KEY = 'n9_auth'
     const customFetch = (url, options = {}) => {
       const headers = new Headers(options.headers || {})
-      if (globalUserToken) {
-        headers.set('x-user-token', globalUserToken)
+      // ALWAYS read from localStorage on every request so multi-tab logins
+      // stay in sync. Previously this read globalUserToken (set once) which
+      // became stale when another tab re-logged-in or admin reset the session,
+      // causing RLS to block ALL queries silently (manifesting as "no turnover"
+      // or empty data even when DB has rows).
+      let token = null
+      try {
+        const raw = globalThis.localStorage?.getItem(AUTH_LS_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          token = parsed?.token || null
+        }
+      } catch {}
+      // Fallback to in-memory (for code paths that set it explicitly via setUserToken)
+      if (!token && globalUserToken) token = globalUserToken
+      if (token) {
+        headers.set('x-user-token', token)
       }
       return originalFetch(url, { ...options, headers })
     }
