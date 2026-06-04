@@ -206,13 +206,8 @@ export async function fetchUserBank(userId) {
 
 export async function fetchTurnoverSummary(userId) {
   try {
-    const walletRes = await supabase
-      .from('wallet')
-      .select('total_deposited')
-      .eq('user_id', userId)
-      .single();
-
-    const totalDeposited = Number(walletRes.data?.total_deposited ?? 0);
+    const { data, error } = await supabase.rpc('get_my_profile');
+    if (error || !data || data.error) return defaultTurnover();
 
     const { data: lockRows } = await supabase
       .from('deposit_locks')
@@ -220,20 +215,14 @@ export async function fetchTurnoverSummary(userId) {
       .eq('user_id', userId)
       .order('created_at', { ascending: true });
 
-    if (!lockRows || lockRows.length === 0) {
-      return defaultTurnover();
-    }
+    if (!lockRows || lockRows.length === 0) return defaultTurnover();
 
     const locks = (lockRows || []).map(r => {
       const required = Number(r.turnover_required);
       const applied = Math.min(Number(r.turnover_applied), required);
       const remaining = Math.max(0, required - applied);
-      return {
-        amount: Number(r.amount),
-        required, applied, remaining,
-        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100,
-        done: remaining <= 0,
-      };
+      return { amount: Number(r.amount), required, applied, remaining,
+        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100, done: remaining <= 0 };
     });
 
     const outstanding = locks.filter(l => !l.done);
@@ -241,7 +230,7 @@ export async function fetchTurnoverSummary(userId) {
     const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
     const remaining = Math.max(0, required - achieved);
     const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
-    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
+    return { required, achieved, remaining, pct, totalDeposited: 0, locks, isUnlocked: remaining <= 0 };
   } catch {
     return defaultTurnover();
   }
