@@ -7,7 +7,6 @@ export const en = {
     back_to_dashboard: 'Back to Dashboard',
     copy: 'Copy',
     copied: 'Copied',
-    save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
     continue: 'Continue',
@@ -15,7 +14,6 @@ export const en = {
     done: 'Done',
     try_again: 'Try Again',
     ok: 'OK',
-    no_data: 'No data',
     no_activity: 'No activity yet',
     active: 'ACTIVE',
     pending: 'PENDING',
@@ -25,37 +23,26 @@ export const en = {
     username: 'Username',
     registration: 'Registration',
     date: 'Date',
-    amount: 'Amount',
-    method: 'Method',
-    balance: 'Balance',
-    summary: 'Summary',
-    fee: 'Fee',
     all: 'All',
     home: 'Home',
-    search: 'Search',
     points: 'P',
-    required: 'Required',
     locked: 'Locked',
     processing: 'Processing',
-    submitted: 'Submitted',
-    failed: 'Failed',
     network_error: 'Network error. Try again.',
     connection_error: 'Connection error. Please try again.',
     request_timeout: 'Request timed out. Your request may still be processing — check your history in a moment.',
-    upload: 'Upload',
     attached: 'Attached',
     file_selected: 'File selected',
     click_to_upload: 'Click here to upload',
     or_drag_drop: 'or drag and drop your image',
-    learn_more: 'Learn More',
-    view_all: 'View All',
     yes: 'Yes',
-    no: 'No',
     logout_confirm: 'Are you sure you want to logout?',
     more: 'More',
     close: 'Close',
     reload: 'Reload Page',
-    back_to_login: 'Back to Login',
+    edit: 'Edit',
+    login_required: 'Please log in to continue.',
+    back_to_login: 'Back to Login'
   },
 
   /* ─── NAVIGATION ─── */
@@ -71,19 +58,12 @@ export const en = {
     history: 'History',
     profile: 'Profile',
     logout: 'Logout',
-    global_partners: 'Global Partners',
-    market_data: 'Market Data',
     login: 'Log In',
-    register: 'Become a Partner',
+    register: 'Become a Partner'
   },
 
   /* ─── LANDING ─── */
   landing: {
-    nav_home: 'Home',
-    nav_about: 'About Us',
-    nav_partnership: 'Partnership',
-    nav_services: 'Services',
-    nav_contact: 'Contact',
     hero_badge: 'GLOBAL PARTNERSHIP. SUSTAINABLE GROWTH.',
     hero_headline_1: 'Global Partnerships',
     hero_headline_2: 'for Sustainable Growth',
@@ -105,10 +85,6 @@ export const en = {
     stat_partners: 'Strategic Partners',
     stat_experience: 'Years Experience',
     stat_opportunities: 'Opportunities',
-    stat_countries_val: '50+',
-    stat_partners_val: '200+',
-    stat_experience_val: '10+',
-    stat_opportunities_val: '∞',
     about_badge: 'ABOUT NUMBER 9',
     about_headline_1: 'Building Bridges.',
     about_headline_2: 'Creating Opportunities.',
@@ -117,7 +93,7 @@ export const en = {
     about_body_2: 'We believe sustainable growth is only possible through strong partnerships, continuous innovation, and trust built over time.',
     cta_title: 'Ready to Start?',
     cta_button: 'Join NUMBER9 Today',
-    footer: '© 2012 NUMBER9. All rights reserved.',
+    footer: '© 2012 NUMBER9. All rights reserved.'
   },
 
   /* ─── AUTH / LOGIN ─── */
@@ -202,6 +178,8 @@ export const en = {
     step1_complete: 'Step 1 Complete',
     thank_you: 'Thank You!',
     step1_desc: 'Your account details have been saved. Next, please complete your bank details and identity verification (KYC) so our admin team can verify and activate your account.',
+    submitting: 'Submitting…',
+    password_hint: 'Min. 6 characters',
     continue_bank: 'Continue to Bank & KYC',
     pending_verification: 'Pending Verification',
     registration_submitted: 'Registration submitted',
@@ -233,47 +211,24 @@ export const en = {
     marketplace: 'Marketplace',
     recent_activity: 'Recent Activity',
     no_activity: 'No activity yet',
-    dep: 'DEP',
-    wd: 'WD',
     deposit_label: 'Deposit · {method}',
     withdraw_label: 'Withdraw · {method}',
     position_label: 'Position · {code} · #{session}',
-    disclaimer: 'All financial data displayed on this dashboard is updated in real time. Your account information is protected by industry-standard security protocols. For any discrepancies or concerns, please contact our support team immediately.',
+    disclaimer: 'All financial data displayed on this dashboard is updated in real time. Your account information is protected by industry-standard security protocols. For any discrepancies or concerns, please contact our support team immediately.'
   },
 
   /* ─── WALLET ─── */
   wallet: {
     title: 'Wallet',
     subtitle: 'Manage balances, deposits & withdrawals.',
-    saldo: 'Saldo',
-    pending_deposit: 'Pending deposit +{amount}',
-    pending_withdraw: 'pending withdraw -{amount}',
-    deposit: '+ Deposit',
-    withdraw: 'Withdraw',
-    transfer: 'Transfer',
-    coming_soon: 'Coming soon',
-    my_wallets: 'My Wallets',
-    usdt: 'USDT TRC20',
-    usdt_desc: 'Min 50 · Instant · 0% fee',
-    bank: 'Bank Transfer',
-    bank_desc: 'Min 100 · 1–2 days · 0% fee',
-    ewallet: 'E-Wallet',
-    ewallet_desc: 'Min 25 · Instant · 1% fee',
-    games: 'Games',
-    wl: 'W/L',
-    pnl: 'P&L',
-    deposit_methods: 'Deposit Methods',
-    last_game: 'Last game result',
-    no_transactions: 'No transactions yet. Make your first deposit.',
-    dp: 'DP',
-    wd: 'WD',
+    tabs_deposit: 'Deposit',
+    tabs_withdraw: 'Withdraw',
+    tabs_turnover: 'Turnover',
+    saldo: 'Saldo'
   },
 
   /* ─── DEPOSIT ─── */
   deposit: {
-    title: 'Deposit',
-    subtitle: 'Add funds to your NUMBER9 account',
-    balance: 'Balance',
     locked_timer: 'Locked · {timer}',
     select_method: 'Select a method',
     enter_amount: 'Enter valid amount',
@@ -292,26 +247,20 @@ export const en = {
     enter_amount_desc: 'Top up to your account',
     upload_proof_title: 'Upload Proof of Transfer',
     upload_proof_desc: 'JPG or PNG image only. Max 5MB',
-    available_balance: 'Available Balance',
     summary: 'Summary',
     amount: 'Amount',
     method: 'Method',
     proof: 'Proof',
     confirm: 'Confirm Deposit',
     locked_timer_btn: 'Locked {timer}',
-    disclaimer: 'All deposit transactions are securely recorded with complete user details, payment methods, transaction codes, and verification status.',
     history: 'Deposit History',
-    history_desc: 'Your recent transactions',
     placeholder_amount: '0',
     confirm_title: 'Confirm Deposit',
-    confirm_message: 'Deposit {amount} P into your account?',
+    confirm_message: 'Deposit {amount} P into your account?'
   },
 
   /* ─── WITHDRAW ─── */
   withdraw: {
-    title: 'Withdraw',
-    subtitle: 'Cash out to your account',
-    available: 'Available',
     turnover_required: 'Turnover required: {amount} P',
     turnover_remaining: '{amount} P remaining before withdrawal',
     turnover_title: 'TURNOVER REQUIREMENT',
@@ -323,11 +272,8 @@ export const en = {
     bank_name: 'Bank Name',
     account_number: 'Account Number',
     account_holder: 'Account Holder',
-    no_bank_details: 'Bank details not found',
-    update_profile: 'Update Profile →',
     amount_title: 'Withdrawal Amount',
     max_amount: 'Maximum: {amount} P',
-    available_balance: 'Available Balance',
     summary: 'Summary',
     amount: 'Amount',
     method: 'Method',
@@ -335,7 +281,6 @@ export const en = {
     fee_free: '0% fee',
     locked_required: 'Locked · {amount} P required',
     request: 'Request Withdraw',
-    disclaimer: 'Withdrawal requests are processed within 24 hours. Your account will be credited after successful verification and approval.',
     enter_valid: 'Enter valid amount',
     insufficient: 'Insufficient balance',
     add_bank: 'Add bank details in profile',
@@ -343,7 +288,7 @@ export const en = {
     submitted: 'Submitted · Awaiting approval',
     placeholder: '0',
     confirm_title: 'Confirm Withdrawal',
-    confirm_message: 'Withdraw {amount} P from your account?',
+    confirm_message: 'Withdraw {amount} P from your account?'
   },
 
   /* ─── MARKETPLACE ENTRY ─── */
@@ -407,8 +352,6 @@ export const en = {
     contracts_count: 'Contracts · {count}',
     no_contract: 'None — select a contract first',
     selected_total: 'TOTAL {n}',
-    multiplier_3x: '3.0×',
-    multiplier_2x: '2.0×',
     investment_per_contract: 'Investment / Contract',
     max: 'Max',
     custom_amount: 'Custom amount',
@@ -451,7 +394,7 @@ export const en = {
     no_orders: 'No orders yet',
     in_profit: 'In Profit',
     in_loss: 'In Loss',
-    points: 'Points',
+    points: 'Points'
   },
 
   /* ─── TRADING (MEDIA) ─── */
@@ -497,7 +440,6 @@ export const en = {
   /* ─── TURNOVER ─── */
   turnover: {
     title: 'Turnover Progress',
-    achieved: '{done} / {req}',
     percent: '%',
     to_unlock: 'to unlock withdraw',
     unlocked: 'Withdrawal Unlocked',
@@ -508,8 +450,6 @@ export const en = {
     left: 'Left',
     breakdown: 'Breakdown by Activity',
     no_activity: 'No activity yet.',
-    deposit_tx: 'Deposit {id}',
-    requirement: 'Requirement #{id}',
     rules: 'Rules & Info',
     q1: 'What counts toward turnover?',
     q1_a: 'All trading volume in 3D King and Gold Trading counts 100% toward your turnover requirement. Bonus credits do not count until unlocked.',
@@ -519,7 +459,7 @@ export const en = {
     q3_a: 'Yes. Both winning and losing trades contribute based on notional value.',
     grow: 'Grow Your Turnover',
     trade_now: 'Trade Now',
-    trade_marketplace: 'Trade Marketplace',
+    trade_marketplace: 'Trade Marketplace'
   },
 
   /* ─── REFERRAL ─── */
@@ -533,6 +473,7 @@ export const en = {
     active_users: 'Active',
     this_month: 'This Mo.',
     earned: 'Earned',
+    my_code: 'Your Referral Code',
     pending_title: 'Pending Admin Approval',
     pending_desc: 'Your referral code will be generated once an administrator approves your registration.',
   },
@@ -555,7 +496,6 @@ export const en = {
     account_no: 'Account No.',
     account_name: 'Account Name',
     verification: 'Verification',
-    need_help: 'Need Help? →',
     id_verify: 'Identity',
     address_verify: 'Address',
     referral_program: 'Referral Program',
@@ -563,10 +503,9 @@ export const en = {
     referred_by: 'Referred by:',
     manage_referrals: 'Manage Referrals →',
     code_pending: 'Referral code pending',
-    code_pending_desc: 'Available after admin approval',
     user_id: 'User ID',
     referral: 'Referral',
-    status: 'Status',
+    status: 'Status'
   },
 
   /* ─── SUPPORT ─── */
@@ -621,22 +560,14 @@ export const en = {
     deposit: 'Deposit',
     withdraw: 'Withdraw',
     bet: 'Bet',
-    trade: 'Trade',
-    referral: 'Referral',
     d30: '30d',
     d7: '7d',
     h24: '24h',
     all_time: 'All Time',
     deposit_turnover: 'Deposit Turnover',
-    deposit_id: 'Deposit {id}',
-    turnover_met: 'All turnover requirements met — withdraw unlocked.',
     no_results: 'No activity found for selected filters.',
     proof_uploaded: 'Proof uploaded',
-    status_ap: 'AP',
-    status_pd: 'PD',
-    status_rj: 'RJ',
-    status_win: 'WIN',
-    game_position: '3D King · {code} · {session}',
+    result: 'Result'
   },
 
   /* ─── ERROR BOUNDARY ─── */
@@ -655,33 +586,6 @@ export const en = {
     empty_default: 'No data',
     empty_action_title: 'Action Required',
     empty_action_label: 'Continue',
-    loading: 'Loading…',
-    preset_k: '{n}K',
-  },
-
-  /* ─── COUNTRIES ─── */
-  countries: {
-    indonesia: 'Indonesia',
-    singapore: 'Singapore',
-    malaysia: 'Malaysia',
-    thailand: 'Thailand',
-    philippines: 'Philippines',
-    vietnam: 'Vietnam',
-    japan: 'Japan',
-    korea: 'Korea',
-    uk: 'UK',
-    usa: 'USA',
-    australia: 'Australia',
-    canada: 'Canada',
-  },
-
-  /* ─── MARKET DATA ─── */
-  market: {
-    btc: 'BTC',
-    eth: 'ETH',
-    gold: 'GOLD',
-    sp500: 'S&P500',
-    nikkei: 'NIKKEI',
-    hk: 'HANG SENG',
-  },
+    loading: 'Loading…'
+  }
 }

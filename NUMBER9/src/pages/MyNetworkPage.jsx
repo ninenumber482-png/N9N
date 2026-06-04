@@ -14,7 +14,7 @@ export default function MyNetworkPage() {
   const fetchDownlines = useStore(s => s.fetchDownlines)
 
   const me = getUserByUsername(auth?.username) || {}
-  const isActive = me.account_status === 'ACTIVE'
+  const isActive = (me.accountStatus || me.account_status) === 'ACTIVE'
 
   // Downlines = users who registered with me as their referrer (DB-backed, not local cache).
   const [downlines, setDownlines] = useState([])

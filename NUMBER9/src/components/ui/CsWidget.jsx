@@ -17,7 +17,7 @@ function getCached() {
 function setCached(data) {
   try {
     localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }))
-  } catch { }
+  } catch { /* ignore */ }
 }
 
 export default function CsWidget() {

@@ -3,6 +3,11 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import bcrypt from 'npm:bcryptjs@2.4.3'
 
+async function sha256(msg: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 interface LoginPayload {
   username: string;
   password: string;
@@ -61,6 +66,7 @@ export default {
         .eq('username', dbUsername)
         .eq('role', 'admin')
         .eq('account_status', 'ACTIVE')
+        .neq('login_status', 'SUSPENDED')
         .single()
 
       if (error || !userRow) {
@@ -82,9 +88,11 @@ export default {
       // Insert session record
       const now = new Date().toISOString()
       const expiresAt = new Date(Date.now() + 86400000).toISOString()
+      const tokenHash = await sha256(sessionToken);
+
       const { error: sessionErr } = await supabase.from('sessions').insert({
         user_id: userRow.id,
-        token_hash: sessionToken,
+        token_hash: tokenHash,
         ip_address: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('host') || '',
         browser_info: req.headers.get('user-agent') || 'admin-dashboard',
         last_activity: now,

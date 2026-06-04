@@ -26,7 +26,7 @@ const hasBackend = () => Boolean(SUPA_URL && SUPA_KEY);
 /* The logged-in user's UUID — set by the GamePage so the data layer can scope
    bets and debit the right wallet. */
 let _userId = null;
-export function setKingUser(userId) { _userId = userId || null; }
+export function setKingUser(userId) { _userId = userId || null; }  
 
 /* Map a Supabase `king_results` row to the result shape the UI expects
    (digit1/2/3, resultTotal, resultNumber, bigSmall, oddEven). */
@@ -59,21 +59,20 @@ function mapBetRow(row) {
     result: row.result,
     createdAt: row.created_at,
     placedAt: row.created_at,
+    settledAt: row.updated_at || null,
   });
 }
 
 
 /* ---- timing constants (must match backend session scheme) ---- */
 export const SESSION_DURATION_MS = 300_000; // 5 minutes between result times
-export const BETTING_WINDOW_MS = 240_000; // 4:00 = OPEN
-export const LOCKED_DURATION_MS = 60_000; // 1:00 = LOCKED (betting closes 1 min before draw; matches admin /3dking)
-export const RESULTING_DURATION_MS = 3_000; // 0:03 = RESULTING
-export const SETTLED_DURATION_MS = 7_000; // 0:07 = SETTLED
+
+const LOCKED_DURATION_MS = 60_000; // 1:00 = LOCKED (betting closes 1 min before draw; matches admin /3dking)
+const RESULTING_DURATION_MS = 3_000; // 0:03 = RESULTING
+const SETTLED_DURATION_MS = 7_000; // 0:07 = SETTLED
 
 /* ---- bid groups & payouts ---- */
 export const PAYOUT = { BIG_SMALL: 2, ODD_EVEN: 2, NUMBER: 3 };
-export const BIG_SMALL = ["BIG", "SMALL"];
-export const ODD_EVEN = ["ODD", "EVEN"];
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -202,7 +201,7 @@ export async function refreshKingData(userId = _userId) {
     const [resultsRes, betsRes] = await Promise.all([
       supabase.from("king_results").select("session_code,d1,d2,d3,total,big_small,odd_even,created_at").order("session_code", { ascending: false }).limit(100),
       userId
-        ? supabase.from("bets").select("id,session_code,bet_code,selection,stake,potential_payout,actual_payout,status,result,created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(200)
+        ? supabase.from("bets").select("id,session_code,bet_code,selection,stake,potential_payout,actual_payout,status,result,created_at,updated_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(200)
         : Promise.resolve({ data: [], error: null }),
     ]);
 
@@ -257,7 +256,7 @@ const codeFor3 = (sel) => (typeof sel === "number" ? `TOTAL_${sel}` : sel);
 /* Place bids. Uses the server-side place_bet() RPC which atomically inserts bet
    rows, verifies the wallet balance, and debits the stake in a single transaction
    (SECURITY DEFINER, so it bypasses RLS). */
-export async function placeBid({ sessionCode, selections, stake, username, userId = _userId }) {
+export async function placeBid({ sessionCode, selections, stake, userId = _userId }) {
   if (hasBackend() && userId) {
     try {
       if (!supabase) return { ok: false, error: "Backend unavailable. Cannot place bet." };
@@ -269,7 +268,7 @@ export async function placeBid({ sessionCode, selections, stake, username, userI
         potential_payout: payoutFor(selection, stake),
       }));
 
-      const { data, error } = await supabase.rpc("place_bet", {
+      const { error } = await supabase.rpc("place_bet", {
         p_user_id: userId,
         p_session_code: sessionCode,
         p_selections,
@@ -282,7 +281,7 @@ export async function placeBid({ sessionCode, selections, stake, username, userI
       // listening on the store) notice that a new bet landed — otherwise
       // the 15s poll cycle would not see the new head-of-stream bet for
       // up to 15 seconds, and the local balance refresh would race.
-      try { useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 })); } catch {}
+      try { useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 })); } catch { /* ignore */ }
       return { ok: true, count: selections.length };
     } catch (err) {
       return { ok: false, error: err?.message || "Bet failed. Please try again." };

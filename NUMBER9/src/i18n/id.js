@@ -7,7 +7,6 @@ export const id = {
     back_to_dashboard: 'Kembali ke Dashboard',
     copy: 'Salin',
     copied: 'Tersalin',
-    save: 'Simpan',
     cancel: 'Batal',
     confirm: 'Konfirmasi',
     continue: 'Lanjut',
@@ -15,7 +14,6 @@ export const id = {
     done: 'Selesai',
     try_again: 'Coba Lagi',
     ok: 'OK',
-    no_data: 'Tidak ada data',
     no_activity: 'Belum ada aktivitas',
     active: 'AKTIF',
     pending: 'TERTUNDA',
@@ -25,37 +23,26 @@ export const id = {
     username: 'Nama Pengguna',
     registration: 'Pendaftaran',
     date: 'Tanggal',
-    amount: 'Jumlah',
-    method: 'Metode',
-    balance: 'Saldo',
-    summary: 'Ringkasan',
-    fee: 'Biaya',
     all: 'Semua',
     home: 'Beranda',
-    search: 'Cari',
     points: 'P',
-    required: 'Diperlukan',
     locked: 'Terkunci',
     processing: 'Diproses',
-    submitted: 'Terkirim',
-    failed: 'Gagal',
     network_error: 'Kesalahan jaringan. Coba lagi.',
     connection_error: 'Koneksi error. Silakan coba lagi.',
     request_timeout: 'Permintaan kehabisan waktu. Permintaan Anda mungkin sedang diproses — periksa riwayat sebentar lagi.',
-    upload: 'Unggah',
     attached: 'Terlampir',
     file_selected: 'File dipilih',
     click_to_upload: 'Klik untuk unggah',
     or_drag_drop: 'atau seret dan lepas gambar Anda',
-    learn_more: 'Pelajari Lebih',
-    view_all: 'Lihat Semua',
     yes: 'Ya',
-    no: 'Tidak',
     logout_confirm: 'Apakah Anda yakin ingin keluar?',
     more: 'Lainnya',
     close: 'Tutup',
     reload: 'Muat Ulang',
-    back_to_login: 'Kembali ke Login',
+    edit: 'Ubah',
+    login_required: 'Silakan login untuk melanjutkan.',
+    back_to_login: 'Kembali ke Login'
   },
 
   /* ─── NAVIGATION ─── */
@@ -71,19 +58,12 @@ export const id = {
     history: 'Riwayat',
     profile: 'Profil',
     logout: 'Keluar',
-    global_partners: 'Mitra Global',
-    market_data: 'Data Pasar',
     login: 'Masuk',
-    register: 'Jadi Mitra',
+    register: 'Jadi Mitra'
   },
 
   /* ─── LANDING ─── */
   landing: {
-    nav_home: 'Beranda',
-    nav_about: 'Tentang',
-    nav_partnership: 'Kemitraan',
-    nav_services: 'Layanan',
-    nav_contact: 'Kontak',
     hero_badge: 'KEMITRAAN GLOBAL. PERTUMBUHAN BERKELANJUTAN.',
     hero_headline_1: 'Kemitraan Global',
     hero_headline_2: 'untuk Pertumbuhan Berkelanjutan',
@@ -105,10 +85,6 @@ export const id = {
     stat_partners: 'Mitra Strategis',
     stat_experience: 'Tahun Pengalaman',
     stat_opportunities: 'Peluang',
-    stat_countries_val: '50+',
-    stat_partners_val: '200+',
-    stat_experience_val: '10+',
-    stat_opportunities_val: '∞',
     about_badge: 'TENTANG NUMBER 9',
     about_headline_1: 'Membangun Jembatan.',
     about_headline_2: 'Menciptakan Peluang.',
@@ -117,7 +93,7 @@ export const id = {
     about_body_2: 'Kami percaya pertumbuhan berkelanjutan hanya mungkin melalui kemitraan kuat, inovasi berkelanjutan, dan kepercayaan yang dibangun seiring waktu.',
     cta_title: 'Siap Memulai?',
     cta_button: 'Bergabung dengan NUMBER9',
-    footer: '© 2012 NUMBER9. Hak cipta dilindungi.',
+    footer: '© 2012 NUMBER9. Hak cipta dilindungi.'
   },
 
   /* ─── AUTH / LOGIN ─── */
@@ -202,6 +178,8 @@ export const id = {
     step1_complete: 'Langkah 1 Selesai',
     thank_you: 'Terima Kasih!',
     step1_desc: 'Data akun Anda telah disimpan. Selanjutnya, lengkapi detail bank dan verifikasi identitas (KYC) agar tim admin dapat memverifikasi dan mengaktifkan akun Anda.',
+    submitting: 'Mengirim…',
+    password_hint: 'Min. 6 karakter',
     continue_bank: 'Lanjut ke Bank & KYC',
     pending_verification: 'Menunggu Verifikasi',
     registration_submitted: 'Pendaftaran terkirim',
@@ -233,47 +211,24 @@ export const id = {
     marketplace: 'Market',
     recent_activity: 'Aktivitas Terbaru',
     no_activity: 'Belum ada aktivitas',
-    dep: 'DEP',
-    wd: 'WD',
     deposit_label: 'Deposit · {method}',
     withdraw_label: 'Tarik · {method}',
     position_label: 'Posisi · {code} · #{session}',
-    disclaimer: 'Semua data keuangan yang ditampilkan di dashboard ini diperbarui secara real-time. Informasi akun Anda dilindungi oleh protokol keamanan standar industri. Untuk ketidaksesuaian atau pertanyaan, hubungi tim dukungan kami segera.',
+    disclaimer: 'Semua data keuangan yang ditampilkan di dashboard ini diperbarui secara real-time. Informasi akun Anda dilindungi oleh protokol keamanan standar industri. Untuk ketidaksesuaian atau pertanyaan, hubungi tim dukungan kami segera.'
   },
 
   /* ─── WALLET ─── */
   wallet: {
     title: 'Dompet',
     subtitle: 'Kelola saldo, deposit & penarikan.',
-    saldo: 'Saldo',
-    pending_deposit: 'Deposit pending +{amount}',
-    pending_withdraw: 'penarikan pending -{amount}',
-    deposit: '+ Deposit',
-    withdraw: 'Tarik Dana',
-    transfer: 'Transfer',
-    coming_soon: 'Segera hadir',
-    my_wallets: 'Dompet Saya',
-    usdt: 'USDT TRC20',
-    usdt_desc: 'Min 50 · Instan · 0% biaya',
-    bank: 'Transfer Bank',
-    bank_desc: 'Min 100 · 1–2 hari · 0% biaya',
-    ewallet: 'E-Wallet',
-    ewallet_desc: 'Min 25 · Instan · 1% biaya',
-    games: 'Game',
-    wl: 'M/K',
-    pnl: 'R/L',
-    deposit_methods: 'Metode Deposit',
-    last_game: 'Hasil game terakhir',
-    no_transactions: 'Belum ada transaksi. Lakukan deposit pertama Anda.',
-    dp: 'DP',
-    wd: 'WD',
+    tabs_deposit: 'Deposit',
+    tabs_withdraw: 'Tarik Dana',
+    tabs_turnover: 'Omzet',
+    saldo: 'Saldo'
   },
 
   /* ─── DEPOSIT ─── */
   deposit: {
-    title: 'Deposit',
-    subtitle: 'Tambahkan dana ke akun NUMBER9 Anda',
-    balance: 'Saldo',
     locked_timer: 'Terkunci · {timer}',
     select_method: 'Pilih metode',
     enter_amount: 'Masukkan jumlah valid',
@@ -292,33 +247,20 @@ export const id = {
     enter_amount_desc: 'Isi ulang akun Anda',
     upload_proof_title: 'Unggah Bukti Transfer',
     upload_proof_desc: 'Hanya gambar JPG atau PNG. Maks 5MB',
-    available_balance: 'Saldo Tersedia',
     summary: 'Ringkasan',
     amount: 'Jumlah',
     method: 'Metode',
     proof: 'Bukti',
     confirm: 'Konfirmasi Deposit',
     locked_timer_btn: 'Terkunci {timer}',
-    disclaimer: 'Semua transaksi deposit dicatat dengan aman dengan detail pengguna, metode pembayaran, kode transaksi, dan status verifikasi.',
     history: 'Riwayat Deposit',
-    history_desc: 'Transaksi terbaru Anda',
     placeholder_amount: '0',
     confirm_title: 'Konfirmasi Deposit',
-    confirm_message: 'Deposit {amount} P ke akun Anda?',
-  },
-
-  /* ─── MARKETPLACE ENTRY ─── */
-  marketplace: {
-    entry_title: 'Masuk Marketplace?',
-    entry_message: 'Anda akan memasuki NUMBER9 Settlement Marketplace. Lanjutkan?',
-    entry_confirm: 'Masuk',
+    confirm_message: 'Deposit {amount} P ke akun Anda?'
   },
 
   /* ─── WITHDRAW ─── */
   withdraw: {
-    title: 'Tarik Dana',
-    subtitle: 'Tarik dana ke akun Anda',
-    available: 'Tersedia',
     turnover_required: 'Omzet diperlukan: {amount} P',
     turnover_remaining: '{amount} P tersisa sebelum penarikan',
     turnover_title: 'PERSYARATAN OMZET',
@@ -330,11 +272,8 @@ export const id = {
     bank_name: 'Nama Bank',
     account_number: 'Nomor Rekening',
     account_holder: 'Pemilik Rekening',
-    no_bank_details: 'Detail bank tidak ditemukan',
-    update_profile: 'Perbarui Profil →',
     amount_title: 'Jumlah Penarikan',
     max_amount: 'Maksimum: {amount} P',
-    available_balance: 'Saldo Tersedia',
     summary: 'Ringkasan',
     amount: 'Jumlah',
     method: 'Metode',
@@ -342,7 +281,6 @@ export const id = {
     fee_free: '0% biaya',
     locked_required: 'Terkunci · {amount} P diperlukan',
     request: 'Ajukan Penarikan',
-    disclaimer: 'Permintaan penarikan diproses dalam 24 jam. Akun Anda akan dikreditkan setelah verifikasi dan persetujuan berhasil.',
     enter_valid: 'Masukkan jumlah valid',
     insufficient: 'Saldo tidak mencukupi',
     add_bank: 'Tambahkan detail bank di profil',
@@ -350,7 +288,7 @@ export const id = {
     submitted: 'Terkirim · Menunggu persetujuan',
     placeholder: '0',
     confirm_title: 'Konfirmasi Penarikan',
-    confirm_message: 'Tarik {amount} P dari akun Anda?',
+    confirm_message: 'Tarik {amount} P dari akun Anda?'
   },
 
   /* ─── MARKETPLACE ENTRY ─── */
@@ -414,8 +352,6 @@ export const id = {
     contracts_count: 'Kontrak · {count}',
     no_contract: 'Tidak ada — pilih kontrak dulu',
     selected_total: 'TOTAL {n}',
-    multiplier_3x: '3.0×',
-    multiplier_2x: '2.0×',
     investment_per_contract: 'Investasi / Kontrak',
     max: 'Maks',
     custom_amount: 'Jumlah kustom',
@@ -458,7 +394,7 @@ export const id = {
     no_orders: 'Belum ada pesanan',
     in_profit: 'Dalam Profit',
     in_loss: 'Dalam Rugi',
-    points: 'Poin',
+    points: 'Poin'
   },
 
   /* ─── TRADING (MEDIA) ─── */
@@ -504,7 +440,6 @@ export const id = {
   /* ─── TURNOVER ─── */
   turnover: {
     title: 'Progress Omzet',
-    achieved: '{done} / {req}',
     percent: '%',
     to_unlock: 'untuk buka penarikan',
     unlocked: 'Penarikan Terbuka',
@@ -515,8 +450,6 @@ export const id = {
     left: 'Sisa',
     breakdown: 'Rincian per Aktivitas',
     no_activity: 'Belum ada aktivitas.',
-    deposit_tx: 'Deposit {id}',
-    requirement: 'Persyaratan #{id}',
     rules: 'Aturan & Info',
     q1: 'Apa yang dihitung sebagai omzet?',
     q1_a: 'Semua volume trading di 3D King dan Gold Trading dihitung 100% untuk persyaratan omzet Anda. Kredit bonus tidak dihitung sampai terbuka.',
@@ -526,7 +459,7 @@ export const id = {
     q3_a: 'Ya. Baik trading menang maupun kalah berkontribusi berdasarkan nilai nosional.',
     grow: 'Tingkatkan Omzet Anda',
     trade_now: 'Trading Sekarang',
-    trade_marketplace: 'Market Trading',
+    trade_marketplace: 'Market Trading'
   },
 
   /* ─── REFERRAL ─── */
@@ -540,6 +473,7 @@ export const id = {
     active_users: 'Aktif',
     this_month: 'Bulan Ini',
     earned: 'Diperoleh',
+    my_code: 'Kode Referral Anda',
     pending_title: 'Menunggu Persetujuan Admin',
     pending_desc: 'Kode referral Anda akan dibuat setelah administrator menyetujui pendaftaran Anda.',
   },
@@ -562,7 +496,6 @@ export const id = {
     account_no: 'No. Rekening',
     account_name: 'Nama Rekening',
     verification: 'Verifikasi',
-    need_help: 'Butuh Bantuan? →',
     id_verify: 'Identitas',
     address_verify: 'Alamat',
     referral_program: 'Program Referral',
@@ -570,10 +503,9 @@ export const id = {
     referred_by: 'Direfer oleh:',
     manage_referrals: 'Kelola Referral →',
     code_pending: 'Kode referral tertunda',
-    code_pending_desc: 'Tersedia setelah persetujuan admin',
     user_id: 'ID Pengguna',
     referral: 'Referral',
-    status: 'Status',
+    status: 'Status'
   },
 
   /* ─── SUPPORT ─── */
@@ -628,22 +560,14 @@ export const id = {
     deposit: 'Deposit',
     withdraw: 'Tarik Dana',
     bet: 'Bet',
-    trade: 'Trading',
-    referral: 'Referral',
     d30: '30h',
     d7: '7h',
     h24: '24j',
     all_time: 'Semua Waktu',
     deposit_turnover: 'Omzet Deposit',
-    deposit_id: 'Deposit {id}',
-    turnover_met: 'Semua persyaratan omzet terpenuhi — penarikan terbuka.',
     no_results: 'Tidak ada aktivitas untuk filter yang dipilih.',
     proof_uploaded: 'Bukti terunggah',
-    status_ap: 'AP',
-    status_pd: 'PD',
-    status_rj: 'RJ',
-    status_win: 'MENANG',
-    game_position: '3D King · {code} · {session}',
+    result: 'Hasil'
   },
 
   /* ─── ERROR BOUNDARY ─── */
@@ -662,33 +586,6 @@ export const id = {
     empty_default: 'Tidak ada data',
     empty_action_title: 'Tindakan Diperlukan',
     empty_action_label: 'Lanjut',
-    loading: 'Memuat…',
-    preset_k: '{n}RB',
-  },
-
-  /* ─── COUNTRIES ─── */
-  countries: {
-    indonesia: 'Indonesia',
-    singapore: 'Singapura',
-    malaysia: 'Malaysia',
-    thailand: 'Thailand',
-    philippines: 'Filipina',
-    vietnam: 'Vietnam',
-    japan: 'Jepang',
-    korea: 'Korea',
-    uk: 'Inggris',
-    usa: 'AS',
-    australia: 'Australia',
-    canada: 'Kanada',
-  },
-
-  /* ─── MARKET DATA ─── */
-  market: {
-    btc: 'BTC',
-    eth: 'ETH',
-    gold: 'EMAS',
-    sp500: 'S&P500',
-    nikkei: 'NIKKEI',
-    hk: 'HANG SENG',
-  },
+    loading: 'Memuat…'
+  }
 }

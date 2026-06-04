@@ -1,3 +1,4 @@
+// DEAD CODE: realtimeEnabled=false, subscriptions never execute
 /* ============================================================
    REALTIME MANAGER — Centralized Subscription Orchestration
    ============================================================
@@ -228,5 +229,5 @@ export async function unsubscribeAll() {
       await _settledBetsChannel.unsubscribe();
       _settledBetsChannel = null;
     }
-  } catch {}
+  } catch { /* ignore */ }
 }

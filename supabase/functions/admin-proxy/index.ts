@@ -17,6 +17,11 @@ function checkRateLimit(token: string): boolean {
   return true
 }
 
+async function sha256(msg: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -61,11 +66,13 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-  // Validate session by token_hash
+  // Validate session by token_hash (compare hashed token)
+  const tokenHash = await sha256(token);
+
   const { data: session, error: sessionErr } = await supabase
     .from('sessions')
     .select('id, user_id, logged_out_at, last_activity, expires_at')
-    .eq('token_hash', token)
+    .eq('token_hash', tokenHash)
     .single()
 
   if (sessionErr || !session || session.logged_out_at) {

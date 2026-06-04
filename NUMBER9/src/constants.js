@@ -11,6 +11,5 @@ export const WITHDRAWAL_METHODS = [
 
 // UI Timing
 export const TOAST_DURATION_MS = 3500;
-export const PAGE_TRANSITION_MS = 1400;
 export const DEPOSIT_LOCK_MS = 15 * 60 * 1000;
 export const WITHDRAWAL_LOCK_MS = 15 * 60 * 1000;

@@ -9,7 +9,6 @@ import { supabase } from '../utils/supabase';
 import { getFingerprint } from '../utils/fingerprint';
 
 let _timer = null;
-let _userId = null;
 let _fingerprint = null;
 
 async function ping() {
@@ -20,12 +19,11 @@ async function ping() {
     }
     // Use RPC to update session (bypasses RLS via SECURITY DEFINER)
     await supabase.rpc('session_heartbeat', { p_fingerprint: _fingerprint || null });
-  } catch {}
+  } catch { /* ignore */ }
 }
 
-export function startHeartbeat(userId) {
+export function startHeartbeat(_userId) { // eslint-disable-line no-unused-vars
   stopHeartbeat();
-  _userId = userId;
   _fingerprint = null;
   // Initial ping immediately
   ping();
@@ -38,5 +36,4 @@ export function stopHeartbeat() {
     clearInterval(_timer);
     _timer = null;
   }
-  _userId = null;
 }

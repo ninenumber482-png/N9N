@@ -247,13 +247,13 @@ export default function GamePage() {
           onConfirm={() => {
             setEntryLoading(true);
             setTimeout(() => {
-              try { localStorage.setItem(ENTRY_LS_KEY, 'true'); } catch {}
+              try { localStorage.setItem(ENTRY_LS_KEY, 'true'); } catch { /* ignore */ }
               setEntryLoading(false);
               setShowEntry(false);
             }, 1200);
           }}
           onCancel={() => {
-            try { localStorage.setItem(ENTRY_LS_KEY, 'true'); } catch {}
+            try { localStorage.setItem(ENTRY_LS_KEY, 'true'); } catch { /* ignore */ }
             setShowEntry(false);
           }}
         />

@@ -137,7 +137,7 @@ export class AdminService {
   }
 
   // ── WALLET ──
-  getWallets(limit = 100) { return this.get<any>('wallet', `select=user_id,balance_main,balance_bonus,updated_at,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc&limit=${limit}`); }
+  getWallets(limit = 100) { return this.get<any>('wallet', `select=user_id,balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover,updated_at,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc&limit=${limit}`); }
   getWallet(userId: string) { return this.get<any>(`wallet?user_id=eq.${userId}`, 'limit=1'); }
   updateWalletRow(userId: string, data: any) {
     return this.proxy<any>('PATCH', `/wallet?user_id=eq.${userId}`, data);

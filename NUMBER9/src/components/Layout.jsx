@@ -17,12 +17,12 @@ const NAV = [
   { k: "dashboard", l: "nav.overview", p: "dashboard", I: Icon.Grid, bottom: true },
   { k: "king", l: "nav.marketplace", p: "king", I: Icon.Crown, bottom: true },
   { k: "wallet", l: "nav.wallet", p: "wallet", I: Icon.Wallet, bottom: true },
-  { k: "turnover", l: "nav.turnover", p: "turnover", I: Icon.Turnover },
   { k: "history", l: "nav.history", p: "history", I: Icon.History, bottom: true },
-  { k: "deposit", l: "nav.deposit", p: "deposit", I: Icon.Download, bottom: true },
-  { k: "withdraw", l: "nav.withdraw", p: "withdraw", I: Icon.Upload, bottom: true },
   { k: "trading", l: "nav.media", p: "trading", I: Icon.Bell, bottom: true },
-  { k: "network", l: "nav.network", p: "network", I: Icon.Users, bottom: true },
+  { k: "deposit", l: "nav.deposit", p: "wallet?tab=deposit", I: Icon.Download },
+  { k: "withdraw", l: "nav.withdraw", p: "wallet?tab=withdraw", I: Icon.Upload },
+  { k: "turnover", l: "nav.turnover", p: "wallet?tab=turnover", I: Icon.Turnover },
+  { k: "network", l: "nav.network", p: "network", I: Icon.Users },
   { k: "profile", l: "nav.profile", p: "profile", I: Icon.User },
 ];
 
@@ -207,7 +207,7 @@ export default function Layout({ children }) {
             onClick={() => setShowMoreMenu(true)}
             aria-label="More navigation"
             className={`flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 rounded-xl transition-all duration-200 ${
-              ['turnover', 'withdraw', 'trading', 'network', 'profile'].includes(pg)
+              (pg === 'turnover' || pg === 'network' || pg === 'profile')
                 ? "text-yellow-400 bg-yellow-400/10 border border-yellow-400/20"
                 : "text-zinc-600 hover:text-zinc-300 hover:bg-white/5"
             }`}

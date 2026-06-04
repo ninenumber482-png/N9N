@@ -8,7 +8,8 @@ import { useEffect, useRef } from "react";
 export function usePolling(fn, intervalMs = 5000, deps = []) {
   const timerRef = useRef(null);
   const fnRef = useRef(fn);
-  fnRef.current = fn;
+
+  useEffect(() => { fnRef.current = fn; }, [fn]);
 
   useEffect(() => {
     let mounted = true;
@@ -17,7 +18,7 @@ export function usePolling(fn, intervalMs = 5000, deps = []) {
       if (!mounted) return;
       try {
         await fnRef.current();
-      } catch (e) {
+      } catch {
         // Silent fail — polling should be resilient
       }
       if (mounted) {

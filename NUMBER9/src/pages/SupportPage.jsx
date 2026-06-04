@@ -39,7 +39,7 @@ export default function SupportPage() {
           return
         }
       }
-    } catch {}
+    } catch { /* ignore */ }
     supabase.from('platform_config').select('key, value').then(({ data, error }) => {
       if (error || !data) return
       const map = {}
@@ -87,7 +87,7 @@ export default function SupportPage() {
       setTicketSubject('')
       setTicketCategory('DEPOSIT')
       setTicketMessage('')
-    } catch (e) {
+    } catch {
       setFeedback({ type: 'err', text: t('support.failed') })
     } finally {
       setSubmitting(false)

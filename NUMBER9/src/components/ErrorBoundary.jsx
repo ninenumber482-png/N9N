@@ -23,7 +23,7 @@ export default class ErrorBoundary extends React.Component {
   };
 
   handleGoLogin = () => {
-    try { localStorage.removeItem('n9_auth'); } catch {}
+    try { localStorage.removeItem('n9_auth'); } catch { /* ignore */ }
     window.location.hash = '#/login';
     window.location.reload();
   };

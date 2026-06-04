@@ -30,7 +30,7 @@ if (supabaseUrl && supabaseKey) {
           const parsed = JSON.parse(raw)
           token = parsed?.token || null
         }
-      } catch {}
+      } catch { /* ignore */ }
       // Fallback to in-memory (for code paths that set it explicitly via setUserToken)
       if (!token && globalUserToken) token = globalUserToken
       if (token) {
@@ -48,7 +48,7 @@ if (supabaseUrl && supabaseKey) {
       }
     })
     realtimeEnabled = false // must match realtime.enabled above
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 export const supabase = supabaseInstance
@@ -61,17 +61,3 @@ export function setUserToken(token) {
   globalUserToken = token
 }
 
-// Test connection
-export async function testConnection() {
-  try {
-    const { error } = await supabase
-      .from('users')
-      .select('count', { count: 'exact' })
-      .limit(1)
-
-    if (error) return false
-    return true
-  } catch {
-    return false
-  }
-}

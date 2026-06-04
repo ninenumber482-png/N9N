@@ -49,10 +49,8 @@ export default function ProfilePage() {
   const phone    = me.phone || auth?.phone || "";
   const country  = me.country || "";
   const role     = me.role || "user";
-  const acct     = me.account_status || "ACTIVE";
-  const reg      = me.registration_status || "";
-  const loginSt  = me.login_status || "";
-  const kyc      = me.kyc_status || "PENDING";
+  const acct     = me.accountStatus || me.account_status || "ACTIVE";
+  const kyc      = me.kycStatus || me.kyc_status || "PENDING";
   const code     = me.referralCode || "";
   const referred = me.referredByCode || "";
   const bank     = me.bankName || "";
@@ -60,7 +58,6 @@ export default function ProfilePage() {
   const bankName = me.bankAccountName || "";
 
   const joinDate = wibDate(me.createdAt)
-  const approvedDate = wibDate(me.approvedAt)
 
   const isKycApproved = kyc === "APPROVED";
   const KYC = [

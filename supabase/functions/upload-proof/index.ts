@@ -11,13 +11,25 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://app.mynumber9.uk",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
-};
+async function sha256(msg: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
-const json = (body: unknown, status = 200) =>
+const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "http://localhost:5175"];
+
+const json = (body: unknown, status = 200, origin = "") => {
+  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": allow,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
+    },
+  });
+};
   new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -54,10 +66,11 @@ export default {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify the session token → resolve the calling user's id.
+    const tokenHash = await sha256(token);
     const { data: user, error: userErr } = await supabase
       .from("users")
       .select("id")
-      .eq("session_token", token)
+      .eq("session_token", tokenHash)
       .gt("session_expires_at", new Date().toISOString())
       .single();
 

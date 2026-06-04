@@ -55,8 +55,8 @@ export default function DashboardPage() {
       type: 'POS',
       desc: t('dashboard.position_label', { code: b.betCode, session: b.sessionCode?.slice(-6) || '—' }),
       amount: b.result === 'WIN' ? `+${((b.payout || 0) - b.stake).toLocaleString()} ${t('common.points')}` : `-${(b.stake || 0).toLocaleString()} ${t('common.points')}`,
-      date: wibDate(b.settledAt),
-      ts: b.settledAt ? new Date(b.settledAt).getTime() : 0,
+      date: wibDate(b.settledAt || b.placedAt),
+      ts: b.settledAt ? new Date(b.settledAt).getTime() : (b.placedAt ? new Date(b.placedAt).getTime() : 0),
       status: b.result,
     }))
     return [...txActs, ...bidActs].sort((a, b) => b.ts - a.ts).slice(0, 5)

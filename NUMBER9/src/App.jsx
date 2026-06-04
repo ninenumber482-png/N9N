@@ -5,6 +5,7 @@ import { useStore, isDemoMode, clearAllData, setDemoMode } from "./store/useStor
 import { subscribeToWalletAndTransactions, subscribeToSettledBets } from "./store/realtimeManager";
 import { usePolling } from "./hooks/usePolling";
 import { supabase } from "./utils/supabase";
+import { refreshKingData, listBids } from "./store/king";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { I18nProvider } from "./i18n";
 import Layout from "./components/Layout";
@@ -12,10 +13,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import WalletPage from "./pages/WalletPage";
-import DepositPage from "./pages/DepositPage";
-import WithdrawPage from "./pages/WithdrawPage";
 import TradingPage from "./pages/TradingPage";
-import TurnoverPage from "./pages/TurnoverPage";
 import ReferralPage from "./pages/ReferralPage";
 import MyNetworkPage from "./pages/MyNetworkPage";
 import HistoryPage from "./pages/HistoryPage";
@@ -68,12 +66,12 @@ function AppContent() {
         <Route path="/c/:clientUuid" element={<ClientRoute />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Layout><DashboardPage /></Layout>} />
-          <Route path="wallet" element={<Layout><WalletPage /></Layout>} />
-          <Route path="deposit" element={<Layout><DepositPage /></Layout>} />
-          <Route path="withdraw" element={<Layout><WithdrawPage /></Layout>} />
           <Route path="king" element={<Layout><GamePage /></Layout>} />
+          <Route path="wallet" element={<Layout><WalletPage /></Layout>} />
+          <Route path="deposit" element={<Navigate to="../wallet?tab=deposit" replace />} />
+          <Route path="withdraw" element={<Navigate to="../wallet?tab=withdraw" replace />} />
+          <Route path="turnover" element={<Navigate to="../wallet?tab=turnover" replace />} />
           <Route path="trading" element={<Layout><TradingPage /></Layout>} />
-          <Route path="turnover" element={<Layout><TurnoverPage /></Layout>} />
           <Route path="referral" element={<Layout><ReferralPage /></Layout>} />
           <Route path="network" element={<Layout><MyNetworkPage /></Layout>} />
           <Route path="history" element={<Layout><HistoryPage /></Layout>} />
@@ -111,7 +109,6 @@ function App() {
     let unsubBets = () => {};
 
     if (auth?.id) {
-      const username = auth?.username || '';
 
       // Wallet + transactions realtime
       (async () => {
@@ -170,7 +167,7 @@ function App() {
       (async () => {
         unsubBets = await subscribeToSettledBets(
           auth.id,
-          (bet) => {
+          () => {
             // On bet settlement, trigger version bump to update UI
             useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
           },
@@ -207,7 +204,6 @@ function App() {
         .limit(5);
 
       // Refresh bets via king.js cache
-      const { refreshKingData, listBids } = await import("./store/king");
       await refreshKingData(auth.id);
       const latestBetId = listBids()?.[0]?.id || null;
 

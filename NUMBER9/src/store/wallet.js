@@ -6,9 +6,9 @@
    ============================================================ */
 
 import { supabase, realtimeEnabled } from "../utils/supabase";
-import { DEPOSIT_LOCK_MS, WITHDRAWAL_LOCK_MS } from "../constants";
+import { DEPOSIT_LOCK_MS } from "../constants";
 
-const now = () => new Date().toISOString();
+
 
 /* ---------- platform accounts ---------- */
 export async function fetchPlatformAccounts() {
@@ -62,16 +62,8 @@ export function getDepositLockRemaining(tx, now) {
   const txTime = new Date(tx.requestedAt || tx.created_at).getTime();
   return Math.max(0, DEPOSIT_LOCK_MS - ((now || Date.now()) - txTime));
 }
-export function isDepositLocked(tx) { return getDepositLockRemaining(tx) > 0; }
 
 /* ---------- withdrawal lock ---------- */
-export function getWithdrawalLockRemaining(tx, now) {
-  if (tx.status !== "PENDING" && tx.status !== "pending") return 0;
-  if (tx.type !== "WITHDRAWAL" && tx.type !== "Withdrawal") return 0;
-  const txTime = new Date(tx.requestedAt || tx.created_at).getTime();
-  return Math.max(0, WITHDRAWAL_LOCK_MS - ((now || Date.now()) - txTime));
-}
-export function isWithdrawalLocked(tx) { return getWithdrawalLockRemaining(tx) > 0; }
 
 /* ---------- turnover (Supabase-based) ---------- */
 export async function checkWithdrawEligibility(userId) {
@@ -288,7 +280,7 @@ export async function fetchUserTransactions(userId, limit = 100) {
   return [];
 }
 
-export async function subscribeWalletRealtime(userUuid, username, onWalletUpdate, onTxUpdate) {
+export async function subscribeWalletRealtime(userUuid, onWalletUpdate, onTxUpdate) {
   if (!realtimeEnabled) return;
   if (_realtimeChannel) {
     supabase.removeChannel(_realtimeChannel);

@@ -44,7 +44,7 @@ const writeJSON = (k, v) => {
   } catch {}
 };
 
-const now = () => new Date().toISOString();
+// const now = () => new Date().toISOString(); // unused
 
 const generateRefCode = () => {
   const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -53,7 +53,7 @@ const generateRefCode = () => {
 
 const DEMO_MODE = false;
 
-const getDefaultUsers = () => ({});
+// const getDefaultUsers = () => ({}); // unused
 
 /* ---------- store ---------- */
 export const useStore = create((set, get) => ({
@@ -248,50 +248,10 @@ export const useStore = create((set, get) => ({
       // Fetch initial balances (main, reserved, buying power) for immediate UI display
       await get().fetchBalances();
 
-      subscribeWalletRealtime(user.id, uname,
+      subscribeWalletRealtime(user.id,
         () => get().fetchBalances(),
-        (tx) => {
+        () => {
           set(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
-          // Show notification for approved deposits
-          if (tx.type === 'DEPOSIT' && tx.status === 'COMPLETED') {
-            set({
-              systemNotification: {
-                type: 'deposit_approved',
-                title: 'Deposit Approved',
-                message: `+${Number(tx.amount || 0).toLocaleString()} P has been credited to your wallet.`,
-              },
-            });
-          }
-          // Show notification for rejected deposits
-          if (tx.type === 'DEPOSIT' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
-            set({
-              systemNotification: {
-                type: 'deposit_rejected',
-                title: 'Deposit Rejected',
-                message: `Your deposit of ${Number(tx.amount || 0).toLocaleString()} P was rejected.`,
-              },
-            });
-          }
-          // Show notification for approved withdrawals
-          if (tx.type === 'WITHDRAWAL' && tx.status === 'COMPLETED') {
-            set({
-              systemNotification: {
-                type: 'withdraw_approved',
-                title: 'Withdrawal Complete',
-                message: `${Number(tx.amount || 0).toLocaleString()} P has been withdrawn.`,
-              },
-            });
-          }
-          // Show notification for rejected withdrawals
-          if (tx.type === 'WITHDRAWAL' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
-            set({
-              systemNotification: {
-                type: 'withdraw_rejected',
-                title: 'Withdrawal Rejected',
-                message: `Your withdrawal of ${Number(tx.amount || 0).toLocaleString()} P was rejected.`,
-              },
-            });
-          }
         }
       );
 
@@ -620,8 +580,8 @@ export const useStore = create((set, get) => ({
           .eq("user_id", auth.id)
           .single();
         if (!error && data) {
-          const main = Number(data.balance_main) ?? 0;
-          const bonus = Number(data.balance_bonus) ?? 0;
+          const main = Number(data.balance_main ?? 0);
+          const bonus = Number(data.balance_bonus ?? 0);
           // Since 20260604170000: submit_withdrawal ATOMICALLY deducts balance_main
           // at submission. So balance_main already reflects money in-flight
           // (deducted, waiting for admin to bank-transfer). No "reserved" sub-bucket
@@ -759,43 +719,10 @@ export const clearAllData = () => {
           useStore.setState({ users: { ...users } });
         }).catch(() => {});
         if (!stillValid()) return; // logout happened during profile fetch
-        subscribeWalletRealtime(
-          _auth.id, _auth.username,
+        subscribeWalletRealtime(_auth.id,
           () => useStore.getState().fetchBalances(),
-          (tx) => {
+          () => {
             useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
-            if (tx.type === 'DEPOSIT' && tx.status === 'COMPLETED') {
-              useStore.setState({
-                systemNotification: {
-                  type: 'deposit_approved', title: 'Deposit Approved',
-                  message: `+${Number(tx.amount || 0).toLocaleString()} P credited.`,
-                },
-              });
-            }
-            if (tx.type === 'DEPOSIT' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
-              useStore.setState({
-                systemNotification: {
-                  type: 'deposit_rejected', title: 'Deposit Rejected',
-                  message: `${Number(tx.amount || 0).toLocaleString()} P deposit rejected.`,
-                },
-              });
-            }
-            if (tx.type === 'WITHDRAWAL' && tx.status === 'COMPLETED') {
-              useStore.setState({
-                systemNotification: {
-                  type: 'withdraw_approved', title: 'Withdrawal Complete',
-                  message: `${Number(tx.amount || 0).toLocaleString()} P withdrawn.`,
-                },
-              });
-            }
-            if (tx.type === 'WITHDRAWAL' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
-              useStore.setState({
-                systemNotification: {
-                  type: 'withdraw_rejected', title: 'Withdrawal Rejected',
-                  message: `${Number(tx.amount || 0).toLocaleString()} P withdrawal rejected.`,
-                },
-              });
-            }
           }
         );
         // Start session heartbeat on auto-login (only if session still alive)

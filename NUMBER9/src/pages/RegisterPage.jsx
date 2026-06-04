@@ -4,6 +4,7 @@ import { useStore } from "../store/useStore";
 import { Icon } from "../components/icons";
 import { useI18n } from "../i18n";
 import ModalOverlay from "../components/ui/ModalOverlay";
+import CsWidget from "../components/ui/CsWidget";
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -25,6 +26,7 @@ export default function RegisterPage() {
   const auth = useStore((s) => s.auth);
   const findUserByReferralCodeAsync = useStore((s) => s.findUserByReferralCodeAsync);
   const registerUser = useStore((s) => s.registerUser);
+  const completeRegistration = useStore((s) => s.completeRegistration);
   const navigate = useNavigate();
   const toDashboard = () => `/c/${auth?.id}/dashboard`;
   const [form, setForm] = useState({
@@ -52,6 +54,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fileLoading, setFileLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingUuid, setPendingUuid] = useState(null);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -123,24 +126,6 @@ export default function RegisterPage() {
     setError("");
     const err = validateStep1();
     if (err) return setError(err);
-    setShowThankYou(true);
-  };
-
-  const proceedToStep2 = () => {
-    setShowThankYou(false);
-    setStep(2);
-    setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (submitting) return;
-    setError("");
-    const e1 = validateStep1();
-    if (e1) { setStep(1); return setError(e1); }
-    const e2 = validateStep2();
-    if (e2) return setError(e2);
     setSubmitting(true);
 
     const v = {
@@ -152,6 +137,42 @@ export default function RegisterPage() {
       password: form.password,
       referral: form.referral.trim().toUpperCase(),
     };
+
+    registerUser({
+      username: v.username,
+      password: v.password,
+      displayName: v.fullName,
+      email: v.email,
+      phone: v.phone,
+      country: v.country,
+      referralCode: v.referral,
+    }).then((result) => {
+      setSubmitting(false);
+      if (!result || !result.ok)
+        return setError((result && result.error) || t('register.registration_failed'));
+      setPendingUuid(result.user.uuid);
+      setShowThankYou(true);
+    }).catch(() => {
+      setSubmitting(false);
+      setError(t('common.connection_error'));
+    });
+  };
+
+  const proceedToStep2 = () => {
+    setShowThankYou(false);
+    setStep(2);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    setError("");
+    const e2 = validateStep2();
+    if (e2) return setError(e2);
+    setSubmitting(true);
+
     const docLabel =
       form.documentType === "id"
         ? "National ID"
@@ -159,36 +180,25 @@ export default function RegisterPage() {
           ? "Passport"
           : "Driver's License";
 
-    let result;
-    try {
-      result = await registerUser({
-        username: v.username,
-        password: v.password,
-        displayName: v.fullName,
-        email: v.email,
-        phone: v.phone,
-        country: v.country,
-        referralCode: v.referral,
-        bankName: form.bankName,
-        bankAccountNumber: form.bankAccountNumber,
-        bankAccountName: form.bankAccountName,
-        kyc: {
-          documentType: docLabel,
-          docImage: form.docImage,
-          selfieImage: form.selfieImage,
-          submittedAt: new Date().toISOString(),
-        },
-      });
-    } catch {
+    completeRegistration(pendingUuid, {
+      bankName: form.bankName,
+      bankAccountNumber: form.bankAccountNumber,
+      bankAccountName: form.bankAccountName,
+      kyc: {
+        documentType: docLabel,
+        docImage: form.docImage,
+        selfieImage: form.selfieImage,
+        submittedAt: new Date().toISOString(),
+      },
+    }).then((result) => {
+      setSubmitting(false);
+      if (!result || !result.ok)
+        return setError((result && result.error) || t('register.registration_failed'));
+      setOk(pendingUuid);
+    }).catch(() => {
       setSubmitting(false);
       setError(t('common.connection_error'));
-      return;
-    }
-    setSubmitting(false);
-    if (!result || !result.ok)
-      return setError((result && result.error) || t('register.registration_failed'));
-
-    setOk(result.user);
+    });
   };
 
   return (
@@ -227,6 +237,9 @@ export default function RegisterPage() {
           background: 'linear-gradient(to right, #050607 0%, rgba(5,6,7,0.8) 50%, transparent 100%)',
         }}
       />
+
+      {/* CS Widget */}
+      <CsWidget />
 
       {/* Content */}
       <div className="relative z-10 mx-auto w-full max-w-3xl">
@@ -527,7 +540,7 @@ export default function RegisterPage() {
             </div>
           </div>
           <p className="mt-4 text-[12px] leading-relaxed text-zinc-300">
-            {t('register.registration_done', { user: ok.username })}
+            {t('register.registration_done', { user: "" })}
           </p>
           <ul className="mt-3 space-y-1 text-[12px] text-zinc-400">
             <li>
@@ -539,12 +552,8 @@ export default function RegisterPage() {
               <span className="text-yellow-400">LOCKED</span>
             </li>
             <li>
-              <span className="font-bold text-zinc-300">{t('register.upline_label')}</span>{" "}
-              <span className="font-mono text-zinc-200">{ok.referredByCode}</span>
-            </li>
-            <li>
               <span className="font-bold text-zinc-300">{t('register.uuid_label')}</span>{" "}
-              <span className="font-mono text-[10px] text-zinc-200">{ok.uuid}</span>
+              <span className="font-mono text-[10px] text-zinc-200">{ok}</span>
             </li>
           </ul>
           <p className="mt-4 rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2.5 text-[11px] leading-relaxed text-zinc-400">

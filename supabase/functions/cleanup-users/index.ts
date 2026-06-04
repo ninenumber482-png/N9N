@@ -29,10 +29,14 @@ export default {
       const token = req.headers.get('x-session-token') || ''
       if (!token) return json({ error: 'Unauthorized' }, 401)
 
+      const tokenHash = Array.from(
+        new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)))
+      ).map(b => b.toString(16).padStart(2, '0')).join('');
+
       const { data: session, error: sessErr } = await supabase
         .from('sessions')
         .select('id, user_id, logged_out_at, expires_at')
-        .eq('token_hash', token)
+        .eq('token_hash', tokenHash)
         .single()
 
       if (sessErr || !session || session.logged_out_at) return json({ error: 'Invalid session' }, 401)

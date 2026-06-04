@@ -96,7 +96,7 @@ export default function LoginForm({
                 <input
                   id="login-user"
                   type="text"
-                  className="h-11 w-full rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 text-sm text-white outline-none placeholder:text-zinc-500 transition focus:border-yellow-400/70 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-10 w-full rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 text-sm text-white outline-none placeholder:text-zinc-500 transition focus:border-yellow-400/70 disabled:cursor-not-allowed disabled:opacity-50"
                   value={username}
                   onChange={onUsernameChange}
                   placeholder={t('auth.username_placeholder')}
@@ -117,7 +117,7 @@ export default function LoginForm({
                   <input
                     id="login-pass"
                     type={showPassword ? 'text' : 'password'}
-                    className="h-11 w-full rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 text-sm text-white outline-none placeholder:text-zinc-500 transition focus:border-yellow-400/70 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-10 w-full rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 text-sm text-white outline-none placeholder:text-zinc-500 transition focus:border-yellow-400/70 disabled:cursor-not-allowed disabled:opacity-50"
                     value={password}
                     onChange={onPasswordChange}
                     placeholder={t('auth.password_placeholder')}
@@ -139,7 +139,7 @@ export default function LoginForm({
               <button
                 type="submit"
                 disabled={isDisabled}
-                className="h-11 w-full rounded-lg bg-[#f4c400] text-sm font-bold text-black transition hover:bg-[#ffe033] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-11 w-full rounded-lg bg-yellow-400 text-sm font-extrabold text-black transition hover:bg-yellow-300 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? t('auth.signing_in') : t('auth.sign_in')}
               </button>

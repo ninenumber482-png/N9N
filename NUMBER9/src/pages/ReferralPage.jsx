@@ -14,7 +14,7 @@ export default function ReferralPage() {
   const [copied, setCopied] = useState(false)
 
   const me = getUserByUsername(auth?.username) || {}
-  const isActive = me.account_status === 'ACTIVE'
+  const isActive = (me.accountStatus || me.account_status) === 'ACTIVE'
   const code = isActive ? me.referralCode : null
 
   const copy = () => {

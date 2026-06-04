@@ -28,7 +28,7 @@ export default function HistoryPage() {
   const [txs, setTxs] = useState([]);
   const [turnoverData, setTurnoverData] = useState({ required: 0, achieved: 0, isUnlocked: true });
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [, setRefreshing] = useState(false);
   const [kingReady, setKingReady] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [toast, setToast] = useState(null);
@@ -86,7 +86,7 @@ export default function HistoryPage() {
       if (aliveRef.current) {
         setLoading(false);
         setRefreshing(false);
-        setToast({ type: 'err', text: t('common.history_load_failed') });
+        setToast({ type: 'err', text: t('auth.history_load_failed') });
         isInitialLoadRef.current = false;
       }
     });
