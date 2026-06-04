@@ -19,9 +19,6 @@ const NAV = [
   { k: "wallet", l: "nav.wallet", p: "wallet", I: Icon.Wallet, bottom: true },
   { k: "history", l: "nav.history", p: "history", I: Icon.History, bottom: true },
   { k: "trading", l: "nav.media", p: "trading", I: Icon.Bell, bottom: true },
-  { k: "deposit", l: "nav.deposit", p: "wallet?tab=deposit", I: Icon.Download },
-  { k: "withdraw", l: "nav.withdraw", p: "wallet?tab=withdraw", I: Icon.Upload },
-  { k: "turnover", l: "nav.turnover", p: "wallet?tab=turnover", I: Icon.Turnover },
   { k: "network", l: "nav.network", p: "network", I: Icon.Users },
   { k: "profile", l: "nav.profile", p: "profile", I: Icon.User },
 ];
