@@ -224,6 +224,7 @@ export const id = {
     tabs_deposit: 'Deposit',
     tabs_withdraw: 'Tarik Dana',
     tabs_turnover: 'Omzet',
+    total_turnover: 'Total Omzet',
     saldo: 'Saldo'
   },
 
@@ -451,6 +452,7 @@ export const id = {
     breakdown: 'Rincian per Aktivitas',
     no_activity: 'Belum ada aktivitas.',
     rules: 'Aturan & Info',
+    remaining: 'Sisa',
     q1: 'Apa yang dihitung sebagai omzet?',
     q1_a: 'Semua volume trading di 3D King dan Gold Trading dihitung 100% untuk persyaratan omzet Anda. Kredit bonus tidak dihitung sampai terbuka.',
     q2: 'Kapan saya bisa menarik?',

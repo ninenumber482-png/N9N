@@ -4,7 +4,10 @@ import { useStore } from "../store/useStore";
 import { Icon } from "../components/icons";
 import { useI18n } from '../i18n';
 import { wibDate } from '../utils/wib';
+import { fetchTurnoverSummary } from '../store/wallet';
 import PageShell from '../components/ui/PageShell';
+
+const fmt = (n) => Number(n || 0).toLocaleString();
 
 export default function ProfilePage() {
   const auth         = useStore((s) => s.auth);
@@ -13,6 +16,7 @@ export default function ProfilePage() {
   const fetchProfile = useStore((s) => s.fetchProfile);
   const onUserChange = useStore((s) => s.onUserChange);
   const [loading, setLoading] = useState(true);
+  const [turnover, setTurnover] = useState(null);
   const [me, setMe] = useState({});
   const { t } = useI18n();
 
@@ -26,15 +30,11 @@ export default function ProfilePage() {
       .then((data) => {
         if (isMounted) {
           if (data) setMe((prev) => ({ ...prev, ...data }));
-          setLoading(false);
         }
       })
-      .catch(() => {
-        if (isMounted) setLoading(false);
-      });
-    // Merge realtime updates from subscribeUserStatus() into local `me`.
-    // The handler is called with the new row, so we can patch specific
-    // fields (email, phone, kyc_status, etc.) without a network round-trip.
+      .catch(() => {})
+      .finally(() => { if (isMounted) setLoading(false); });
+    fetchTurnoverSummary(auth.id).then((d) => { if (isMounted) setTurnover(d); }).catch(() => {});
     const unsub = onUserChange((newRow) => {
       if (!isMounted) return;
       setMe((prev) => ({ ...prev, ...newRow }));
@@ -129,6 +129,26 @@ export default function ProfilePage() {
           <Row l={t('profile.account_no')}   v={bankAcct || "—"} mono />
           <Row l={t('profile.account_name')} v={bankName || "—"} />
         </Section>
+
+        {turnover && (
+          <Section icon={Icon.Turnover} title={t('turnover.title')}>
+            <Row l={t('wallet.total_turnover')} v={fmt(turnover.achieved + turnover.remaining) + ' P'} />
+            <Row l={t('turnover.achieved')} v={fmt(turnover.achieved) + ' P'} />
+            {turnover.remaining > 0 && (
+              <Row l={t('turnover.remaining')} v={fmt(turnover.remaining) + ' P'} />
+            )}
+            <div className="px-4 py-3">
+              <div className="h-2 overflow-hidden rounded-full bg-[#1f2128]">
+                <div className="h-full bg-yellow-400 transition-all duration-700" style={{ width: `${turnover.pct}%` }} />
+              </div>
+              {turnover.remaining > 0 ? (
+                <p className="mt-1 text-[10px] text-zinc-500">{t('turnover.to_unlock')}</p>
+              ) : (
+                <p className="mt-1 text-[10px] text-emerald-400">✓ {t('turnover.unlocked')}</p>
+              )}
+            </div>
+          </Section>
+        )}
 
         <Section icon={Icon.Shield} title={t('profile.verification')}>
           <div className="grid grid-cols-4 gap-0">

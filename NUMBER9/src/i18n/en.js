@@ -224,6 +224,7 @@ export const en = {
     tabs_deposit: 'Deposit',
     tabs_withdraw: 'Withdraw',
     tabs_turnover: 'Turnover',
+    total_turnover: 'Total Turnover',
     saldo: 'Saldo'
   },
 
@@ -451,6 +452,7 @@ export const en = {
     breakdown: 'Breakdown by Activity',
     no_activity: 'No activity yet.',
     rules: 'Rules & Info',
+    remaining: 'Remaining',
     q1: 'What counts toward turnover?',
     q1_a: 'All trading volume in 3D King and Gold Trading counts 100% toward your turnover requirement. Bonus credits do not count until unlocked.',
     q2: 'When can I withdraw?',
