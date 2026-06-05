@@ -183,7 +183,12 @@ export default function DashboardPage() {
         {acts.length > 0 ? (
           <div className="space-y-3">
             {acts.map((a) => {
-              const isDone = a.status === 'COMPLETED' || a.status === 'APPROVED'
+              // For positions (POS): 'WIN'/'LOSS' are settled states (no pill)
+              // For transactions (DEP/WD): 'COMPLETED'/'APPROVED' are done, 'PENDING'/'REQUESTED' show pill
+              const isPosition = a.type === 'POS'
+              const isDone = isPosition 
+                ? (a.status === 'WIN' || a.status === 'LOSS' || a.status === 'SETTLED')
+                : (a.status === 'COMPLETED' || a.status === 'APPROVED')
               const isFailed = a.status === 'FAILED' || a.status === 'REJECTED'
               const isPending = !isDone && !isFailed
               const typeColor = a.type === 'DEP'
