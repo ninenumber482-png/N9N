@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request, abort, make_response
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import urllib.request, urllib.error, json
 
-TOKEN      = os.environ.get('TELEGRAM_BOT_TOKEN', '8325821326:AAGgMPSnAgi8at8hbVLO43Dq-M25Q0VKHpY')
+TOKEN      = os.environ['TELEGRAM_BOT_TOKEN']  # MUST be set in env
 API_KEY    = os.environ.get('MONITOR_API_KEY', '362745')
 ADMIN_IDS  = set(int(x) for x in os.environ.get('ADMIN_IDS', '').split(',') if x.strip())
 GROUP_ID   = -5253285983

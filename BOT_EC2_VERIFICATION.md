@@ -50,7 +50,7 @@ Response: {"cpu": 0.0, "ram": 38.1}
 
 ### **Bot Identity**
 ```python
-TOKEN = '8325821326:AAGgMPSnAgi8at8hbVLO43Dq-M25Q0VKHpY'
+TOKEN = os.environ['TELEGRAM_BOT_TOKEN']  # set via env var, not hardcoded
 GROUP_ID = -5253285983
 ADMIN_IDS = (from environment variable)
 ```

@@ -187,7 +187,7 @@ curl -X POST https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/rpc/engine_settle 
 **Current Keys:**
 - Engine API Key: `362745` (stored in `platform_config.engine_api_key`)
 - Bot Monitor API Key: `362745` (same, in `bot_monitor.py`)
-- Telegram Bot Token: `8325821326:AAGgMPSnAgi8at8hbVLO43Dq-M25Q0VKHpY`
+- Telegram Bot Token: `(env TELEGRAM_BOT_TOKEN)`
 
 **Rotation Procedure:**
 ```sql
