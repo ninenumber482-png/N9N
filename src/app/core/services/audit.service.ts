@@ -125,10 +125,69 @@ export class AuditService {
   }
 
   private sendToServer(log: AuditLog): void {
-    // TODO: Send to audit logging RPC or API endpoint
+    // Send to backend audit_log_event RPC for official audit trail
     // This should be called asynchronously without blocking the UI
-    // fetch('/api/audit', { method: 'POST', body: JSON.stringify(log) })
-    //   .catch(err => this.logIfDev({ error: 'Failed to log audit event', details: err }));
+    this.callAuditLoggingRpc(log).catch(err => {
+      this.logIfDev({ error: 'Failed to log audit event', details: err });
+    });
+  }
+
+  /**
+   * Call backend audit_log_event RPC to create official audit trail
+   * CRITICAL: This is the source of truth for security-sensitive events
+   */
+  private async callAuditLoggingRpc(log: AuditLog): Promise<void> {
+    const user = this.auth.getCurrentUser();
+    if (!user) return;
+
+    try {
+      // Call Supabase RPC function
+      const response = await fetch(
+        `${this.getSupabaseUrl()}/rest/v1/rpc/audit_log_event`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': this.getSupabaseKey(),
+            'Authorization': `Bearer ${user.token}`,
+            'x-session-token': user.token,
+          },
+          body: JSON.stringify({
+            p_admin_id: user.id,
+            p_action: log.action,
+            p_resource_type: log.resourceType,
+            p_resource_id: log.resourceId,
+            p_old_value: log.oldValue,
+            p_new_value: log.newValue,
+            p_reason: log.reason,
+            p_ip_address: this.getClientIp(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Audit RPC failed: ${response.status} - ${error}`);
+      }
+
+      this.logIfDev({ message: 'Audit event logged to backend', audit_id: log.id });
+    } catch (err) {
+      console.error('[AuditService] Failed to call audit_log_event RPC:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Get Supabase configuration from environment
+   */
+  private getSupabaseUrl(): string {
+    // Would normally come from environment config
+    return 'https://dqsmpdetiqsqfnidekik.supabase.co';
+  }
+
+  private getSupabaseKey(): string {
+    // Would normally come from environment config
+    return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Placeholder
   }
 
   private logIfDev(log: AuditLog): void {
