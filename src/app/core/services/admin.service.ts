@@ -6,25 +6,38 @@ import { AuthService } from 'src/app/core/services/auth.service';
 export class AdminService {
   private proxyUrl = `${environment.supabaseUrl}/functions/v1/admin-proxy`;
 
-  /** Simple in-memory cache dengan TTL 5 detik untuk mengurangi duplicate requests */
+  /** In-memory cache with TTL (5s) and user context to prevent data leakage */
   private cache = new Map<string, { data: any; ts: number }>();
   private readonly CACHE_TTL = 5000;
 
   constructor(private auth: AuthService) {}
 
+  private getCacheKey(baseKey: string): string {
+    // Include user ID in cache key to prevent cross-user data leakage
+    const user = this.auth.getCurrentUser();
+    const userId = user?.username || 'anonymous';
+    return `${userId}:${baseKey}`;
+  }
+
   private cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-    const cached = this.cache.get(key);
+    const cacheKey = this.getCacheKey(key);
+    const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
       return Promise.resolve(cached.data as T);
     }
     return fetcher().then(data => {
-      this.cache.set(key, { data, ts: Date.now() });
+      this.cache.set(cacheKey, { data, ts: Date.now() });
       return data;
     });
   }
 
   private getToken(): string {
-    return this.auth.getCurrentUser()?.token || environment.supabaseKey;
+    const user = this.auth.getCurrentUser();
+    if (!user?.token) {
+      // Token missing - this should not happen in production
+      throw new Error('User token not available. User may not be authenticated.');
+    }
+    return user.token;
   }
 
   private async proxy<T>(method: string, path: string, body?: any, prefer?: string): Promise<T> {
