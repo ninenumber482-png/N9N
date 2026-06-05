@@ -78,7 +78,7 @@ If these drift apart, results settle at wrong times.
 | `NUMBER9/src/store/king.js` | Bet state, session calc, RPC wrappers |
 | `NUMBER9/src/pages/GamePage.jsx` | Main betting UI with ArenaStage |
 | `NUMBER9/src/pages/HistoryPage.jsx` | P&L (only SETTLED bets count) |
-| `src/app/modules/dashboard/services/admin.service.ts` | Admin RPC wrappers |
+| `src/app/core/services/admin.service.ts` | Admin RPC wrappers |
 | `supabase/migrations/20260601010000_king_engine.sql` | Core `settle_session` RPC |
 | `supabase/migrations/20260602020000_deposit_withdrawal_rpcs.sql` | Deposit/withdrawal RPCs |
 | `scripts/regression-test.sql` | CI regression check (12 tests) |

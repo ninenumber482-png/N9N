@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AdminService } from 'src/app/core/services/admin.service';
+import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
@@ -304,7 +304,8 @@ export class DepositsComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.notification.success('Deposit disetujui', `+${tx.amount.toLocaleString()} P dikreditkan ke wallet.`);
     } catch (e: any) {
-      this.notification.error('Gagal', e.message);
+      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e.message);
+      this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Gagal', err.message);
     } finally {
       this.processing.delete(tx.id);
       this.cdr.markForCheck();
@@ -324,7 +325,8 @@ export class DepositsComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.notification.success('Deposit ditolak', tx.user?.username || tx.id);
     } catch (e: any) {
-      this.notification.error('Gagal', e.message);
+      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e.message);
+      this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Gagal', err.message);
     } finally {
       this.processing.delete(tx.id);
       this.cdr.markForCheck();

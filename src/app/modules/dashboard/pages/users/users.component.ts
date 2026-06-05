@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AdminService } from 'src/app/core/services/admin.service';
+import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service';
 import { environment } from 'src/environments/environment';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
@@ -880,7 +880,8 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.notification.success('User approved', `${u.display_name || u.username} can now log in.`);
     } catch (e: any) {
-      this.notification.error('Approval failed', e.message || 'Could not approve user.');
+      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e.message);
+      this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Approval failed', err.message);
     }
   }
 
@@ -897,7 +898,8 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.notification.success('User rejected', `${u.display_name || u.username} has been rejected.`);
     } catch (e: any) {
-      this.notification.error('Rejection failed', e.message || 'Could not reject user.');
+      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e.message);
+      this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Rejection failed', err.message);
     }
   }
 

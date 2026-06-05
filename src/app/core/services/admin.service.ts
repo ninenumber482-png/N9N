@@ -2,6 +2,24 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { AuthService } from 'src/app/core/services/auth.service';
 
+export class AdminRpcError extends Error {
+  constructor(
+    message: string,
+    public readonly code: 'FORBIDDEN' | 'TX_NOT_FOUND' | 'TX_NOT_PENDING' | 'UNKNOWN',
+    public readonly detail?: string,
+  ) { super(message); this.name = 'AdminRpcError'; }
+
+  static fromMessage(msg: string): AdminRpcError {
+    if (msg.startsWith('FORBIDDEN:')) return new AdminRpcError('Akses ditolak. Hanya admin yang dapat melakukan tindakan ini.', 'FORBIDDEN', msg.slice(10).trim());
+    if (msg === 'TX_NOT_FOUND') return new AdminRpcError('Transaksi tidak ditemukan atau sudah diproses.', 'TX_NOT_FOUND');
+    if (msg === 'TX_NOT_PENDING') return new AdminRpcError('Transaksi sudah diproses sebelumnya.', 'TX_NOT_PENDING');
+    if (msg === 'CANNOT_SELF_APPROVE') return new AdminRpcError('Tidak dapat menyetujui akun sendiri.', 'FORBIDDEN');
+    if (msg === 'CANNOT_SELF_REJECT') return new AdminRpcError('Tidak dapat menolak akun sendiri.', 'FORBIDDEN');
+    if (msg === 'USER_NOT_FOUND_OR_NOT_PENDING') return new AdminRpcError('User tidak ditemukan atau sudah diproses.', 'TX_NOT_FOUND');
+    return new AdminRpcError(msg, 'UNKNOWN');
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private proxyUrl = `${environment.supabaseUrl}/functions/v1/admin-proxy`;
@@ -56,10 +74,11 @@ export class AdminService {
     });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`${res.status}`);
+      throw AdminRpcError.fromMessage(text.length < 200 ? text : `${res.status}`);
     }
     const text = await res.text();
-    return text ? JSON.parse(text) : (undefined as any);
+    if (!text) return undefined as any;
+    try { return JSON.parse(text); } catch { return text as any; }
   }
 
   private async get<T>(table: string, query = ''): Promise<T[]> {
