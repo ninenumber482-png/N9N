@@ -264,12 +264,14 @@ def send_status(chat_id):
                 if lr.tzinfo is None:
                     lr = lr.replace(tzinfo=datetime.timezone.utc)
                 age = int((datetime.datetime.now(datetime.timezone.utc) - lr).total_seconds())
+                lr_wib = lr + datetime.timedelta(hours=7)
+                last_set = lr_wib.strftime('%Y-%m-%d %H:%M:%S WIB')
             elif _last_settlement_dt:
                 age = int((datetime.datetime.now(datetime.timezone.utc) - _last_settlement_dt).total_seconds())
-                last_ts = _last_settlement_dt.isoformat()
+                lr_wib = _last_settlement_dt + datetime.timedelta(hours=7)
+                last_set = lr_wib.strftime('%Y-%m-%d %H:%M:%S WIB')
             else:
                 age = '?'
-            last_set = last_ts[:19].replace('T', ' ') if last_ts else '—'
             engine_block = (
                 f'\n\n⚙️ *Engine Status*\n'
                 f'Status:       `{eng_str}`\n'
@@ -353,7 +355,7 @@ def send_sessions(chat_id):
     lines = [
         f'🎲 *3D King Sessions* ({(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=7)).strftime("%H:%M WIB")})',
         '\u2501' * 25,
-        f'{status_icon} *Aktif:* `{cur_code}` ({cur_status})',
+        f'{status_icon} *Aktif:* `{cur_code} UTC` ({cur_status})',
         f'   ⏱ Sisa: `{remain_str}`',
         f'   📊 Planned: `{planned_str}`',
         '',
@@ -363,12 +365,12 @@ def send_sessions(chat_id):
     for i, u in enumerate(s['upcoming'], 1):
         ud = planned.get(u['code'])
         u_planned = f'{ud[0]} {ud[1]} {ud[2]}' if ud else '—'
-        lines.append(f'  {i}️⃣ `{u["code"]}` ⏳ NEXT (`{u_planned}`)')
+        lines.append(f'  {i}. `{u["code"]} UTC` ⏳ NEXT (`{u_planned}`)')
 
     lines.extend(['', '📜 *Hasil Terakhir:*'])
     for r in s['last_results']:
         d1, d2, d3 = r.get('d1', '?'), r.get('d2', '?'), r.get('d3', '?')
-        lines.append(f'  `{r["session_code"]}` {d1}️⃣ {d2}️⃣ {d3}️⃣')
+        lines.append(f'  `{r["session_code"]} UTC`  {d1}  {d2}  {d3}')
 
     bot.send_message(chat_id, '\n'.join(lines), parse_mode='Markdown', reply_markup=main_keyboard())
 
