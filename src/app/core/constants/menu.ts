@@ -9,6 +9,7 @@ export class Menu {
         { icon: 'assets/icons/heroicons/outline/chart-pie.svg', label: 'Overview', route: '/overview' },
         { icon: 'assets/icons/heroicons/outline/users.svg', label: 'Users', route: '/users' },
         { icon: 'assets/icons/heroicons/outline/gift.svg', label: 'Referrals', route: '/referrals' },
+        { icon: 'assets/icons/heroicons/outline/lock-closed.svg', label: 'Reset Password', route: '/member-password' },
       ],
     },
     {
@@ -17,6 +18,7 @@ export class Menu {
       items: [
         { icon: 'assets/icons/heroicons/outline/credit-card.svg', label: 'Wallet', route: '/wallet' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Transactions', route: '/transactions' },
+        { icon: 'assets/icons/heroicons/outline/plus.svg', label: 'Adjust Saldo', route: '/member-balance' },
       ],
     },
     {

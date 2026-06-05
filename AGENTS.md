@@ -46,6 +46,8 @@ Key RPC signatures (never change without updating both callers):
 - `approve_deposit(txn_id, amount)` — credit balance
 - `approve_withdrawal(txn_id)` — mark for transfer
 - `submit_transaction(type, amount, method, proof_url)` — user submits deposit/withdrawal
+- `admin_reset_password(p_admin_id, p_user_id, p_new_password)` — SECURITY DEFINER, hashes with pgcrypto
+- `admin_adjust_balance(p_admin_id, p_user_id, p_amount, p_reason)` — SECURITY DEFINER, atomic balance update
 
 ## Session timing (critical: must match both apps)
 
@@ -83,6 +85,9 @@ If these drift apart, results settle at wrong times.
 | `supabase/migrations/20260602020000_deposit_withdrawal_rpcs.sql` | Deposit/withdrawal RPCs |
 | `scripts/regression-test.sql` | CI regression check (12 tests) |
 | `NUMBER9/.env.user` | Supabase creds (React, mode=user only) |
+| `src/app/modules/dashboard/pages/member-password/member-password.component.ts` | Admin reset password page, standalone component |
+| `src/app/modules/dashboard/pages/member-balance/member-balance.component.ts` | Admin add/deduct balance page, standalone component |
+| `supabase/migrations/20260609040000_admin_member_management.sql` | `admin_reset_password` + `admin_adjust_balance` RPCs |
 
 ## Conventions
 

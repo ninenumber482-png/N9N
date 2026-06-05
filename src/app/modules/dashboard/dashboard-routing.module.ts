@@ -17,6 +17,8 @@ import { SessionMonitorComponent } from 'src/app/modules/dashboard/pages/session
 import { SecurityCenterComponent } from 'src/app/modules/dashboard/pages/security-center/security-center.component';
 import { RiskManagementComponent } from 'src/app/modules/dashboard/pages/risk-management/risk-management.component';
 import { SystemComponent } from 'src/app/modules/dashboard/pages/system/system.component';
+import { MemberPasswordComponent } from 'src/app/modules/dashboard/pages/member-password/member-password.component';
+import { MemberBalanceComponent } from 'src/app/modules/dashboard/pages/member-balance/member-balance.component';
 
 const routes: Routes = [
   {
@@ -43,6 +45,8 @@ const routes: Routes = [
       { path: 'security-center', component: SecurityCenterComponent },
       { path: 'risk-management', component: RiskManagementComponent },
       { path: 'system', component: SystemComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'member-password', component: MemberPasswordComponent },
+      { path: 'member-balance', component: MemberBalanceComponent },
       { path: '**', redirectTo: 'overview' },
     ],
   },

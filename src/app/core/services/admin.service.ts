@@ -273,6 +273,18 @@ export class AdminService {
     return this.updateRow('referrals', id, { status, updated_at: new Date().toISOString() });
   }
 
+  getUserByUsername(username: string) {
+    return this.get<any>('users', `username=eq.${encodeURIComponent(username)}&select=id,username,display_name,email,role&limit=1`);
+  }
+
+  // ── MEMBER MANAGEMENT ──
+  async resetPassword(userId: string, adminId: string, newPassword: string) {
+    return this.rpc('admin_reset_password', { p_admin_id: adminId, p_user_id: userId, p_new_password: newPassword });
+  }
+  async adjustBalance(adminId: string, userId: string, amount: number, reason?: string) {
+    return this.rpc('admin_adjust_balance', { p_admin_id: adminId, p_user_id: userId, p_amount: amount, p_reason: reason || null });
+  }
+
   // ── USER APPROVAL ──
   async approveUser(userId: string, usernameOrId: string) {
     const adminId = await this.resolveAdminId(usernameOrId);

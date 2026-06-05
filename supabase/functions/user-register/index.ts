@@ -1,6 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import bcrypt from 'npm:bcryptjs@2.4.3'
 
 const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "http://localhost:5175"];
 
@@ -49,8 +48,7 @@ async function resolveReferral(supabase: SupaClient, rawCode: string) {
   };
 }
 
-export default {
-  fetch: async (req: Request) => {
+Deno.serve(async (req: Request) => {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: ch(req) });
     if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, req);
 
@@ -110,6 +108,7 @@ export default {
         if (existingEmail) return json({ error: "Email already registered." }, 409, req);
       }
 
+      const { default: bcrypt } = await import('npm:bcryptjs@2.4.3');
       const passwordHash = await bcrypt.hash(data.password, 10);
       const uuid = crypto.randomUUID();
       const refCode = generateRefCode();
@@ -156,5 +155,4 @@ export default {
       console.error("[USER-REGISTER] Exception:", error);
       return json({ error: "Internal server error" }, 500, req);
     }
-  },
-};
+});
