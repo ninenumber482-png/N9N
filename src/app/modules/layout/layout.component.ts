@@ -7,6 +7,7 @@ import { ToastContainerComponent } from 'src/app/shared/components/toast-contain
 
 @Component({
   selector: 'app-layout',
+  standalone: true,
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.css'],
   imports: [SidebarComponent, NavbarComponent, RouterOutlet, ToastContainerComponent],

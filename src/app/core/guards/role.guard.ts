@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class RoleGuard {
@@ -85,7 +86,7 @@ export class RoleGuard {
       ip: this.getClientIp(),
     };
     // TODO: Send to audit logging service
-    if (import.meta.env.DEV) {
+    if (!environment.production) {
       console.warn('[RoleGuard] Access denied:', logEntry);
     }
   }

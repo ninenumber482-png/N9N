@@ -3,10 +3,11 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SubMenuItem } from 'src/app/core/models/menu.model';
-import { MenuService } from 'src/app/services/menu.service';
+import { MenuService } from 'src/app/modules/layout/services/menu.service';
 
 @Component({
   selector: 'app-sidebar-submenu',
+  standalone: true,
   templateUrl: './sidebar-submenu.component.html',
   styleUrls: ['./sidebar-submenu.component.css'],
   imports: [NgClass, NgTemplateOutlet, RouterLinkActive, RouterLink, AngularSvgIconModule],

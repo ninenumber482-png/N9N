@@ -4,10 +4,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SubMenuItem } from 'src/app/core/models/menu.model';
 import { MenuService } from 'src/app/modules/layout/services/menu.service';
-import { NavbarMobileSubmenuComponent } from 'src/app/navbar-mobile-submenu/navbar-mobile-submenu.component';
+import { NavbarMobileSubmenuComponent } from 'src/app/modules/layout/components/navbar/navbar-mobile/navbar-mobile-submenu/navbar-mobile-submenu.component';
 
 @Component({
   selector: 'app-navbar-mobile-menu',
+  standalone: true,
   templateUrl: './navbar-mobile-menu.component.html',
   styleUrls: ['./navbar-mobile-menu.component.css'],
   imports: [

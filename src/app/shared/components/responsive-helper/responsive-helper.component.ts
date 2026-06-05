@@ -4,6 +4,7 @@ import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-responsive-helper',
+  standalone: true,
   templateUrl: './responsive-helper.component.html',
   styleUrls: ['./responsive-helper.component.css'],
   imports: [],

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { MenuService } from 'src/app/services/menu.service';
+import { MenuService } from 'src/app/modules/layout/services/menu.service';
 import { NavbarMenuComponent } from 'src/app/modules/layout/components/navbar/navbar-menu/navbar-menu.component';
 import { NavbarMobileComponent } from 'src/app/modules/layout/components/navbar/navbar-mobile/navbar-mobilecomponent';
 import { ThemeService } from 'src/app/core/services/theme.service';
@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-navbar',
+  standalone: true,
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
   imports: [AngularSvgIconModule, NavbarMenuComponent, NavbarMobileComponent, CommonModule],

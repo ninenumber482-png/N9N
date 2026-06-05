@@ -9,6 +9,7 @@ import { SecurityService } from 'src/app/core/services/security.service';
 
 @Component({
   selector: 'app-sign-in',
+  standalone: true,
   templateUrl: './sign-in.component.html',
   styleUrls: ['./sign-in.component.css'],
   imports: [CommonModule, ReactiveFormsModule, AngularSvgIconModule],

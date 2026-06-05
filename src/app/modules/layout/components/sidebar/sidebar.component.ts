@@ -1,12 +1,13 @@
 import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { MenuService } from 'src/app/services/menu.service';
+import { MenuService } from 'src/app/modules/layout/services/menu.service';
 import { SidebarMenuComponent } from 'src/app/modules/layout/components/sidebar/sidebar-menu/sidebar-menu.component';
 import { AdminService } from 'src/app/core/services/admin.service';
 
 @Component({
   selector: 'app-sidebar',
+  standalone: true,
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
   imports: [NgClass, AngularSvgIconModule, SidebarMenuComponent],

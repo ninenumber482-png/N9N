@@ -1,11 +1,12 @@
 import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MenuItem } from 'src/app/core/models/menu.model';
-import { MenuService } from 'src/app/services/menu.service';
-import { NavbarSubmenuComponent } from 'src/app/navbar-submenu/navbar-submenu.component';
+import { MenuService } from 'src/app/modules/layout/services/menu.service';
+import { NavbarSubmenuComponent } from 'src/app/modules/layout/components/navbar/navbar-submenu/navbar-submenu.component';
 
 @Component({
   selector: 'app-navbar-menu',
+  standalone: true,
   templateUrl: './navbar-menu.component.html',
   styleUrls: ['./navbar-menu.component.css'],
   imports: [NgClass, NavbarSubmenuComponent],

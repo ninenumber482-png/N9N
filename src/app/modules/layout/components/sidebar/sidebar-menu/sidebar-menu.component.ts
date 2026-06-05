@@ -3,11 +3,12 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SubMenuItem } from 'src/app/core/models/menu.model';
-import { MenuService } from 'src/app/services/menu.service';
-import { SidebarSubmenuComponent } from 'src/app/sidebar-submenu/sidebar-submenu.component';
+import { MenuService } from 'src/app/modules/layout/services/menu.service';
+import { SidebarSubmenuComponent } from 'src/app/modules/layout/components/sidebar/sidebar-submenu/sidebar-submenu.component';
 
 @Component({
   selector: 'app-sidebar-menu',
+  standalone: true,
   templateUrl: './sidebar-menu.component.html',
   styleUrls: ['./sidebar-menu.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

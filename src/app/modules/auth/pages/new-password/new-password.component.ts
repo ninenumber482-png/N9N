@@ -9,6 +9,7 @@ import { SecurityService } from 'src/app/core/services/security.service';
 
 @Component({
   selector: 'app-new-password',
+  standalone: true,
   templateUrl: './new-password.component.html',
   styleUrls: ['./new-password.component.css'],
   imports: [CommonModule, ReactiveFormsModule, RouterLink, AngularSvgIconModule],

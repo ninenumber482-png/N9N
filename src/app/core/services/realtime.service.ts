@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { createClient } from '@supabase/supabase-js';
-import { environment } from 'src/app/environments/environment';
+import { environment } from 'src/environments/environment';
 import { BehaviorSubject, Observable, Subject, interval } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 

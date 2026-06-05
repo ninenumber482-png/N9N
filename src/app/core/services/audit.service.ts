@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
+import { environment } from 'src/environments/environment';
 
 export interface AuditLog {
   id?: string;
@@ -191,7 +192,7 @@ export class AuditService {
   }
 
   private logIfDev(log: AuditLog): void {
-    if (import.meta.env.DEV) {
+    if (!environment.production) {
       console.log('[AuditLog]', log);
     }
   }

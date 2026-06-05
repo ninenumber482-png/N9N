@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
 import { AdminService } from 'src/app/core/services/admin.service';
-import { environment } from 'src/app/environments/environment';
+import { environment } from 'src/environments/environment';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 

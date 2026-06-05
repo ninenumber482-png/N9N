@@ -7,6 +7,7 @@ import { MenuService } from 'src/app/modules/layout/services/menu.service';
 
 @Component({
   selector: 'app-navbar-mobile-submenu',
+  standalone: true,
   templateUrl: './navbar-mobile-submenu.component.html',
   styleUrls: ['./navbar-mobile-submenu.component.css'],
   imports: [NgClass, NgTemplateOutlet, RouterLinkActive, RouterLink, AngularSvgIconModule],

@@ -4,6 +4,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 
 @Component({
   selector: 'app-auth',
+  standalone: true,
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css'],
   imports: [AngularSvgIconModule, RouterOutlet],

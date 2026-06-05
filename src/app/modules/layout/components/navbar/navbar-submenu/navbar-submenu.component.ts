@@ -6,6 +6,7 @@ import { SubMenuItem } from 'src/app/core/models/menu.model';
 
 @Component({
   selector: 'div[navbar-submenu]',
+  standalone: true,
   templateUrl: './navbar-submenu.component.html',
   styleUrls: ['./navbar-submenu.component.css'],
   imports: [NgTemplateOutlet, RouterLinkActive, RouterLink, AngularSvgIconModule],
