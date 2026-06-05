@@ -3,6 +3,7 @@ dist/
 .temp/
 .playwright-mcp/
 *.log
-.claude/
+.claude/*
+!.claude/skills/
 .env
 .env.*
