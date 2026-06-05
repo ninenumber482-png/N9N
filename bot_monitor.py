@@ -78,10 +78,63 @@ def get_king_marketplace():
     rows = supabase_get('platform_config', 'key=eq.king_marketplace&select=value')
     return rows[0]['value'] if rows else 'OPEN'
 
+def get_session_info():
+    now = datetime.datetime.now(datetime.timezone.utc)
+    cur_bound = session_boundary(now)
+    cur_code = cur_bound.strftime('%Y%m%d%H%M')
+    secs_in = (now - cur_bound).total_seconds()
+    remain = SESSION_SECS - secs_in
+    status = 'OPEN' if remain > 0 else 'LOCKED'
+
+    planned = {}
+    try:
+        for row in supabase_get('king_planned', 'order=session_code.asc&limit=10'):
+            planned[row['session_code']] = (row.get('d1'), row.get('d2'), row.get('d3'))
+    except:
+        pass
+
+    upcoming = []
+    for i in range(1, 6):
+        s = cur_bound + datetime.timedelta(seconds=SESSION_SECS * i)
+        code = s.strftime('%Y%m%d%H%M')
+        p = planned.get(code)
+        upcoming.append({'code': code, 'd1': p[0] if p else None, 'd2': p[1] if p else None, 'd3': p[2] if p else None})
+
+    last_results = []
+    try:
+        rows = supabase_get('king_results', 'order=session_code.desc&limit=3&select=session_code,d1,d2,d3')
+        for r in rows:
+            last_results.append(r)
+    except:
+        pass
+
+    return {'code': cur_code, 'status': status, 'remain': remain, 'secs_in': secs_in,
+            'upcoming': upcoming, 'last_results': last_results, 'planned': planned}
+
+def get_platform_stats():
+    try:
+        users = supabase_get('users', 'select=id,role&limit=1000')
+        total = len(users)
+        admins = sum(1 for u in users if u.get('role') == 'admin')
+        members = total - admins
+    except:
+        total = admins = members = '?'
+    try:
+        bets = supabase_get('bets', 'select=id&limit=1000')
+        total_bets = len(bets)
+    except:
+        total_bets = '?'
+    try:
+        tx = supabase_get('transactions', 'select=id,type,status&limit=1000')
+        total_tx = len(tx)
+        pending = sum(1 for t in tx if t.get('status') == 'PENDING')
+    except:
+        total_tx = pending = '?'
+    return {'users': total, 'admins': admins, 'members': members, 'bets': total_bets, 'tx': total_tx, 'pending': pending}
+
 # ── 3D King engine ────────────────────────────────────────────────────────────
 
 def roll_digits(bs=None, oe=None):
-    """Random digits 0-9 each, constrained by BIG/SMALL (sum>=14/<=13) and ODD/EVEN."""
     for _ in range(500):
         d = [random.randint(0, 9) for _ in range(3)]
         total = sum(d)
@@ -93,7 +146,6 @@ def roll_digits(bs=None, oe=None):
     return [random.randint(0, 9) for _ in range(3)]
 
 def session_boundary(utc_dt: datetime.datetime) -> datetime.datetime:
-    """UTC datetime rounded down to nearest 5-minute boundary."""
     m = (utc_dt.minute // 5) * 5
     return utc_dt.replace(minute=m, second=0, microsecond=0)
 
@@ -105,15 +157,10 @@ def king_engine_loop():
             now_utc   = datetime.datetime.now(datetime.timezone.utc)
             cur_bound = session_boundary(now_utc)
 
-            # Sweep last 12 sessions (1 hour) for unsettled results.
-            # Session code convention: END boundary time (matching pg_cron's king_engine_tick).
-            # E.g. session 15:45-15:50 has code "202606051550" settled at 15:50.
-            # settle_session RPC reads king_planned internally — admin BIG/SMALL overrides
-            # set via Angular dashboard are respected automatically.
             for n in range(12):
                 settle_time = cur_bound - datetime.timedelta(seconds=SESSION_SECS * n)
                 if settle_time > now_utc:
-                    continue  # boundary hasn't passed yet
+                    continue
                 code = settle_time.strftime('%Y%m%d%H%M')
                 if code in _settled_cache:
                     continue
@@ -121,8 +168,6 @@ def king_engine_loop():
                     if supabase_get('king_results', f'session_code=eq.{code}&select=session_code'):
                         _settled_cache.add(code)
                         continue
-                    # Generate random digits; engine_settle (SECURITY DEFINER) calls
-                    # settle_session which also checks king_planned for admin overrides
                     digits = roll_digits()
                     supabase_rpc('engine_settle', {
                         'p_api_key': API_KEY,
@@ -135,7 +180,6 @@ def king_engine_loop():
                 except Exception as e:
                     print(f'[ENGINE] Settle err {code}: {e}')
 
-            # Keep cache bounded (keep last 200 codes, ~17 hours)
             if len(_settled_cache) > 200:
                 _settled_cache = set(sorted(_settled_cache)[-200:])
 
@@ -162,12 +206,16 @@ def flask_status():
 def main_keyboard():
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
-        InlineKeyboardButton('📊 Status',            callback_data='status'),
-        InlineKeyboardButton('📋 Logs',              callback_data='logs'),
-        InlineKeyboardButton('🔧 Maintenance ON',    callback_data='maint_on'),
-        InlineKeyboardButton('✅ Maintenance OFF',   callback_data='maint_off'),
-        InlineKeyboardButton('ℹ️ Tech Info',         callback_data='info'),
-        InlineKeyboardButton('🔄 Restart Bot',       callback_data='restart'),
+        InlineKeyboardButton('📊 Status',           callback_data='status'),
+        InlineKeyboardButton('📊 Stats',            callback_data='stats'),
+        InlineKeyboardButton('🎲 Sessions',         callback_data='sessions'),
+        InlineKeyboardButton('📋 Logs',             callback_data='logs'),
+        InlineKeyboardButton('🔄 Sync',             callback_data='sync'),
+        InlineKeyboardButton('🔧 Maintenance ON',   callback_data='maint_on'),
+        InlineKeyboardButton('✅ Maintenance OFF',  callback_data='maint_off'),
+        InlineKeyboardButton('📢 Broadcast',        callback_data='broadcast'),
+        InlineKeyboardButton('ℹ️ Tech Info',        callback_data='info'),
+        InlineKeyboardButton('🔄 Restart Bot',      callback_data='restart'),
     )
     return kb
 
@@ -210,7 +258,6 @@ def send_status(chat_id):
         if eng:
             status  = eng.get('engine_status', '?')
             eng_str = '🟢 RUNNING' if status == 'RUNNING' else f'🔴 {status}'
-            # Use last_result (view column) or last_settlement (older alias)
             last_ts = eng.get('last_result') or eng.get('last_settlement') or ''
             if last_ts:
                 lr  = datetime.datetime.fromisoformat(last_ts.replace('Z', '+00:00'))
@@ -270,6 +317,69 @@ def send_logs(chat_id):
     logs = logs[-3000:] if len(logs) > 3000 else logs
     bot.send_message(chat_id, f'📋 *Recent Logs:*\n```\n{logs}\n```', parse_mode='Markdown')
 
+def send_stats(chat_id):
+    try:
+        s = get_platform_stats()
+        u = s['users']; a = s['admins']; m = s['members']
+        b = s['bets']; t = s['tx']; p = s['pending']
+        text = (
+            '📊 *Platform Statistics*\n\n'
+            f'👥 Total Users:  `{u}`\n'
+            f'   Admin: `{a}` | Member: `{m}`\n'
+            f'🎲 Total Bets:   `{b}`\n'
+            f'💳 Transactions: `{t}` (Pending: `{p}`)\n'
+        )
+        bot.send_message(chat_id, text, parse_mode='Markdown', reply_markup=main_keyboard())
+    except Exception as e:
+        bot.send_message(chat_id, '❌ Stats error: %s' % e)
+
+def send_sessions(chat_id):
+    try:
+        s = get_session_info()
+    except Exception as e:
+        bot.send_message(chat_id, f'❌ Sessions error: {e}')
+        return
+
+    cur_code = s['code']
+    cur_status = s['status']
+    remain_int = int(s['remain'])
+    remain_str = f'{remain_int // 60}m {remain_int % 60}s' if remain_int > 0 else '0s'
+    status_icon = '🟢' if cur_status == 'OPEN' else '🔴'
+
+    planned = s['planned']
+    p = planned.get(cur_code)
+    planned_str = f'{p[0]} {p[1]} {p[2]}' if p else 'belum ada'
+
+    lines = [
+        f'🎲 *3D King Sessions* ({(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=7)).strftime("%H:%M WIB")})',
+        '\u2501' * 25,
+        f'{status_icon} *Aktif:* `{cur_code}` ({cur_status})',
+        f'   ⏱ Sisa: `{remain_str}`',
+        f'   📊 Planned: `{planned_str}`',
+        '',
+    ]
+
+    lines.append('🔜 *Next 5:*')
+    for i, u in enumerate(s['upcoming'], 1):
+        ud = planned.get(u['code'])
+        u_planned = f'{ud[0]} {ud[1]} {ud[2]}' if ud else '—'
+        lines.append(f'  {i}️⃣ `{u["code"]}` ⏳ NEXT (`{u_planned}`)')
+
+    lines.extend(['', '📜 *Hasil Terakhir:*'])
+    for r in s['last_results']:
+        d1, d2, d3 = r.get('d1', '?'), r.get('d2', '?'), r.get('d3', '?')
+        lines.append(f'  `{r["session_code"]}` {d1}️⃣ {d2}️⃣ {d3}️⃣')
+
+    bot.send_message(chat_id, '\n'.join(lines), parse_mode='Markdown', reply_markup=main_keyboard())
+
+# ── Broadcast state ───────────────────────────────────────────────────────────
+
+# Store admin user IDs who are in "broadcast mode" (awaiting message text)
+_broadcast_sessions = set()
+
+def cancel_broadcast(uid):
+    _broadcast_sessions.discard(uid)
+
 # ── Telegram handlers ─────────────────────────────────────────────────────────
 
 @bot.message_handler(commands=['start', 'menu'])
@@ -277,7 +387,10 @@ def cmd_start(msg):
     if not is_allowed_chat(msg.chat.id):
         return
     if is_admin(msg.from_user.id):
-        bot.send_message(msg.chat.id, '🤖 *NUMBER9 Control Panel*',
+        bot.send_message(msg.chat.id, '🤖 *NUMBER9 Control Panel*\n\n'
+                         '`/broadcast` — Kirim pengumuman ke grup\n'
+                         '`/sync` — Sinkronkan data terbaru\n'
+                         '`/stats` — Statistik platform',
                          parse_mode='Markdown', reply_markup=main_keyboard())
     else:
         bot.reply_to(msg,
@@ -321,6 +434,114 @@ def cmd_logs(msg):
         return
     send_logs(msg.chat.id)
 
+@bot.message_handler(commands=['stats'])
+def cmd_stats(msg):
+    if not is_allowed_chat(msg.chat.id):
+        return
+    if not is_admin(msg.from_user.id):
+        bot.reply_to(msg, '⛔ Admin only.')
+        return
+    send_stats(msg.chat.id)
+
+@bot.message_handler(commands=['sessions'])
+def cmd_sessions(msg):
+    if not is_allowed_chat(msg.chat.id):
+        return
+    if not is_admin(msg.from_user.id):
+        bot.reply_to(msg, '⛔ Admin only.')
+        return
+    send_sessions(msg.chat.id)
+
+@bot.message_handler(commands=['broadcast'])
+def cmd_broadcast(msg):
+    if not is_allowed_chat(msg.chat.id):
+        return
+    if not is_admin(msg.from_user.id):
+        bot.reply_to(msg, '⛔ Admin only.')
+        return
+
+    text = msg.text[len('/broadcast'):].strip()
+    if text:
+        # Send directly if message is included in command
+        bot.send_message(GROUP_ID,
+            f'📢 *Pengumuman*\n\n{text}',
+            parse_mode='Markdown')
+        bot.reply_to(msg, '✅ Broadcast terkirim ke grup.')
+    else:
+        # Enter broadcast mode — next message will be broadcast
+        _broadcast_sessions.add(msg.from_user.id)
+        bot.reply_to(msg,
+            '📢 *Mode Broadcast*\n\n'
+            'Ketik pesan yang ingin dikirim ke grup.\n'
+            'Atau ketik `/cancel` untuk membatalkan.',
+            parse_mode='Markdown')
+
+@bot.message_handler(commands=['cancel'])
+def cmd_cancel(msg):
+    if msg.from_user.id in _broadcast_sessions:
+        cancel_broadcast(msg.from_user.id)
+        bot.reply_to(msg, '❌ Broadcast dibatalkan.')
+    else:
+        bot.reply_to(msg, 'Tidak ada sesi broadcast aktif.')
+
+@bot.message_handler(commands=['sync'])
+def cmd_sync(msg):
+    if not is_allowed_chat(msg.chat.id):
+        return
+    if not is_admin(msg.from_user.id):
+        bot.reply_to(msg, '⛔ Admin only.')
+        return
+
+    # Clear engine cache so it refetches
+    global _settled_cache
+    _settled_cache.clear()
+
+    # Fetch fresh platform data
+    try:
+        maint     = get_maintenance()
+        maint_str = '🔴 ON' if maint == 'true' else '🟢 OFF'
+    except:
+        maint_str = '❓'
+
+    try:
+        eng = get_engine_status()
+        es = '🟢 RUNNING' if eng and eng.get('engine_status') == 'RUNNING' else '🔴 ?'
+    except:
+        es = '❓'
+
+    try:
+        market  = get_king_marketplace()
+        mkt_str = '🟢 OPEN' if market == 'OPEN' else '🟡 CLOSED'
+    except:
+        mkt_str = '❓'
+
+    try:
+        s = get_platform_stats()
+        stats_line = f'👥 {s["users"]} users | 🎲 {s["bets"]} bets | 💳 {s["tx"]} tx'
+    except:
+        stats_line = 'Stats unavailable'
+
+    now = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=7)).strftime('%H:%M:%S WIB')
+    text = (
+        f'🔄 *Sync Completed* `{now}`\n\n'
+        f'🔧 Maintenance: {maint_str}\n'
+        f'🎮 Marketplace: {mkt_str}\n'
+        f'⚙️ Engine:      {es}\n\n'
+        f'{stats_line}\n\n'
+        f'_Cache cleared, data refreshed._'
+    )
+    bot.send_message(msg.chat.id, text, parse_mode='Markdown', reply_markup=main_keyboard())
+
+@bot.message_handler(func=lambda m: True)
+def handle_broadcast_message(msg):
+    """If user is in broadcast mode, send their message to the group."""
+    if msg.from_user.id in _broadcast_sessions:
+        cancel_broadcast(msg.from_user.id)
+        bot.send_message(GROUP_ID,
+            f'📢 *Pengumuman*\n\n{msg.text}',
+            parse_mode='Markdown')
+        bot.reply_to(msg, '✅ Broadcast terkirim ke grup.')
+
 @bot.message_handler(func=lambda m: m.new_chat_members is not None)
 def on_new_member(msg):
     if msg.chat.id != GROUP_ID:
@@ -345,6 +566,54 @@ def on_callback(call):
 
     if call.data == 'status':
         send_status(cid)
+
+    elif call.data == 'stats':
+        send_stats(cid)
+
+    elif call.data == 'sync':
+        # Re-trigger the sync command logic
+        global _settled_cache
+        _settled_cache.clear()
+        try:
+            maint     = get_maintenance()
+            maint_str = '🔴 ON' if maint == 'true' else '🟢 OFF'
+        except:
+            maint_str = '❓'
+        try:
+            eng = get_engine_status()
+            es = '🟢 RUNNING' if eng and eng.get('engine_status') == 'RUNNING' else '🔴 ?'
+        except:
+            es = '❓'
+        try:
+            market  = get_king_marketplace()
+            mkt_str = '🟢 OPEN' if market == 'OPEN' else '🟡 CLOSED'
+        except:
+            mkt_str = '❓'
+        try:
+            s = get_platform_stats()
+            stats_line = f'👥 {s["users"]} users | 🎲 {s["bets"]} bets | 💳 {s["tx"]} tx'
+        except:
+            stats_line = 'Stats unavailable'
+        now = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=7)).strftime('%H:%M:%S WIB')
+        bot.send_message(cid,
+            f'🔄 *Sync Completed* `{now}`\n\n'
+            f'🔧 Maintenance: {maint_str}\n'
+            f'🎮 Marketplace: {mkt_str}\n'
+            f'⚙️ Engine:      {es}\n\n'
+            f'{stats_line}\n\n'
+            f'_Cache cleared, data refreshed._',
+            parse_mode='Markdown', reply_markup=main_keyboard())
+
+    elif call.data == 'broadcast':
+        _broadcast_sessions.add(call.from_user.id)
+        bot.send_message(cid,
+            '📢 *Mode Broadcast*\n\n'
+            'Ketik pesan yang ingin dikirim ke grup.\n'
+            'Atau ketik /cancel untuk membatalkan.',
+            parse_mode='Markdown', reply_markup=main_keyboard())
+
+    elif call.data == 'sessions':
+        send_sessions(cid)
 
     elif call.data == 'logs':
         send_logs(cid)

@@ -16,7 +16,7 @@ async function sha256(msg: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "http://localhost:5175"];
+const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "https://mynumber9.uk", "http://localhost:5175"];
 
 const corsHeaders = (origin = "") => {
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
