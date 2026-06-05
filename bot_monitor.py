@@ -78,6 +78,29 @@ def get_king_marketplace():
     rows = supabase_get('platform_config', 'key=eq.king_marketplace&select=value')
     return rows[0]['value'] if rows else 'OPEN'
 
+# ── Angular-style sessions helpers ────────────────────────────────────────────
+
+def utc_to_wib_code(code):
+    dt = datetime.datetime.strptime(code, '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc)
+    wib = dt + datetime.timedelta(hours=7)
+    return f'N9K-{wib.strftime("%Y%m%d%H%M")}'
+
+def utc_to_wib_str(code):
+    dt = datetime.datetime.strptime(code, '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc)
+    wib = dt + datetime.timedelta(hours=7)
+    return wib.strftime('%Y-%m-%d %H:%M')
+
+def derive_bs_oe(d1, d2, d3):
+    t = d1 + d2 + d3
+    bs = 'BIG' if t >= 14 else 'SMALL'
+    oe = 'ODD' if t % 2 == 1 else 'EVEN'
+    return bs, oe, t
+
+def fmt_timer(secs):
+    if secs < 0:
+        secs = 0
+    return f'{int(secs)//60:02d}:{int(secs)%60:02d}'
+
 def get_session_info():
     now = datetime.datetime.now(datetime.timezone.utc)
     cur_bound = session_boundary(now)
@@ -88,13 +111,13 @@ def get_session_info():
 
     planned = {}
     try:
-        for row in supabase_get('king_planned', 'order=session_code.asc&limit=10'):
+        for row in supabase_get('king_planned', 'order=session_code.asc&limit=20'):
             planned[row['session_code']] = (row.get('d1'), row.get('d2'), row.get('d3'))
     except:
         pass
 
     upcoming = []
-    for i in range(1, 6):
+    for i in range(1, 11):
         s = cur_bound + datetime.timedelta(seconds=SESSION_SECS * i)
         code = s.strftime('%Y%m%d%H%M')
         p = planned.get(code)
@@ -102,7 +125,7 @@ def get_session_info():
 
     last_results = []
     try:
-        rows = supabase_get('king_results', 'order=session_code.desc&limit=3&select=session_code,d1,d2,d3')
+        rows = supabase_get('king_results', 'order=session_code.desc&limit=6&select=session_code,d1,d2,d3')
         for r in rows:
             last_results.append(r)
     except:
@@ -342,35 +365,40 @@ def send_sessions(chat_id):
         bot.send_message(chat_id, f'❌ Sessions error: {e}')
         return
 
-    cur_code = s['code']
-    cur_status = s['status']
-    remain_int = int(s['remain'])
-    remain_str = f'{remain_int // 60}m {remain_int % 60}s' if remain_int > 0 else '0s'
-    status_icon = '🟢' if cur_status == 'OPEN' else '🔴'
+    c = s['code']; cs = s['status']; cv = s['remain']
+    icon = '🟢' if cs == 'OPEN' else '🔴'
+    timer = fmt_timer(cv)
 
     planned = s['planned']
-    p = planned.get(cur_code)
-    planned_str = f'{p[0]} {p[1]} {p[2]}' if p else 'belum ada'
 
     lines = [
-        f'🎲 *3D King Sessions* ({(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=7)).strftime("%H:%M WIB")})',
+        f'🎲 *3D King* ({(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=7)).strftime("%H:%M WIB")})',
         '\u2501' * 25,
-        f'{status_icon} *Aktif:* `{cur_code} UTC` ({cur_status})',
-        f'   ⏱ Sisa: `{remain_str}`',
-        f'   📊 Planned: `{planned_str}`',
-        '',
+        f'{icon} `{utc_to_wib_code(c)}`  `{utc_to_wib_str(c)}`  `{cs}`  `{timer}`',
     ]
-
-    lines.append('🔜 *Next 5:*')
-    for i, u in enumerate(s['upcoming'], 1):
-        ud = planned.get(u['code'])
-        u_planned = f'{ud[0]} {ud[1]} {ud[2]}' if ud else '—'
-        lines.append(f'  {i}. `{u["code"]} UTC` ⏳ NEXT (`{u_planned}`)')
+    p = planned.get(c)
+    if p:
+        bs, oe, t = derive_bs_oe(p[0], p[1], p[2])
+        lines.append(f'   {p[0]} {p[1]} {p[2]}  N9:{t}  {bs}  {oe}')
+    else:
+        lines.append(f'   —  —  —')
 
     lines.extend(['', '📜 *Hasil Terakhir:*'])
     for r in s['last_results']:
-        d1, d2, d3 = r.get('d1', '?'), r.get('d2', '?'), r.get('d3', '?')
-        lines.append(f'  `{r["session_code"]} UTC`  {d1}  {d2}  {d3}')
+        rc = r['session_code']
+        d1, d2, d3 = r.get('d1', 0), r.get('d2', 0), r.get('d3', 0)
+        bs, oe, t = derive_bs_oe(d1, d2, d3)
+        lines.append(f'  `{utc_to_wib_code(rc)}` `{utc_to_wib_str(rc)}`  {d1} {d2} {d3}  {bs} {oe}  N9:{t}')
+
+    lines.extend(['', '🔜 *Next:*'])
+    for i, u in enumerate(s['upcoming'][:10], 1):
+        ud = planned.get(u['code'])
+        if ud:
+            bs, oe, t = derive_bs_oe(ud[0], ud[1], ud[2])
+            extra = f'  {bs} {oe}  N9:{t}'
+        else:
+            extra = ''
+        lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  NEXT{extra}')
 
     bot.send_message(chat_id, '\n'.join(lines), parse_mode='Markdown', reply_markup=main_keyboard())
 
