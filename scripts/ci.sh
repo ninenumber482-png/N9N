@@ -23,7 +23,7 @@ echo "============================================"
 # ── Step 1: Regression test ──────────────────────────────────────────────────
 echo ""
 echo "=== [1/5] Regression Test ==="
-if supabase db query --linked --file "$ROOT_DIR/scripts/regression-test.sql" 2>&1 | grep -q "FAILED"; then
+if supabase db query --linked --file "$ROOT_DIR/scripts/regression-test.sql" 2>&1 | grep -E "error|ERROR|FAIL|ROLLBACK" > /dev/null; then
   echo "❌ Regression test FAILED — ada invariant yang dilanggar!"
   exit 1
 else

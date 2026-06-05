@@ -615,6 +615,7 @@ export const clearAllData = () => {
 };
 
 // Auto-subscribe Realtime + sync profile on page load if user already logged in
+let _storageListenerAdded = false;
 {
   const _auth = readJSON(LS.auth, null);
   if (_auth?.id && _auth?.username && _auth?.token) {
@@ -627,17 +628,13 @@ export const clearAllData = () => {
       if (!supabase) { useStore.setState({ auth: null }); }
       (async () => {
         if (!supabase) return;
-        // Abort signal: capture the session ID at start; if the user logs
-        // out (or another tab changes auth) before this chain completes,
-        // the `stillValid` check below short-circuits so we don't subscribe
-        // realtime channels / fire notifications on a dead session.
         const sessionId = _auth.id;
         const stillValid = () => useStore.getState().auth?.id === sessionId;
         setUserToken(_auth.token);
         // Cross-tab sync: when another tab logs in/out, sync this tab's in-memory token.
         // This prevents stale globalUserToken from blocking RLS queries.
-        if (typeof globalThis !== 'undefined' && globalThis.addEventListener) {
-          globalThis.addEventListener('storage', (e) => {
+        if (typeof globalThis !== 'undefined' && globalThis.addEventListener && !_storageListenerAdded) {
+          const handler = (e) => {
             if (e.key === LS.auth) {
               try {
                 const next = e.newValue ? JSON.parse(e.newValue) : null;
@@ -650,7 +647,9 @@ export const clearAllData = () => {
                 }
               } catch {}
             }
-          });
+          };
+          globalThis.addEventListener('storage', handler);
+          _storageListenerAdded = true;
         }
         useStore.getState().fetchProfile().then(prof => {
           if (!stillValid()) return; // user logged out / switched session mid-fetch
@@ -669,7 +668,7 @@ export const clearAllData = () => {
                     .limit(1);
                   if (!data || data.length === 0) {
                     // RLS definitely blocked — token stale
-                    console.warn('[AUTH] Session token stale. Forcing re-login.');
+                    if (import.meta.env.DEV) console.warn('[AUTH] Session token stale. Forcing re-login.');
                     useStore.setState({
                       systemNotification: {
                         type: 'warning',

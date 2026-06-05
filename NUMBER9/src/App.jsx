@@ -103,22 +103,20 @@ function App() {
   }, [subscribePlatformConfig]);
 
   // Auth-scoped subscriptions (wallet, transactions, user status, settled bets)
+  const unsubWalletRef = useRef(() => {});
+  const unsubUserStatusRef = useRef(() => {});
+  const unsubBetsRef = useRef(() => {});
+
   useEffect(() => {
-    let unsubWallet = () => {};
-    let unsubUserStatus = () => {};
-    let unsubBets = () => {};
-
     if (auth?.id) {
-
       // Wallet + transactions realtime
       (async () => {
-        unsubWallet = await subscribeToWalletAndTransactions(
+        unsubWalletRef.current = await subscribeToWalletAndTransactions(
           auth.id,
           () => useStore.getState().fetchBalances(),
           (tx) => {
             useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
 
-            // Transaction notification dispatch
             if (tx.type === 'DEPOSIT' && tx.status === 'COMPLETED') {
               useStore.setState({
                 systemNotification: {
@@ -161,25 +159,22 @@ function App() {
       })();
 
       // User status realtime
-      unsubUserStatus = subscribeUserStatus(auth.id);
+      unsubUserStatusRef.current = subscribeUserStatus(auth.id);
 
       // Settled bets realtime
       (async () => {
-        unsubBets = await subscribeToSettledBets(
+        unsubBetsRef.current = await subscribeToSettledBets(
           auth.id,
-          () => {
-            // On bet settlement, trigger version bump to update UI
-            useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
-          },
+          () => useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 })),
           () => {}
         );
       })();
     }
 
     return () => {
-      unsubWallet?.();
-      unsubUserStatus?.();
-      unsubBets?.();
+      unsubWalletRef.current?.();
+      unsubUserStatusRef.current?.();
+      unsubBetsRef.current?.();
     };
   }, [auth?.id, subscribeUserStatus]);
 

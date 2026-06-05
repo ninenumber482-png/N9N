@@ -36,17 +36,14 @@ export class AuthService {
 
   async authenticate(credentials: Credentials): Promise<SupabaseLoginResult | null> {
     if (!this.securityService.checkRateLimit('login_attempt', 5)) {
-      console.warn('Too many login attempts. Please try again later.');
       return null;
     }
 
     if (!this.securityService.isValidUsername(credentials.username)) {
-      console.warn('Invalid username format');
       return null;
     }
 
     if (!credentials.password || credentials.password.length < 1) {
-      console.warn('Invalid password');
       return null;
     }
 
@@ -61,8 +58,6 @@ export class AuthService {
 
     if (result.success) {
       this.securityService.clearRateLimit('login_attempt');
-    } else {
-      console.warn('Login failed:', result.error);
     }
     return result;
   }

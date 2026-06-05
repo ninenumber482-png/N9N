@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:5175';
+// baseURL is defined in playwright.config.ts
+const BASE_URL = '';
 
 test.describe('NUMBER9 Platform - Integration Tests (Critical Flows)', () => {
 

@@ -1,4 +1,4 @@
-import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { importProvidersFrom } from '@angular/core';
 
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -9,12 +9,8 @@ import { environment } from './environments/environment';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthInterceptor } from './app/core/interceptor/auth.interceptor';
 
-if (environment.production) {
-  enableProdMode();
-  //show this warning only on prod mode
-  if (window) {
-    selfXSSWarning();
-  }
+if (environment.production && typeof window !== 'undefined') {
+  selfXSSWarning();
 }
 
 bootstrapApplication(AppComponent, {

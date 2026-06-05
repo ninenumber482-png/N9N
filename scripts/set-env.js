@@ -4,9 +4,10 @@
  *
  * Usage: node scripts/set-env.js
  *
- * Env vars:
- *   SUPABASE_URL    (default: current value in environment.prod.ts)
- *   SUPABASE_KEY    (default: current value in environment.prod.ts)
+ * Env vars (checked in order of precedence):
+ *   VITE_SUPABASE_URL  / SUPABASE_URL       (CI provides VITE_ prefix)
+ *   VITE_SUPABASE_KEY  / SUPABASE_KEY       (CI provides VITE_ prefix)
+ *   Defaults to current values in environment.prod.ts if not set
  */
 
 const { readFileSync, writeFileSync } = require('fs');
@@ -19,8 +20,9 @@ const existing = readFileSync(prodPath, 'utf-8');
 const currentUrl = existing.match(/supabaseUrl:\s*'([^']+)'/)?.[1] || '';
 const currentKey = existing.match(/supabaseKey:\s*'([^']+)'/)?.[1] || '';
 
-const supabaseUrl = process.env.SUPABASE_URL || currentUrl;
-const supabaseKey = process.env.SUPABASE_KEY || currentKey;
+// Check both VITE_ prefix (from CI) and non-prefixed variants
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || currentUrl;
+const supabaseKey = process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY || currentKey;
 
 const content = `export const environment = {
   production: true,

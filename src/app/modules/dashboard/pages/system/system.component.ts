@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../../core/services/admin.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-
-const SERVER_MONITOR_URL = 'https://server-monitor.ninenumber482.workers.dev';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-system',
@@ -231,7 +230,7 @@ export class SystemComponent implements OnInit, OnDestroy {
 
   private async pollServer() {
     try {
-      const res = await fetch(SERVER_MONITOR_URL);
+      const res = await fetch(environment.serverMonitorUrl);
       if (!res.ok) throw new Error('upstream');
       const data = await res.json();
       this.serverData = data;

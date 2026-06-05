@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:5175';
+// Use baseURL from playwright.config.ts (React at 5175)
+const BASE_URL = '';
 const DEMO_USERNAME = 'testuser_' + Date.now();
 const DEMO_EMAIL = `testuser-${Date.now()}@test.local`;
 const DEMO_PASSWORD = 'TestPass123!';
