@@ -203,6 +203,21 @@ def king_engine_loop():
                 except Exception as e:
                     print(f'[ENGINE] Settle err {code}: {e}')
 
+            # Pre-generate planned digits for next 10 sessions
+            for n in range(1, 11):
+                pt = cur_bound + datetime.timedelta(seconds=SESSION_SECS * n)
+                pc = pt.strftime('%Y%m%d%H%M')
+                try:
+                    if not supabase_get('king_planned', f'session_code=eq.{pc}&select=session_code'):
+                        digits = roll_digits()
+                        supabase_upsert('king_planned', {
+                            'session_code': pc,
+                            'd1': digits[0], 'd2': digits[1], 'd3': digits[2],
+                        })
+                        print(f'[ENGINE] Planned  {pc}: {digits}')
+                except Exception as e:
+                    print(f'[ENGINE] Plan err  {pc}: {e}')
+
             if len(_settled_cache) > 200:
                 _settled_cache = set(sorted(_settled_cache)[-200:])
 
@@ -394,10 +409,11 @@ def send_sessions(chat_id):
     for i, u in enumerate(s['upcoming'][:10], 1):
         ud = planned.get(u['code'])
         if ud:
-            bs, oe, t = derive_bs_oe(ud[0], ud[1], ud[2])
-            lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  {ud[0]} {ud[1]} {ud[2]}  {bs} {oe}  N9:{t}')
+            d1, d2, d3 = ud
         else:
-            lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  —  —  —  —')
+            d1, d2, d3 = roll_digits()
+        bs, oe, t = derive_bs_oe(d1, d2, d3)
+        lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  {d1} {d2} {d3}  {bs} {oe}  N9:{t}')
 
     bot.send_message(chat_id, '\n'.join(lines), parse_mode='Markdown', reply_markup=main_keyboard())
 
