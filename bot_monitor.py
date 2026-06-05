@@ -214,6 +214,8 @@ def send_status(chat_id):
             last_ts = eng.get('last_result') or eng.get('last_settlement') or ''
             if last_ts:
                 lr  = datetime.datetime.fromisoformat(last_ts.replace('Z', '+00:00'))
+                if lr.tzinfo is None:
+                    lr = lr.replace(tzinfo=datetime.timezone.utc)
                 age = int((datetime.datetime.now(datetime.timezone.utc) - lr).total_seconds())
             elif _last_settlement_dt:
                 age = int((datetime.datetime.now(datetime.timezone.utc) - _last_settlement_dt).total_seconds())
