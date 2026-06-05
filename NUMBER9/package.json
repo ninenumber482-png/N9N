@@ -10,7 +10,7 @@
     "build": "VITE_PORT=5175 VITE_APP_MODE=user vite build --mode user",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=number9-app --branch=main --commit-dirty=true"
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name=number9-app --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

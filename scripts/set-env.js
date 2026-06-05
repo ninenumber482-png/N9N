@@ -19,15 +19,25 @@ const existing = readFileSync(prodPath, 'utf-8');
 
 const currentUrl = existing.match(/supabaseUrl:\s*'([^']+)'/)?.[1] || '';
 const currentKey = existing.match(/supabaseKey:\s*'([^']+)'/)?.[1] || '';
+const currentMonitor = existing.match(/serverMonitorUrl:\s*'([^']+)'/)?.[1] || '';
 
 // Check both VITE_ prefix (from CI) and non-prefixed variants
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || currentUrl;
 const supabaseKey = process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY || currentKey;
+// serverMonitorUrl is consumed by system.component.ts; must be present in prod env
+// or the production build fails with TS2339. Preserve existing, allow env override,
+// fall back to the known worker URL.
+const serverMonitorUrl =
+  process.env.VITE_SERVER_MONITOR_URL ||
+  process.env.SERVER_MONITOR_URL ||
+  currentMonitor ||
+  'https://server-monitor.ninenumber482.workers.dev';
 
 const content = `export const environment = {
   production: true,
   supabaseUrl: '${supabaseUrl}',
   supabaseKey: '${supabaseKey}',
+  serverMonitorUrl: '${serverMonitorUrl}',
 };
 `;
 
