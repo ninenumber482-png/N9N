@@ -1,15 +1,15 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AdminService } from '../../../../core/services/admin.service';
-import { environment } from '../../../../../environments/environment';
-import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationService } from '../../../../core/services/notification.service';
-import { RealtimeService } from '../../../../core/services/realtime.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { environment } from 'src/app/environments/environment';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
+import { RealtimeService } from 'src/app/core/services/realtime.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { ConfirmDialogComponent } from 'src/app/shared/components/confirm-dialog/confirm-dialog.component';
+import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-users',
@@ -458,8 +458,9 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
           </div>
         </div>
       }
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersComponent implements OnInit, OnDestroy {
   users: any[] = [];

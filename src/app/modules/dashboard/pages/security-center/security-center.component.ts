@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService } from '../../../../core/services/admin.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-security-center',
@@ -114,8 +114,9 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
       }
       <app-pagination [currentPage]="currentPage" [totalItems]="currentTabData.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SecurityCenterComponent implements OnInit {
   tab = 'alerts';

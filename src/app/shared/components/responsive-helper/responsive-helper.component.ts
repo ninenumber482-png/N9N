@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
   templateUrl: './responsive-helper.component.html',
   styleUrls: ['./responsive-helper.component.css'],
   imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResponsiveHelperComponent implements OnInit {
   public env: any = environment;

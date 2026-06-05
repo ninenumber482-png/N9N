@@ -1,14 +1,15 @@
 import { NgClass } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MenuItem } from 'src/app/core/models/menu.model';
-import { MenuService } from '../../../services/menu.service';
-import { NavbarSubmenuComponent } from '../navbar-submenu/navbar-submenu.component';
+import { MenuService } from 'src/app/services/menu.service';
+import { NavbarSubmenuComponent } from 'src/app/navbar-submenu/navbar-submenu.component';
 
 @Component({
   selector: 'app-navbar-menu',
   templateUrl: './navbar-menu.component.html',
   styleUrls: ['./navbar-menu.component.css'],
   imports: [NgClass, NavbarSubmenuComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarMenuComponent implements OnInit {
   private showMenuClass = ['scale-100', 'animate-fade-in-up', 'opacity-100', 'pointer-events-auto'];

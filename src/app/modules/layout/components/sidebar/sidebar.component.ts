@@ -1,15 +1,16 @@
 import { NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { MenuService } from '../../services/menu.service';
-import { SidebarMenuComponent } from './sidebar-menu/sidebar-menu.component';
-import { AdminService } from '../../../../core/services/admin.service';
+import { MenuService } from 'src/app/services/menu.service';
+import { SidebarMenuComponent } from 'src/app/modules/layout/components/sidebar/sidebar-menu/sidebar-menu.component';
+import { AdminService } from 'src/app/core/services/admin.service';
 
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
   imports: [NgClass, AngularSvgIconModule, SidebarMenuComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private badgeTimer: ReturnType<typeof setInterval> | null = null;

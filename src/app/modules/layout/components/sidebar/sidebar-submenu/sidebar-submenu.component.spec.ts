@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SidebarSubmenuComponent } from './sidebar-submenu.component';
+import { SidebarSubmenuComponent } from 'src/app/modules/layout/components/sidebar/sidebar-submenu/sidebar-submenu.component';
 
 describe('SidebarSubmenuComponent', () => {
   let component: SidebarSubmenuComponent;

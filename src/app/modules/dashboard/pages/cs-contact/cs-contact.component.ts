@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService } from '../../../../core/services/admin.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationService } from '../../../../core/services/notification.service';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 @Component({
   selector: 'app-cs-contact',
@@ -139,8 +139,9 @@ import { NotificationService } from '../../../../core/services/notification.serv
           </div>
         </div>
       }
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CsContactComponent implements OnInit {
   form = {

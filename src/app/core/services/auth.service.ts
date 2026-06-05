@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { SecurityService } from './security.service';
-import { SupabaseService, SupabaseLoginResult } from './supabase.service';
+import { SecurityService } from 'src/app/core/services/security.service';
+import { SupabaseService, SupabaseLoginResult } from 'src/app/core/services/supabase.service';
 
 export interface User {
   username: string;

@@ -1,13 +1,13 @@
-import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AdminService } from '../../../../core/services/admin.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationService } from '../../../../core/services/notification.service';
-import { RealtimeService } from '../../../../core/services/realtime.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
+import { RealtimeService } from 'src/app/core/services/realtime.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { ConfirmDialogComponent } from 'src/app/shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-referrals',
@@ -178,8 +178,9 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
       [confirmVariant]="confirm.confirmVariant"
       (onConfirm)="executeConfirm()"
       (onCancel)="cancelDialog()"
-    />
+    />,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReferralsComponent implements OnInit, OnDestroy {
   referrals: any[] = [];

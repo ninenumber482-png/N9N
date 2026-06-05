@@ -1,4 +1,4 @@
-import { Component, computed, EventEmitter, input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, EventEmitter, input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -37,8 +37,9 @@ import { CommonModule } from '@angular/common';
           Next ›
         </button>
       </div>
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaginationComponent {
   currentPage = input(1);

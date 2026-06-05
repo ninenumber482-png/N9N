@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthComponent } from './auth.component';
-import { SignInComponent } from './pages/sign-in/sign-in.component';
-import { NewPasswordComponent } from './pages/new-password/new-password.component';
+import { AuthComponent } from 'src/app/modules/auth/auth.component';
+import { SignInComponent } from 'src/app/modules/auth/pages/sign-in/sign-in.component';
+import { NewPasswordComponent } from 'src/app/modules/auth/pages/new-password/new-password.component';
 
 const routes: Routes = [
   {

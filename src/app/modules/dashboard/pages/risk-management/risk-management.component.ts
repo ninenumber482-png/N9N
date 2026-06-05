@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService } from '../../../../core/services/admin.service';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-risk-management',
@@ -97,8 +97,9 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
       </div>
       <app-pagination [currentPage]="currentPage" [totalItems]="filteredProfiles.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RiskManagementComponent implements OnInit {
   riskProfiles: any[] = [];

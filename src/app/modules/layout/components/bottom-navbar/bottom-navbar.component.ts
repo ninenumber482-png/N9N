@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 
 @Component({
@@ -6,6 +6,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
   templateUrl: './bottom-navbar.component.html',
   styleUrls: ['./bottom-navbar.component.css'],
   imports: [AngularSvgIconModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BottomNavbarComponent implements OnInit {
   constructor() {}

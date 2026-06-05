@@ -1,8 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { createClient } from '@supabase/supabase-js';
-import { environment } from '../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 import { BehaviorSubject, Observable, Subject, interval } from 'rxjs';
-import { ToastService } from './toast.service';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class RealtimeService implements OnDestroy {

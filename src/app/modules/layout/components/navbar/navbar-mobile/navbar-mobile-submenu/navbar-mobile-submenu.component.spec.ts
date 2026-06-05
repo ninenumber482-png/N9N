@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { NavbarMobileSubmenuComponent } from './navbar-mobile-submenu.component';
+import { NavbarMobileSubmenuComponent } from 'src/app/modules/layout/components/navbar/navbar-mobile/navbar-mobile-submenu/navbar-mobile-submenu.component';
 
 describe('NavbarMobileSubmenuComponent', () => {
   let component: NavbarMobileSubmenuComponent;

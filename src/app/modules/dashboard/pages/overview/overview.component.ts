@@ -1,11 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
-import { AdminService } from '../../../../core/services/admin.service';
-import { environment } from '../../../../../environments/environment';
-import { NotificationService } from '../../../../core/services/notification.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { environment } from 'src/app/environments/environment';
+import { NotificationService } from 'src/app/core/services/notification.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 
 @Component({
   selector: 'app-overview',
@@ -239,8 +239,9 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
         </div>
       </div>
       }
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverviewComponent implements OnInit {
   stats = { totalUsers: 0, totalTransactions: 0, pendingBets: 0, pendingKyc: 0 };

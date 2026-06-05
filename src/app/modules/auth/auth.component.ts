@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 
@@ -7,6 +7,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css'],
   imports: [AngularSvgIconModule, RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthComponent implements OnInit {
   ngOnInit(): void {}

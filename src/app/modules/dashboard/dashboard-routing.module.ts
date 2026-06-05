@@ -1,22 +1,22 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { DashboardComponent } from './dashboard.component';
-import { RoleGuard } from '../../core/guards/role.guard';
-import { OverviewComponent } from './pages/overview/overview.component';
-import { UsersComponent } from './pages/users/users.component';
-import { TransactionsComponent } from './pages/transactions/transactions.component';
-import { WalletAdminComponent } from './pages/wallet-admin/wallet-admin.component';
-import { BetsComponent } from './pages/bets/bets.component';
-import { KycComponent } from './pages/kyc/kyc.component';
-import { AuditComponent } from './pages/audit/audit.component';
-import { ReferralsComponent } from './pages/referrals/referrals.component';
-import { ThreeDKingComponent } from './pages/3dking/3dking.component';
-import { CsContactComponent } from './pages/cs-contact/cs-contact.component';
-import { GamingComponent } from './pages/gaming/gaming.component';
-import { SessionMonitorComponent } from './pages/session-monitor/session-monitor.component';
-import { SecurityCenterComponent } from './pages/security-center/security-center.component';
-import { RiskManagementComponent } from './pages/risk-management/risk-management.component';
-import { SystemComponent } from './pages/system/system.component';
+import { DashboardComponent } from 'src/app/modules/dashboard/dashboard.component';
+import { RoleGuard } from 'src/app/core/guards/role.guard';
+import { OverviewComponent } from 'src/app/modules/dashboard/pages/overview/overview.component';
+import { UsersComponent } from 'src/app/modules/dashboard/pages/users/users.component';
+import { TransactionsComponent } from 'src/app/modules/dashboard/pages/transactions/transactions.component';
+import { WalletAdminComponent } from 'src/app/modules/dashboard/pages/wallet-admin/wallet-admin.component';
+import { BetsComponent } from 'src/app/modules/dashboard/pages/bets/bets.component';
+import { KycComponent } from 'src/app/modules/dashboard/pages/kyc/kyc.component';
+import { AuditComponent } from 'src/app/modules/dashboard/pages/audit/audit.component';
+import { ReferralsComponent } from 'src/app/modules/dashboard/pages/referrals/referrals.component';
+import { ThreeDKingComponent } from 'src/app/modules/dashboard/pages/3dking/3dking.component';
+import { CsContactComponent } from 'src/app/modules/dashboard/pages/cs-contact/cs-contact.component';
+import { GamingComponent } from 'src/app/modules/dashboard/pages/gaming/gaming.component';
+import { SessionMonitorComponent } from 'src/app/modules/dashboard/pages/session-monitor/session-monitor.component';
+import { SecurityCenterComponent } from 'src/app/modules/dashboard/pages/security-center/security-center.component';
+import { RiskManagementComponent } from 'src/app/modules/dashboard/pages/risk-management/risk-management.component';
+import { SystemComponent } from 'src/app/modules/dashboard/pages/system/system.component';
 
 const routes: Routes = [
   {

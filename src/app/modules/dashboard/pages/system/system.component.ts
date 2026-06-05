@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService } from '../../../../core/services/admin.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-import { environment } from '../../../../../environments/environment';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { environment } from 'src/app/environments/environment';
 
 @Component({
   selector: 'app-system',
@@ -198,8 +198,9 @@ import { environment } from '../../../../../environments/environment';
         </div>
       </div>
 
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemComponent implements OnInit, OnDestroy {
   configs: any[] = [];

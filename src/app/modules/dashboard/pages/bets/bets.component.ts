@@ -1,11 +1,11 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AdminService } from '../../../../core/services/admin.service';
-import { RealtimeService } from '../../../../core/services/realtime.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { RealtimeService } from 'src/app/core/services/realtime.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-bets',
@@ -77,8 +77,9 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
         </div>
       <app-pagination [currentPage]="currentPage" [totalItems]="filtered.length" (pageChange)="onPageChange($event)"></app-pagination>
       </div>
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BetsComponent implements OnInit, OnDestroy {
   bets: any[] = [];

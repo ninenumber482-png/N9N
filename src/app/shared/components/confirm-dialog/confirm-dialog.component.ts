@@ -1,4 +1,4 @@
-import { Component, EventEmitter, input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -55,9 +55,10 @@ import { CommonModule } from '@angular/common';
             </button>
           </div>
         </div>
-      </div>
+      </div>,
     }
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmDialogComponent {
   open = input(false);

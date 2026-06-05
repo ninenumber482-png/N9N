@@ -1,15 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Event, NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { NavbarComponent } from './components/navbar/navbar.component';
-import { SidebarComponent } from './components/sidebar/sidebar.component';
-import { ToastContainerComponent } from '../../shared/components/toast-container/toast-container.component';
+import { NavbarComponent } from 'src/app/modules/layout/components/navbar/navbar.component';
+import { SidebarComponent } from 'src/app/modules/layout/components/sidebar/sidebar.component';
+import { ToastContainerComponent } from 'src/app/shared/components/toast-container/toast-container.component';
 
 @Component({
   selector: 'app-layout',
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.css'],
   imports: [SidebarComponent, NavbarComponent, RouterOutlet, ToastContainerComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent implements OnInit {
   private mainContent: HTMLElement | null = null;

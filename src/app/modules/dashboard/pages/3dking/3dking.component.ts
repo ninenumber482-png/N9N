@@ -1,7 +1,7 @@
-import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AdminService } from '../../../../core/services/admin.service';
-import { NotificationService } from '../../../../core/services/notification.service';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 const SESSION_MS = 300_000;
 const LOCK_MS = 60_000;   // betting + result-editing close 1 min before draw (kept in sync with king.js)
@@ -220,8 +220,9 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
           </div>
         </div>
       </div>
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThreeDKingComponent implements OnInit, OnDestroy {
   sessions: SessionRow[] = [];

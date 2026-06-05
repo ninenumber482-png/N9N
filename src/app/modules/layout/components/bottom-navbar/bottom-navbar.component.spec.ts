@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BottomNavbarComponent } from './bottom-navbar.component';
+import { BottomNavbarComponent } from 'src/app/modules/layout/components/bottom-navbar/bottom-navbar.component';
 
 describe('BottomNavbarComponent', () => {
   let component: BottomNavbarComponent;

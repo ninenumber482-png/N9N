@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { ToastService, ToastMessage } from '../../../core/services/toast.service';
+import { ToastService, ToastMessage } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-toast-container',
@@ -83,7 +83,8 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
     .animate-slide-in {
       animation: slide-in 0.3s ease-out;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastContainerComponent implements OnInit, OnDestroy {
   toasts: ToastMessage[] = [];

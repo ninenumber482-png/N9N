@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, Router } from '@angular/router';
-import { RealtimeService } from '../../core/services/realtime.service';
+import { RealtimeService } from 'src/app/core/services/realtime.service';
 
 const PAGE_ORDER = [
   { route: '/overview', label: 'Overview' },
@@ -62,8 +62,9 @@ const PAGE_ORDER = [
           </nav>
         </div>
       </div>
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   pages = PAGE_ORDER;

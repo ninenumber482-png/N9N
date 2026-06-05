@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { NavbarSubmenuComponent } from './navbar-submenu.component';
+import { NavbarSubmenuComponent } from 'src/app/modules/layout/components/navbar/navbar-submenu/navbar-submenu.component';
 
 describe('NavbarSubmenuComponent', () => {
   let component: NavbarSubmenuComponent;

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { toast } from 'ngx-sonner';
-import { ToastService } from './toast.service';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Injectable({
   providedIn: 'root',

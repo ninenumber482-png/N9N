@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SubMenuItem } from 'src/app/core/models/menu.model';
-import { MenuService } from '../../../services/menu.service';
-import { SidebarSubmenuComponent } from '../sidebar-submenu/sidebar-submenu.component';
+import { MenuService } from 'src/app/services/menu.service';
+import { SidebarSubmenuComponent } from 'src/app/sidebar-submenu/sidebar-submenu.component';
 
 @Component({
   selector: 'app-sidebar-menu',

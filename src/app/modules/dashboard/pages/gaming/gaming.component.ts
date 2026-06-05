@@ -1,10 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
-import { AdminService } from '../../../../core/services/admin.service';
-import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-gaming',
@@ -107,8 +107,9 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
       </div>
       <app-pagination [currentPage]="currentPage" [totalItems]="sessions.length" (pageChange)="onPageChange($event)"></app-pagination>
       }
-    </div>
+    </div>,
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GamingComponent implements OnInit {
   sessions: any[] = [];

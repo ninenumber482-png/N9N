@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ResponsiveHelperComponent } from './responsive-helper.component';
+import { ResponsiveHelperComponent } from 'src/app/shared/components/responsive-helper/responsive-helper.component';
 
 describe('ResponsiveHelperComponent', () => {
   let component: ResponsiveHelperComponent;

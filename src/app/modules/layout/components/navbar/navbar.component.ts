@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { MenuService } from '../../services/menu.service';
-import { NavbarMenuComponent } from './navbar-menu/navbar-menu.component';
-import { NavbarMobileComponent } from './navbar-mobile/navbar-mobilecomponent';
-import { ThemeService } from '../../../../core/services/theme.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { ToastService, ToastMessage } from '../../../../core/services/toast.service';
+import { MenuService } from 'src/app/services/menu.service';
+import { NavbarMenuComponent } from 'src/app/modules/layout/components/navbar/navbar-menu/navbar-menu.component';
+import { NavbarMobileComponent } from 'src/app/modules/layout/components/navbar/navbar-mobile/navbar-mobilecomponent';
+import { ThemeService } from 'src/app/core/services/theme.service';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { ToastService, ToastMessage } from 'src/app/core/services/toast.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
   imports: [AngularSvgIconModule, NavbarMenuComponent, NavbarMobileComponent, CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   isDarkMode = false;
