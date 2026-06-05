@@ -117,8 +117,8 @@ export default function HistoryPage() {
   bids.forEach((b) => {
     if (!sessionBetMap[b.sessionCode]) sessionBetMap[b.sessionCode] = { bets: [], pnl: 0 };
     sessionBetMap[b.sessionCode].bets.push(b);
-    if (b.result === "WIN") sessionBetMap[b.sessionCode].pnl += b.payout;
-    else if (b.result === "LOSE") sessionBetMap[b.sessionCode].pnl -= b.stake;
+    if (b.result === "WIN") sessionBetMap[b.sessionCode].pnl += (b.payout ?? 0);
+    else if (b.result === "LOSE") sessionBetMap[b.sessionCode].pnl -= (b.stake ?? 0);
   });
 
   const resultRows = Object.entries(sessionBetMap)

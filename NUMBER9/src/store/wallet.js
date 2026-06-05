@@ -103,6 +103,7 @@ export async function requestDeposit(params) {
 
   try {
     const proofUrl = await uploadProof(params.userUuid, params.proof);
+    if (params.proof && !proofUrl) return { ok: false, error: "Proof upload failed. Check your connection and try again." };
     const idempotencyKey = newIdempotencyKey();
 
     const data = await apiRpc('submit_deposit', {

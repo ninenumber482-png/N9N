@@ -134,7 +134,10 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
   const handleProof = (e) => {
     const file = e.target.files[0]; if (!file) return;
     setProofName(file.name);
-    const r = new FileReader(); r.onload = (ev) => setProof(ev.target.result); r.readAsDataURL(file);
+    const r = new FileReader();
+    r.onload = (ev) => setProof(ev.target.result);
+    r.onerror = () => { setProofName(''); setToast({ type: 'err', text: t('common.file_read_error') }); };
+    r.readAsDataURL(file);
   };
 
   const submit = async () => {
@@ -223,7 +226,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
           <p className="text-sm font-semibold text-white">{t('deposit.enter_amount_title')}</p>
           <p className="text-xs text-zinc-500">{t('deposit.enter_amount_desc')}</p>
         </div>
-        <div className="p-4">
+        <div className="px-4 py-4">
           <AmountInput value={amount} onChange={setAmount} presets={DEPOSIT_PRESETS} label="" placeholder={t('deposit.placeholder_amount')} />
         </div>
       </section>
@@ -234,7 +237,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
           <p className="text-xs text-zinc-500">{t('deposit.upload_proof_desc')}</p>
         </div>
         <div className="p-4">
-          <label className={`block cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition ${proof ? "border-emerald-500 bg-emerald-500/10" : "border-[#1f2128] hover:border-zinc-500"}`}>
+          <label className={`block cursor-pointer rounded-lg border-2 border-dashed p-5 sm:p-8 text-center transition ${proof ? "border-emerald-500 bg-emerald-500/10" : "border-[#1f2128] hover:border-zinc-500"}`}>
             <input type="file" accept="image/*" className="hidden" onChange={handleProof} />
             {proof ? (
               <div className="space-y-2"><p className="text-sm font-semibold text-emerald-400">{t('common.file_selected')}</p><p className="text-xs text-emerald-400">{proofName}</p></div>
@@ -392,17 +395,17 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
                 <div>
                   <label className="mb-1 block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t('withdraw.bank_name')}</label>
                   <input value={useEdit ? editBank.name : bankName} onChange={e => setEditBank(p => ({...p, name: e.target.value}))} readOnly={!useEdit}
-                    className="w-full rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2 text-sm text-white outline-none focus:border-yellow-400/50 read-only:opacity-70" placeholder="e.g. BCA" />
+                    className="w-full rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-yellow-400/50 read-only:opacity-70" placeholder="e.g. BCA" />
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t('withdraw.account_number')}</label>
                   <input value={useEdit ? editBank.number : bankAccNum} onChange={e => setEditBank(p => ({...p, number: e.target.value}))} readOnly={!useEdit}
-                    className="w-full rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2 text-sm text-white outline-none focus:border-yellow-400/50 read-only:opacity-70" placeholder="e.g. 1234567890" inputMode="numeric" />
+                    className="w-full rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-yellow-400/50 read-only:opacity-70" placeholder="e.g. 1234567890" inputMode="numeric" />
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t('withdraw.account_holder')}</label>
                   <input value={useEdit ? editBank.holder : bankAccName} onChange={e => setEditBank(p => ({...p, holder: e.target.value}))} readOnly={!useEdit}
-                    className="w-full rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2 text-sm text-white outline-none focus:border-yellow-400/50 read-only:opacity-70" placeholder="e.g. JOHN DOE" />
+                    className="w-full rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-yellow-400/50 read-only:opacity-70" placeholder="e.g. JOHN DOE" />
                 </div>
               </>
             )}
@@ -415,7 +418,7 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
           <p className="text-sm font-semibold text-white">{t('withdraw.amount_title')}</p>
           <p className="text-xs text-zinc-500">{t('withdraw.max_amount', { amount: fmt(balanceMain) })}</p>
         </div>
-        <div className="p-4">
+        <div className="px-4 py-4">
           <AmountInput value={amount} onChange={setAmount} presets={WITHDRAW_PRESETS} label="" placeholder={t('withdraw.placeholder')} />
         </div>
       </section>

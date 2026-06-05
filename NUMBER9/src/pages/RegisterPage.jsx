@@ -16,7 +16,7 @@ function readFileAsDataUrl(file) {
 }
 
 const inp =
-  "w-full h-10 rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/70";
+  "w-full h-10 rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 text-base sm:text-sm text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/70";
 const lbl =
   "block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1";
 
@@ -102,7 +102,7 @@ export default function RegisterPage() {
       !v.password || !v.confirmPassword || !v.referral
     )
       return t('register.validation_required');
-    if (!/^[\w.]{3,20}$/.test(v.username))
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(v.username))
       return t('register.validation_username');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email))
       return t('register.validation_email');

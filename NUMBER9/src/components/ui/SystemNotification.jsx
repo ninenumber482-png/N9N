@@ -17,7 +17,7 @@ export default function SystemNotification() {
   if (!show || !notification) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-40 animate-slide-in">
+    <div className="fixed top-[max(4.5rem,calc(4rem+env(safe-area-inset-top)))] right-4 z-40 animate-slide-in lg:top-4">
       <div className="max-w-sm rounded-xl border border-white/10 bg-[#1a1a2e]/95 p-4 shadow-2xl backdrop-blur-sm">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20">

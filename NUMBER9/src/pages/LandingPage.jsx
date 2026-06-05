@@ -41,7 +41,7 @@ export default function LandingPage() {
           <div className="flex gap-3">
             <button
               onClick={() => setLang(lang === 'id' ? 'en' : 'id')}
-              className="px-3 py-1.5 rounded-lg border border-zinc-700 text-xs font-bold text-zinc-300 hover:border-yellow-400/50 hover:text-yellow-400 transition"
+              className="px-3 py-2 rounded-lg border border-zinc-700 text-xs font-bold text-zinc-300 hover:border-yellow-400/50 hover:text-yellow-400 transition"
             >
               {lang === 'id' ? 'EN' : 'ID'}
             </button>
@@ -57,7 +57,7 @@ export default function LandingPage() {
 
         <div className="mx-auto max-w-4xl text-center relative z-10">
           <p className="text-sm font-black tracking-widest text-yellow-400 mb-4 uppercase">{t('landing.hero_badge')}</p>
-          <h1 className="text-5xl md:text-6xl font-black mb-6 leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
             <div>{t('landing.hero_headline_1')}</div>
             <div>{t('landing.hero_headline_2')}</div>
           </h1>
@@ -79,7 +79,7 @@ export default function LandingPage() {
       {/* Partners Section */}
       <section className="px-4 py-20 md:py-32 bg-[#0c0e14] border-t border-[#1f2128]">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-black mb-12 text-center">{t('landing.trusted_by')}</h2>
+          <h2 className="text-xl sm:text-2xl font-black mb-12 text-center">{t('landing.trusted_by')}</h2>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-x-8 gap-y-10 items-center justify-items-center">
             {LOGOS.map((logo, i) => (
               <div key={i} className="flex h-10 w-full items-center justify-center">
@@ -99,8 +99,8 @@ export default function LandingPage() {
       {/* Values Section */}
       <section className="px-4 py-20 md:py-32 border-t border-[#1f2128]">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-4xl font-black mb-16 text-center">{t('landing.values_title')}</h2>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <h2 className="text-2xl sm:text-4xl font-black mb-10 sm:mb-16 text-center">{t('landing.values_title')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {VALUES.map((value, i) => {
               const title = t(value.titleKey);
               const desc = t(value.descKey);
@@ -118,13 +118,13 @@ export default function LandingPage() {
       {/* Stats Section */}
       <section className="px-4 py-20 md:py-32 border-t border-[#1f2128]">
         <div className="mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {STATS.map((stat, i) => {
               const label = t(stat.labelKey);
               return (
               <div key={i} className="text-center">
-                <img src={stat.icon} alt={label} className="h-16 w-16 mx-auto mb-4 opacity-80" />
-                <div className="text-4xl font-black text-yellow-400 mb-2">{stat.value}</div>
+                <img src={stat.icon} alt={label} className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 opacity-80" />
+                <div className="text-3xl sm:text-4xl font-black text-yellow-400 mb-2">{stat.value}</div>
                 <p className="text-zinc-400">{label}</p>
               </div>
             )})}
@@ -151,7 +151,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="px-4 py-20 md:py-32 border-t border-[#1f2128]">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl font-black mb-6">{t('landing.cta_title')}</h2>
+          <h2 className="text-2xl sm:text-4xl font-black mb-6">{t('landing.cta_title')}</h2>
           <Link to="/register" className="inline-block px-10 py-4 rounded-lg bg-yellow-400 text-black font-bold text-lg hover:bg-yellow-300 transition">
             {t('landing.cta_button')}
           </Link>

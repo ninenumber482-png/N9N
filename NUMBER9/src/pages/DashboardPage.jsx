@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store/useStore'
 import { Icon } from '../components/icons'
 import { fetchUserTransactions } from '../store/wallet'
-import { listBids } from '../store/king'
+import { listBids, refreshKingData } from '../store/king'
 import { useI18n } from '../i18n'
 import PageShell from '../components/ui/PageShell'
 import { SkeletonCard, Shimmer } from '../components/ui/Skeleton'
@@ -27,7 +27,6 @@ export default function DashboardPage() {
 
   const [userTxs, setUserTxs] = useState([])
   const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     Promise.all([
       fetchBalances(),
@@ -193,7 +192,7 @@ export default function DashboardPage() {
               const amountColor = a.type === 'DEP'
                 ? (isDone ? 'text-emerald-400' : isPending ? 'text-amber-400' : 'text-red-400')
                 : (a.type === 'WD' ? 'text-zinc-400' : (String(a.amount).startsWith('+') ? 'text-emerald-400' : 'text-zinc-400'))
-              const statusLabel = isDone ? null : isPending ? 'Menunggu' : 'Ditolak'
+              const statusLabel = isDone ? null : isPending ? t('common.waiting') : t('common.rejected')
               const statusPillClass = isPending
                 ? 'bg-amber-400/10 text-amber-400'
                 : 'bg-red-400/10 text-red-400'

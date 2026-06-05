@@ -298,7 +298,7 @@ export default function GamePage() {
             <div className="min-w-0 bg-[#0c0e14] px-3 py-2.5 sm:px-4">
               <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">{t('game.market')}</p>
               <div className="flex items-baseline gap-1.5">
-                <span className={`font-mono text-xl font-black tabular-nums sm:text-2xl ${up ? "text-emerald-400" : down ? "text-red-400" : "text-white"}`}>{price}</span>
+                <span className={`font-mono text-base font-black tabular-nums sm:text-xl lg:text-2xl ${up ? "text-emerald-400" : down ? "text-red-400" : "text-white"}`}>{price}</span>
                 <span className={`text-xs font-bold ${up ? "text-emerald-400" : down ? "text-red-400" : "text-zinc-600"}`}>{up ? "▲" : down ? "▼" : "—"}</span>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function GamePage() {
       </div>
 
       {/* ── Body ── */}
-      <div className="relative z-10 w-full px-3 py-4 pb-20 sm:px-4 lg:px-6 lg:pb-8 2xl:px-10">
+      <div className="relative z-10 w-full px-3 py-4 pb-[max(5rem,calc(5rem+env(safe-area-inset-bottom)))] sm:px-4 lg:px-6 lg:pb-8 2xl:px-10">
 
         {/* ── Live index chart (trading terminal) ── */}
         <div className="mb-3 overflow-hidden rounded-xl border border-[#1f2128] bg-[#0c0e14]">
@@ -415,7 +415,7 @@ export default function GamePage() {
 
                 {/* Numbers */}
                 <Label className="mt-3">{t('game.total_number')}</Label>
-                <div className="mt-1.5 grid grid-cols-7 gap-1 sm:grid-cols-[repeat(14,minmax(0,1fr))]">
+                <div className="mt-1.5 grid grid-cols-4 gap-1 sm:grid-cols-7 md:grid-cols-[repeat(14,minmax(0,1fr))]">
                   {NUMBERS.map((n) => (
                     <button key={n}
                       disabled={!isOpen || (pendingNumCode && pendingNumCode !== `TOTAL_${n}`) || (number !== null && number !== n)}
@@ -471,7 +471,7 @@ export default function GamePage() {
 
       {/* ── Stake Modal ── */}
       {stakeOpen && (
-        <ModalOverlay open={stakeOpen} onClose={() => setStakeOpen(false)} className="items-center justify-center bg-black/60 p-4">
+        <ModalOverlay open={stakeOpen} onClose={() => setStakeOpen(false)} className="items-center justify-center bg-black/60 p-3 sm:p-4">
           <div className="flex max-h-[90dvh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-[#1f2128] bg-[#0c0e14]">
             {/* Top accent */}
             <div className="h-1 w-full shrink-0 bg-linear-to-r from-yellow-400 via-yellow-400/40 to-transparent" />
@@ -604,7 +604,7 @@ export default function GamePage() {
                   <div key={i} className="flex items-center justify-between rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-1.5">
                     <span className="font-mono text-[11px] font-bold text-yellow-400">{b.betCode}</span>
                     <span className={`text-[11px] font-bold ${b.result === "WIN" ? "text-emerald-400" : "text-red-400"}`}>
-                      {b.result === "WIN" ? `+${(b.payout - b.stake).toLocaleString()}` : `-${b.stake.toLocaleString()}`} {t('common.points')}
+                      {b.result === "WIN" ? `+${((b.payout || 0) - (b.stake || 0)).toLocaleString()}` : `-${(b.stake || 0).toLocaleString()}`} {t('common.points')}
                     </span>
                   </div>
                 ))}
@@ -849,7 +849,7 @@ function SpinDigit() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="grid h-14 w-10 place-items-center rounded-xl border border-violet-400/30 bg-violet-400/10 font-mono text-2xl font-black text-violet-300 sm:h-16 sm:w-12 sm:text-3xl">
+    <span className="grid h-10 w-8 place-items-center rounded-xl border border-violet-400/30 bg-violet-400/10 font-mono text-xl font-black text-violet-300 sm:h-14 sm:w-10 sm:text-2xl lg:h-16 lg:w-12 lg:text-3xl">
       {n}
     </span>
   );
@@ -954,7 +954,7 @@ function SessionBetsInline({ session, bids }) {
   const prev = getPreviousSessionCode(session.sessionCode);
   const prevBids = listBidsForSession(prev).filter((b) => b.status !== "PENDING");
   const allSettled = [...settled, ...prevBids];
-  const netPnl = allSettled.reduce((s, b) => s + b.payout - b.stake, 0);
+  const netPnl = allSettled.reduce((s, b) => s + (b.payout || 0) - (b.stake || 0), 0);
   return (
     <div>
       <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5">
@@ -979,7 +979,7 @@ function SessionBetsInline({ session, bids }) {
                 <span className="w-16 sm:w-20 text-[10px] font-black uppercase tracking-wider text-yellow-400">{b.betCode}</span>
                 <span className="flex-1 text-right text-[10px] text-zinc-500">{b.result === 'WIN' ? t('game.win') : b.result}</span>
                 <span className={`text-[11px] font-extrabold tabular-nums ${b.result === "WIN" ? "text-emerald-400" : "text-red-400"}`}>
-                  {b.result === "WIN" ? `+${(b.payout - b.stake).toLocaleString()}` : `-${b.stake.toLocaleString()}`}
+                  {b.result === "WIN" ? `+${((b.payout || 0) - (b.stake || 0)).toLocaleString()}` : `-${(b.stake || 0).toLocaleString()}`}
                 </span>
               </div>
             ))}
@@ -1048,7 +1048,7 @@ function BidHistoryInline({ bids }) {
                 <span className="font-mono text-[8px] text-zinc-600 sm:hidden">{b.displayCode.slice(-6)}</span>
                 <span className="flex-1 text-right text-[10px] text-zinc-500">{b.stake.toLocaleString()}</span>
                 <span className={`w-14 sm:w-16 text-right text-[10px] font-extrabold tabular-nums ${win ? "text-emerald-400" : lose ? "text-red-400" : "text-zinc-400"}`}>
-                  {b.status === "PENDING" ? `${b.potentialPayout.toLocaleString()}` : win ? `+${(b.payout - b.stake).toLocaleString()}` : `-${b.stake.toLocaleString()}`}
+                  {b.status === "PENDING" ? `${(b.potentialPayout || 0).toLocaleString()}` : win ? `+${((b.payout || 0) - (b.stake || 0)).toLocaleString()}` : `-${(b.stake || 0).toLocaleString()}`}
                 </span>
               </div>
             );

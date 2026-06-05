@@ -36,13 +36,15 @@ export const id = {
     click_to_upload: 'Klik untuk unggah',
     or_drag_drop: 'atau seret dan lepas gambar Anda',
     yes: 'Ya',
+    rejected: 'Ditolak',
     logout_confirm: 'Apakah Anda yakin ingin keluar?',
     more: 'Lainnya',
     close: 'Tutup',
     reload: 'Muat Ulang',
     edit: 'Ubah',
     login_required: 'Silakan login untuk melanjutkan.',
-    back_to_login: 'Kembali ke Login'
+    back_to_login: 'Kembali ke Login',
+    file_read_error: 'Tidak dapat membaca file. Coba file lain.'
   },
 
   /* ─── NAVIGATION ─── */
@@ -190,7 +192,7 @@ export const id = {
     uuid_label: 'UUID Anda:',
     code_pending: 'Kode referral akan dibuat dan terlihat di dashboard setelah admin menyetujui akun Anda.',
     validation_required: 'Semua field akun wajib diisi.',
-    validation_username: 'Nama pengguna harus 3–20 karakter (huruf, angka, titik, garis bawah).',
+    validation_username: 'Nama pengguna harus 3–20 karakter (huruf, angka, garis bawah).',
     validation_email: 'Masukkan alamat email yang valid.',
     validation_password: 'Kata sandi minimal 6 karakter.',
     validation_password_match: 'Kata sandi tidak cocok.',
@@ -570,7 +572,8 @@ export const id = {
     deposit_turnover: 'Omzet Deposit',
     no_results: 'Tidak ada aktivitas untuk filter yang dipilih.',
     proof_uploaded: 'Bukti terunggah',
-    result: 'Hasil'
+    result: 'Hasil',
+    game_position: 'Posisi · {code} · {session}'
   },
 
   /* ─── ERROR BOUNDARY ─── */

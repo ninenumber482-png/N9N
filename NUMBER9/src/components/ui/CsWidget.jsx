@@ -71,7 +71,7 @@ export default function CsWidget() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-emerald-500/50 hover:scale-110 transition-all duration-200 active:scale-95 lg:bottom-6"
+        className="fixed bottom-[max(5rem,calc(5rem+env(safe-area-inset-bottom)))] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-emerald-500/50 hover:scale-110 transition-all duration-200 active:scale-95 lg:bottom-6"
         aria-label="Chat with customer service"
       >
         <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
@@ -81,7 +81,7 @@ export default function CsWidget() {
 
       {/* Chat bubble dialog */}
       {open && (
-        <div className="fixed bottom-36 right-4 z-50 w-72 animate-fade-in-up lg:bottom-24">
+        <div className="fixed bottom-[max(9rem,calc(9rem+env(safe-area-inset-bottom)))] right-4 z-50 w-72 animate-fade-in-up lg:bottom-24">
           <div className="rounded-2xl border border-white/[0.06] bg-[#0e1017] shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden">
             {/* Header */}
             <div className="bg-emerald-500 px-4 py-3 flex items-center gap-3">

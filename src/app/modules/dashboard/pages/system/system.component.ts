@@ -1,8 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../../core/services/admin.service';
 import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
+
+const SERVER_MONITOR_URL = 'https://server-monitor.ninenumber482.workers.dev';
 
 @Component({
   selector: 'app-system',
@@ -141,10 +143,66 @@ import { WibDatePipe } from '../../../../shared/pipes/wib-date.pipe';
       </div>
 
       }
+
+      <!-- EC2 Server Monitor — selalu tampil, independen dari loading configs -->
+      <div class="bg-card border border-border rounded-lg">
+        <div class="flex items-center justify-between border-b border-border px-4 py-3">
+          <h3 class="text-sm font-medium text-foreground">EC2 Server Monitor</h3>
+          <span class="flex items-center gap-1.5 text-[11px]"
+            [class.text-green-500]="serverStatus === 'online'"
+            [class.text-red-500]="serverStatus === 'offline'"
+            [class.text-muted-foreground]="serverStatus === 'loading'">
+            <span class="inline-block w-1.5 h-1.5 rounded-full"
+              [class.bg-green-500]="serverStatus === 'online'"
+              [class.bg-red-500]="serverStatus === 'offline'"
+              [class.bg-muted-foreground]="serverStatus === 'loading'">
+            </span>
+            {{ serverStatus === 'online' ? 'Online' : serverStatus === 'offline' ? 'Offline' : 'Connecting...' }}
+          </span>
+        </div>
+        <div class="p-4">
+          <div class="grid grid-cols-2 gap-4 text-[11px]">
+            <div>
+              <p class="text-muted-foreground mb-1">CPU Usage</p>
+              <p class="font-mono text-foreground text-base font-semibold">
+                {{ serverData ? serverData.cpu.toFixed(1) + '%' : '—' }}
+              </p>
+              @if (serverData) {
+                <div class="mt-1.5 h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                    [style.width.%]="serverData.cpu"
+                    [class.bg-green-500]="serverData.cpu < 70"
+                    [class.bg-yellow-500]="serverData.cpu >= 70 && serverData.cpu < 90"
+                    [class.bg-red-500]="serverData.cpu >= 90">
+                  </div>
+                </div>
+              }
+            </div>
+            <div>
+              <p class="text-muted-foreground mb-1">RAM Usage</p>
+              <p class="font-mono text-foreground text-base font-semibold">
+                {{ serverData ? serverData.ram.toFixed(1) + '%' : '—' }}
+              </p>
+              @if (serverData) {
+                <div class="mt-1.5 h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                    [style.width.%]="serverData.ram"
+                    [class.bg-green-500]="serverData.ram < 70"
+                    [class.bg-yellow-500]="serverData.ram >= 70 && serverData.ram < 90"
+                    [class.bg-red-500]="serverData.ram >= 90">
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-3">Auto-refresh setiap 5 detik via Cloudflare Worker</p>
+        </div>
+      </div>
+
     </div>
   `,
 })
-export class SystemComponent implements OnInit {
+export class SystemComponent implements OnInit, OnDestroy {
   configs: any[] = [];
   maintenanceMode = false;
   kingStatus = 'OPEN';
@@ -155,9 +213,35 @@ export class SystemComponent implements OnInit {
   editingKey: string | null = null;
   editingValue = '';
 
+  serverData: { cpu: number; ram: number } | null = null;
+  serverStatus: 'loading' | 'online' | 'offline' = 'loading';
+  private serverPollTimer: any;
+
   constructor(private admin: AdminService, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    this.pollServer();
+    this.serverPollTimer = setInterval(() => this.pollServer(), 5000);
+  }
+
+  ngOnDestroy() {
+    clearInterval(this.serverPollTimer);
+  }
+
+  private async pollServer() {
+    try {
+      const res = await fetch(SERVER_MONITOR_URL);
+      if (!res.ok) throw new Error('upstream');
+      const data = await res.json();
+      this.serverData = data;
+      this.serverStatus = 'online';
+    } catch {
+      this.serverStatus = 'offline';
+      this.serverData = null;
+    }
+    this.cdr.markForCheck();
+  }
 
   async load() {
     this.loading = true;

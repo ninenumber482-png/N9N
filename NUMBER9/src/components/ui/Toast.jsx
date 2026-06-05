@@ -18,7 +18,7 @@ export default function Toast({ toast, onClose }) {
                             "border border-red-500/30 bg-red-500/20 text-red-400";
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 rounded-lg px-6 py-3 text-sm font-semibold ${typeClass}`}>
+    <div className={`fixed bottom-[max(6rem,calc(5.5rem+env(safe-area-inset-bottom)))] right-4 z-50 max-w-[calc(100vw-2rem)] rounded-lg px-4 py-3 text-sm font-semibold shadow-lg lg:bottom-6 lg:right-6 lg:max-w-sm ${typeClass}`}>
       {toast.text}
     </div>
   );

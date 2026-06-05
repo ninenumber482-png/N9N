@@ -36,13 +36,15 @@ export const en = {
     click_to_upload: 'Click here to upload',
     or_drag_drop: 'or drag and drop your image',
     yes: 'Yes',
+    rejected: 'Rejected',
     logout_confirm: 'Are you sure you want to logout?',
     more: 'More',
     close: 'Close',
     reload: 'Reload Page',
     edit: 'Edit',
     login_required: 'Please log in to continue.',
-    back_to_login: 'Back to Login'
+    back_to_login: 'Back to Login',
+    file_read_error: 'Cannot read file. Try another.'
   },
 
   /* ─── NAVIGATION ─── */
@@ -190,7 +192,7 @@ export const en = {
     uuid_label: 'Your UUID:',
     code_pending: 'Your referral code will be generated and visible in your dashboard once the admin approves your account.',
     validation_required: 'All account fields are required.',
-    validation_username: 'Username must be 3–20 characters (letters, numbers, dot, underscore).',
+    validation_username: 'Username must be 3–20 characters (letters, numbers, underscore).',
     validation_email: 'Please enter a valid email address.',
     validation_password: 'Password must be at least 6 characters.',
     validation_password_match: 'Passwords do not match.',
@@ -570,7 +572,8 @@ export const en = {
     deposit_turnover: 'Deposit Turnover',
     no_results: 'No activity found for selected filters.',
     proof_uploaded: 'Proof uploaded',
-    result: 'Result'
+    result: 'Result',
+    game_position: 'Position · {code} · {session}'
   },
 
   /* ─── ERROR BOUNDARY ─── */

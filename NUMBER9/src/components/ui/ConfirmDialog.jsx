@@ -23,7 +23,7 @@ export default function ConfirmDialog({
       onClick={modal.onClick}
     >
       <div
-        className={`relative w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-7 text-center shadow-[0_0_60px_rgba(0,0,0,0.6)] ${loading ? 'pointer-events-none' : ''}`}
+        className={`relative w-full max-w-[min(calc(100%-2rem),24rem)] rounded-2xl border border-white/[0.06] bg-[#0e1017] p-6 sm:p-7 text-center shadow-[0_0_60px_rgba(0,0,0,0.6)] ${loading ? 'pointer-events-none' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showLogo && (

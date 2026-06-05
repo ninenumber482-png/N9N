@@ -78,7 +78,7 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#050607] text-white flex flex-col lg:flex-row">
+    <div className="h-dvh overflow-hidden bg-[#050607] text-white flex flex-col lg:flex-row">
       {/* MOBILE HEADER */}
       <header className="sticky top-0 z-30 border-b border-[#1f2128] bg-[#050607]/95 backdrop-blur-md lg:hidden">
         <div className="h-1 bg-linear-to-r from-yellow-400 via-yellow-400/40 to-transparent" />
@@ -115,7 +115,7 @@ export default function Layout({ children }) {
       <SystemNotification />
 
       {/* MAIN CONTENT - FULL WIDTH */}
-      <main className="flex-1 min-w-0 overflow-hidden flex flex-col lg:flex-row">
+      <main className="flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col lg:flex-row">
         {/* LEFT SIDEBAR - NAVIGATION + USER INFO - DESKTOP ONLY */}
         <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:flex-col lg:border-r lg:border-[#1f2128] lg:bg-[#0c0e14]">
           <div className="absolute top-0 left-0 h-1 w-full bg-linear-to-r from-yellow-400 via-yellow-400/40 to-transparent" />
@@ -171,10 +171,10 @@ export default function Layout({ children }) {
           </div>
         </aside>
 
-        <div className="flex-1 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#1f2128_transparent] [overscroll-behavior:contain]">
+        <div className="flex-1 min-h-0 overflow-y-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:#1f2128_transparent] [overscroll-behavior:contain]">
           {/* Full-bleed routes (marketplace terminal) own their own padding;
               all other pages get the shared, uniform page padding here. */}
-          <div className={bleed ? "w-full" : "w-full px-4 pt-4 pb-28 sm:px-6 sm:pt-8 sm:pb-28 lg:px-10 lg:py-10"}>
+          <div className={bleed ? "w-full" : "w-full px-4 pt-4 pb-[max(5rem,calc(5rem+env(safe-area-inset-bottom)))] sm:px-6 sm:pt-8 sm:pb-28 lg:px-10 lg:py-10"}>
             {children}
           </div>
         </div>

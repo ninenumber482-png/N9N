@@ -92,7 +92,7 @@ export const useStore = create((set, get) => ({
               const updates = { ...s.systemStatus };
               if (key === 'king_status') updates.kingStatus = value || 'OPEN';
               if (key === 'king_status_msg') updates.kingStatusMsg = value || '';
-              if (key === 'platform_maintenance') updates.platformMaintenance = value === 'true' || value === true;
+              if (key === 'platform_maintenance' || key === 'maintenance_mode') updates.platformMaintenance = value === 'true' || value === true;
               if (key === 'platform_msg') updates.platformMsg = value || '';
 
               return { systemStatus: updates };
@@ -113,14 +113,14 @@ export const useStore = create((set, get) => ({
       const { data: config, error } = await supabase
         .from('platform_config')
         .select('key, value')
-        .in('key', ['king_status', 'king_status_msg', 'platform_maintenance', 'platform_msg']);
+        .in('key', ['king_status', 'king_status_msg', 'platform_maintenance', 'maintenance_mode', 'platform_msg']);
 
       if (!error && config) {
         const updates = {};
         config.forEach(item => {
           if (item.key === 'king_status') updates.kingStatus = item.value || 'OPEN';
           if (item.key === 'king_status_msg') updates.kingStatusMsg = item.value || '';
-          if (item.key === 'platform_maintenance') updates.platformMaintenance = item.value === 'true' || item.value === true;
+          if (item.key === 'platform_maintenance' || item.key === 'maintenance_mode') updates.platformMaintenance = item.value === 'true' || item.value === true;
           if (item.key === 'platform_msg') updates.platformMsg = item.value || '';
         });
         if (Object.keys(updates).length > 0) {
@@ -445,7 +445,19 @@ export const useStore = create((set, get) => ({
   fetchProfile: async () => {
     const authData = readJSON(LS.auth, null);
     if (!authData?.id) return null;
-    return _fallbackProfile(authData);
+    try {
+      if (!supabase) return _fallbackProfile(authData);
+      const { data, error } = await supabase.rpc('get_my_full_profile');
+      if (error) {
+        // UNAUTHORIZED = stale session token — return null so caller can force re-login
+        if (error.message?.includes('UNAUTHORIZED') || error.code === 'PGRST301') return null;
+        return _fallbackProfile(authData);
+      }
+      if (!data) return _fallbackProfile(authData);
+      return data;
+    } catch {
+      return _fallbackProfile(authData);
+    }
   },
 
   // Direct downline = users who registered with me as their referrer (referred_by_user).
