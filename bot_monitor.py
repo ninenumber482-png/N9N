@@ -208,11 +208,11 @@ def king_engine_loop():
                 pt = cur_bound + datetime.timedelta(seconds=SESSION_SECS * n)
                 pc = pt.strftime('%Y%m%d%H%M')
                 try:
-                    if not supabase_get('king_planned', f'session_code=eq.{pc}&select=session_code'):
+                    if not supabase_get('king_planned', f'session_code=eq.{pc}&select=session_code,d1'):
                         digits = roll_digits()
-                        supabase_upsert('king_planned', {
-                            'session_code': pc,
-                            'd1': digits[0], 'd2': digits[1], 'd3': digits[2],
+                        supabase_rpc('upsert_king_planned', {
+                            'p_code': pc,
+                            'p_d1': digits[0], 'p_d2': digits[1], 'p_d3': digits[2],
                         })
                         print(f'[ENGINE] Planned  {pc}: {digits}')
                 except Exception as e:
@@ -410,10 +410,10 @@ def send_sessions(chat_id):
         ud = planned.get(u['code'])
         if ud:
             d1, d2, d3 = ud
+            bs, oe, t = derive_bs_oe(d1, d2, d3)
+            lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  {d1} {d2} {d3}  {bs} {oe}  N9:{t}')
         else:
-            d1, d2, d3 = roll_digits()
-        bs, oe, t = derive_bs_oe(d1, d2, d3)
-        lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  {d1} {d2} {d3}  {bs} {oe}  N9:{t}')
+            lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  —')
 
     bot.send_message(chat_id, '\n'.join(lines), parse_mode='Markdown', reply_markup=main_keyboard())
 
