@@ -4,6 +4,5 @@ dist/
 .playwright-mcp/
 *.log
 .claude/
-.temp/
 .env
 .env.*
