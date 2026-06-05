@@ -397,7 +397,7 @@ def send_sessions(chat_id):
             bs, oe, t = derive_bs_oe(ud[0], ud[1], ud[2])
             lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  {ud[0]} {ud[1]} {ud[2]}  {bs} {oe}  N9:{t}')
         else:
-            lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`  —  —  —  —')
+            lines.append(f'  {i}. `{utc_to_wib_code(u["code"])}` `{utc_to_wib_str(u["code"])}`')
 
     bot.send_message(chat_id, '\n'.join(lines), parse_mode='Markdown', reply_markup=main_keyboard())
 
