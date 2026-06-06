@@ -7,6 +7,7 @@ import { usePolling } from "./hooks/usePolling";
 import { supabase } from "./utils/supabase";
 import { refreshKingData, listBids } from "./store/king";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PopupBanner from "./components/ui/PopupBanner";
 import { I18nProvider } from "./i18n";
 import Layout from "./components/Layout";
 import LandingPage from "./pages/LandingPage";
@@ -57,7 +58,9 @@ function AppContent() {
   const auth = useStore(s => s.auth);
 
   return (
-    <Suspense fallback={<PageFallback />}>
+    <>
+      <PopupBanner />
+      <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route path="/" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <LandingPage />} />
         <Route path="/login" element={auth ? <Navigate to={`/c/${auth.id}/dashboard`} replace /> : <LoginPage />} />
@@ -83,6 +86,7 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+    </>
   );
 }
 
