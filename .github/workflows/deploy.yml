@@ -65,6 +65,7 @@ jobs:
 
       - name: Deploy Angular admin to Cloudflare Pages
         run: |
+          cp _worker.js dist/number9systemd/browser/
           npx wrangler pages deploy dist/number9systemd/browser \
             --project-name number9-admin
         env:
