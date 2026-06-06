@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> Dernière mise à jour : 2026-06-06
+
 ## Two apps, one monorepo
 
 | App | Dir | Stack | Entrypoint | URL |
@@ -29,7 +31,7 @@ cd NUMBER9 && npm run lint         # React ESLint
 
 ## Build & deploy
 
-- `npm run build` (Angular): runs `scripts/set-env.js` → `ng build` → copies `src/assets/_redirects` to output
+- `npm run build` (Angular): runs `scripts/set-env.js` → `ng build` → copies `src/assets/_redirects` + `src/assets/_headers` to output
 - `cd NUMBER9 && npm run build` (React): `VITE_APP_MODE=user vite build --mode user`
 - CI (`.github/workflows/deploy.yml`): runs `scripts/regression-test.sql` → builds both → deploys to Cloudflare Pages
   - `number9-admin` → `admin.mynumber9.uk`
@@ -91,6 +93,35 @@ If these drift apart, results settle at wrong times.
 | `supabase/migrations/20260609040000_admin_member_management.sql` | `admin_reset_password` + `admin_adjust_balance` RPCs |
 | `src/app/modules/dashboard/pages/ip-whitelist/ip-whitelist.component.ts` | Admin IP whitelist CRUD page (standalone, OnPush) |
 | `_worker.js` | Cloudflare Pages gateway — key + Turnstile + rate limit + IP whitelist |
+| `src/assets/_headers` | Angular CSP + security headers (HSTS, XFO, etc.) |
+| `NUMBER9/public/_headers` | React CSP + security headers (HSTS, XFO, etc.) |
+| `supabase/migrations/20260609100000_popup_banners.sql` | Popup banners table + RPCs |
+| `supabase/functions/admin-popup-image/index.ts` | Upload/delete popup banner images |
+| `src/app/modules/dashboard/pages/popup-banner/popup-banner.component.ts` | Admin popup banner CRUD (standalone, OnPush) |
+| `NUMBER9/src/components/ui/PopupBanner.jsx` | React popup overlay component |
+
+## Security headers (CSP)
+
+Both apps ship `_headers` files that Cloudflare Pages applies to every response:
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Content-Security-Policy` with per-app policies (connect-src includes `wss://supabase.co` for Realtime)
+
+## Popup Banner
+
+- Table: `popup_banners` with `active`, `image_url`, `link_url`, `sort_order`
+- Admin: `/popup-banner` page — upload image (PNG/JPEG/WebP/GIF, max 5MB), toggle active, delete
+- User: `PopupBanner` component in Layout — fetches `get_active_popup_banners` RPC, shows overlay with dismiss (24h localStorage)
+- Edge function `admin-popup-image` handles upload to `popups` storage bucket, upserts banner record
+
+## Gateway (_worker.js)
+
+Cloudflare Pages worker sits in front of both apps:
+- Cookie-based auth: `n9_gateway` cookie (8h TTL)
+- Rate limit: 4 attempts per 15min per IP
+- Turnstile CAPTCHA integration
+- Access key from `GATEWAY_KEY` env var
 
 ## Conventions
 
