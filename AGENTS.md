@@ -87,7 +87,10 @@ If these drift apart, results settle at wrong times.
 | `NUMBER9/.env.user` | Supabase creds (React, mode=user only) |
 | `src/app/modules/dashboard/pages/member-password/member-password.component.ts` | Admin reset password page, standalone component |
 | `src/app/modules/dashboard/pages/member-balance/member-balance.component.ts` | Admin add/deduct balance page, standalone component |
+| `supabase/migrations/20260606150000_gateway_whitelist.sql` | Gateway whitelist table + CRUD RPCs |
 | `supabase/migrations/20260609040000_admin_member_management.sql` | `admin_reset_password` + `admin_adjust_balance` RPCs |
+| `src/app/modules/dashboard/pages/ip-whitelist/ip-whitelist.component.ts` | Admin IP whitelist CRUD page (standalone, OnPush) |
+| `_worker.js` | Cloudflare Pages gateway — key + Turnstile + rate limit + IP whitelist |
 
 ## Conventions
 

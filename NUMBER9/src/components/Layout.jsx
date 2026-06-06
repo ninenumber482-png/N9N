@@ -5,6 +5,7 @@ import { Icon } from "./icons";
 import { useI18n } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SystemNotification from "./ui/SystemNotification";
+import PopupBanner from "./ui/PopupBanner";
 import CsWidget from "./ui/CsWidget";
 import ModalOverlay from "./ui/ModalOverlay";
 
@@ -113,6 +114,7 @@ export default function Layout({ children }) {
       </header>
 
       <SystemNotification />
+      <PopupBanner />
 
       {/* MAIN CONTENT - FULL WIDTH */}
       <main className="flex-1 min-w-0 min-h-0 overflow-hidden flex flex-col lg:flex-row">

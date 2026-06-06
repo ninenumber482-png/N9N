@@ -369,6 +369,33 @@ export class AdminService {
     return this.insertRow('platform_config', data);
   }
 
+  // ── POPUP BANNERS ──
+  getPopupBanners(limit = 50) {
+    return this.get<any>(`popup_banners?order=created_at.desc&limit=${limit}`);
+  }
+  deletePopupBannerRow(id: string) {
+    return this.deleteRow('popup_banners', id);
+  }
+  updatePopupBannerRow(id: string, data: any) {
+    return this.updateRow('popup_banners', id, data);
+  }
+  async uploadPopupImage(dataUrl: string, title: string, linkUrl = '', bannerId?: string): Promise<any> {
+    const token = this.getToken();
+    const res = await fetch(`${environment.supabaseUrl}/functions/v1/admin-popup-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: environment.supabaseKey,
+        Authorization: `Bearer ${environment.supabaseKey}`,
+        'x-session-token': token,
+      },
+      body: JSON.stringify({ dataUrl, title, linkUrl, bannerId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw AdminRpcError.fromMessage(data.error || 'Upload failed');
+    return data;
+  }
+
   // ── DASHBOARD STATS ──
   async getDashboardStats() {
     const [users, totalTx, pendingBets, pendingKyc] = await Promise.all([

@@ -19,6 +19,8 @@ import { RiskManagementComponent } from 'src/app/modules/dashboard/pages/risk-ma
 import { SystemComponent } from 'src/app/modules/dashboard/pages/system/system.component';
 import { MemberPasswordComponent } from 'src/app/modules/dashboard/pages/member-password/member-password.component';
 import { MemberBalanceComponent } from 'src/app/modules/dashboard/pages/member-balance/member-balance.component';
+import { IpWhitelistComponent } from 'src/app/modules/dashboard/pages/ip-whitelist/ip-whitelist.component';
+import { PopupBannerComponent } from 'src/app/modules/dashboard/pages/popup-banner/popup-banner.component';
 
 const routes: Routes = [
   {
@@ -47,6 +49,8 @@ const routes: Routes = [
       { path: 'system', component: SystemComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'member-password', component: MemberPasswordComponent },
       { path: 'member-balance', component: MemberBalanceComponent },
+      { path: 'ip-whitelist', component: IpWhitelistComponent },
+      { path: 'popup-banner', component: PopupBannerComponent },
       { path: '**', redirectTo: 'overview' },
     ],
   },

@@ -39,6 +39,8 @@ export class Menu {
         { icon: 'assets/icons/heroicons/outline/cursor-click.svg', label: 'Audit Log', route: '/audit' },
         { icon: 'assets/icons/heroicons/outline/shield-check.svg', label: 'Security Center', route: '/security-center' },
         { icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg', label: 'Risk Management', route: '/risk-management' },
+        { icon: 'assets/icons/heroicons/outline/lock-closed.svg', label: 'IP Whitelist', route: '/ip-whitelist' },
+        { icon: 'assets/icons/heroicons/outline/photograph.svg', label: 'Popup Banner', route: '/popup-banner' },
       ],
     },
     {

@@ -6,6 +6,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { SecurityService } from 'src/app/core/services/security.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-sign-in',
@@ -76,6 +77,44 @@ export class SignInComponent implements OnInit {
       const result = await this.authService.authenticate(credentials);
 
       if (result?.success) {
+        // Get client IP
+        let clientIp = 'unknown';
+        try {
+          const ipRes = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipRes.json();
+          clientIp = ipData.ip || 'unknown';
+        } catch {}
+
+        // Check if IP is whitelisted
+        const whitelistIps = await (async () => {
+          try {
+            const whitelistRes = await fetch(
+              `${environment.supabaseUrl}/rest/v1/rpc/get_allowed_ips`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  apikey: environment.supabaseKey,
+                  Authorization: `Bearer ${environment.supabaseKey}`,
+                },
+                body: '{}',
+              },
+            );
+            if (!whitelistRes.ok) return null;
+            const data = await whitelistRes.json();
+            if (!Array.isArray(data)) return null;
+            return data.map((r: any) => r.ip_address).filter(Boolean);
+          } catch {
+            return null;
+          }
+        })();
+
+        // If whitelist has entries but client IP not in it → block
+        if (Array.isArray(whitelistIps) && whitelistIps.length > 0 && !whitelistIps.includes(clientIp)) {
+          this._router.navigate(['/auth/forbidden'], { queryParams: { ip: clientIp } });
+          return;
+        }
+
         this.authService.login(
           { username, isAuthenticated: true, role: result.user?.role, email: result.user?.email },
           result.session?.access_token,

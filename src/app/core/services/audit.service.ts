@@ -193,7 +193,7 @@ export class AuditService {
 
   private logIfDev(log: AuditLog): void {
     if (!environment.production) {
-      console.log('[AuditLog]', log);
+      //
     }
   }
 

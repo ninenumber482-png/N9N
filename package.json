@@ -8,7 +8,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open",
-    "build": "node scripts/set-env.js && ng build && cp src/assets/_redirects dist/number9systemd/browser/_redirects",
+    "build": "node scripts/set-env.js && ng build && cp src/assets/_redirects dist/number9systemd/browser/_redirects && cp src/assets/_headers dist/number9systemd/browser/_headers",
     "build:ci": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

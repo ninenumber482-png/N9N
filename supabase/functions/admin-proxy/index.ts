@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
     '/platform_config', '/security_alerts', '/failed_logins',
     '/transaction_audit', '/user_audit', '/metrics',
     '/deposit_locks', '/engine_status',
+    '/popup_banners',
   ]
   const pathAllowed = ALLOWED_PREFIXES.some(p => path.startsWith(p))
   if (!pathAllowed) {

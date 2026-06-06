@@ -60,24 +60,45 @@ export default {
 
       // Look up admin user in database
       const dbUsername = username.toLowerCase().trim()
-      const { data: userRow, error } = await supabase
-        .from('users')
-        .select('id, username, display_name, role, account_status, password_hash, email')
-        .eq('username', dbUsername)
-        .eq('role', 'admin')
-        .eq('account_status', 'ACTIVE')
-        .neq('login_status', 'SUSPENDED')
-        .single()
+      let userRow: Record<string, any> | null = null;
 
-      if (error || !userRow) {
+      // Query both tables and collect password hashes to check
+      const [uRow, n9Row] = await Promise.all([
+        supabase.from('users').select('id, username, display_name, role, account_status, password_hash, email')
+          .eq('username', dbUsername).eq('role', 'admin').eq('account_status', 'ACTIVE').neq('login_status', 'SUSPENDED').maybeSingle(),
+        supabase.from('n9_users').select('id, username, password_hash, role')
+          .eq('username', dbUsername).eq('role', 'admin').maybeSingle(),
+      ]);
+
+      const uData = uRow.data;
+      const n9Data = n9Row.data;
+
+      // Collect all candidate password hashes
+      const hashes = new Set<string>();
+      if (uData?.password_hash) hashes.add(uData.password_hash);
+      if (n9Data?.password_hash) hashes.add(n9Data.password_hash);
+
+      // Check if any hash matches
+      let matchedHash: string | null = null;
+      for (const h of hashes) {
+        if (bcrypt.compareSync(password, h)) {
+          matchedHash = h;
+          break;
+        }
+      }
+
+      if (!matchedHash) {
         console.warn(`[SECURITY] Login attempt with unknown admin: ${username}`);
         return json({ error: "Invalid username or password" }, 401);
       }
 
-      // Verify password via bcrypt
-      const pwdOk = bcrypt.compareSync(password, userRow.password_hash || '');
-      if (!pwdOk) {
-        console.warn(`[SECURITY] Failed password for db admin: ${username}`);
+      // Build userRow — always prefer users table record for FK compatibility
+      if (uData) {
+        userRow = uData;
+      } else if (n9Data) {
+        userRow = { ...n9Data, display_name: n9Data.username, email: '', account_status: 'ACTIVE' };
+      } else {
+        console.warn(`[SECURITY] Login attempt with unknown admin: ${username}`);
         return json({ error: "Invalid username or password" }, 401);
       }
 

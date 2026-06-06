@@ -1,6 +1,6 @@
 const COOKIE_NAME = 'n9_gateway';
 const COOKIE_MAX_AGE = 28800; // 8 jam
-const RATE_LIMIT_ATTEMPTS = 3;
+const RATE_LIMIT_ATTEMPTS = 4;
 const RATE_LIMIT_WINDOW_MS = 900_000; // 15 menit
 
 const rateStore = new Map();
@@ -17,22 +17,18 @@ function checkRateLimit(ip) {
   return true;
 }
 
-function logAccess(ip, path, status) {
-  try {
-    console.log(`[GATEWAY] ${new Date().toISOString()} ${ip} ${status} ${path}`);
-  } catch {}
-}
-
-function gatewayHtml(turnstileSiteKey) {
+function gatewayHtml(turnstileSiteKey, rateLocked) {
   const turnstile = turnstileSiteKey
     ? `<div class="cf-turnstile" data-sitekey="${turnstileSiteKey}" data-theme="dark" style="margin-top:16px"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer><\/script>`
     : '';
+  const lockedStyle = rateLocked ? ' style="display:block"' : '';
+  const errorStyle = ' style="display:none"';
   return `<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NUMBER9 Admin — Gateway</title>
+<title>NUMBER9 Admin</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a0f;font-family:system-ui,-apple-system,sans-serif;color:#e4e4e7}
@@ -51,13 +47,13 @@ button:hover{opacity:.9}
 <div class="card">
 <div class="logo">NUMBER9</div>
 <div class="sub">Admin Access Gateway</div>
-<form method="POST" action="/__gateway">
+<form method="POST" action="/x7k9m2">
 <input type="password" name="key" placeholder="Masukkan kode akses" autofocus>
 ${turnstile}
 <button type="submit">MASUK</button>
 </form>
-<div class="error" id="error">Kode akses salah</div>
-<div class="locked" id="locked">Terlalu banyak percobaan. Coba lagi 15 menit lagi.</div>
+<div class="error" id="error"${errorStyle}>Kode akses salah</div>
+<div class="locked" id="locked"${lockedStyle}>Terlalu banyak percobaan. Coba lagi 15 menit lagi.</div>
 </div>
 <script>
 const p=new URLSearchParams(location.search);
@@ -72,61 +68,60 @@ async function handleRequest(request, env) {
   const gatewayKey = env.GATEWAY_KEY;
   const turnstileSecret = env.TURNSTILE_SECRET_KEY || '';
   const turnstileSiteKey = env.TURNSTILE_SITE_KEY || '';
-  const allowedIPs = (env.ALLOWED_IPS || '').split(',').map(s => s.trim()).filter(Boolean);
-
   const url = new URL(request.url);
   const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-forwarded-for') || 'unknown';
   const cookie = request.headers.get('Cookie') || '';
 
-  // IP whitelist check
-  if (allowedIPs.length > 0 && !allowedIPs.includes(ip)) {
-    logAccess(ip, url.pathname, 'IP_BLOCKED');
-    return new Response('Akses ditolak: IP tidak terdaftar.', { status: 403, headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-  }
-
+  // With cookie → serve Angular SPA
   if (cookie.includes(`${COOKIE_NAME}=1`)) {
-    logAccess(ip, url.pathname, 'PASS');
     return env.ASSETS.fetch(request);
   }
 
-  if (!checkRateLimit(ip)) {
-    logAccess(ip, url.pathname, 'RATE_LIMITED');
-    return new Response(gatewayHtml(turnstileSiteKey).replace('id="locked">', 'id="locked" style="display:block">'), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
-  }
-
-  if (url.pathname === '/__gateway' && request.method === 'POST') {
-    const formData = await request.formData();
-    const key = formData.get('key') || '';
-    let turnstileOk = true;
-
-    if (turnstileSecret) {
-      const token = formData.get('cf-turnstile-response') || '';
-      if (!token) turnstileOk = false;
-      else {
-        const verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-          method: 'POST',
-          body: `secret=${encodeURIComponent(turnstileSecret)}&response=${encodeURIComponent(token)}`,
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  // Only /x7k9m2 can show the gateway
+  if (url.pathname === '/x7k9m2') {
+    // Handle POST — validate key + Turnstile
+    if (request.method === 'POST') {
+      if (!checkRateLimit(ip)) {
+        return new Response(gatewayHtml(turnstileSiteKey, true), {
+          status: 429, headers: { 'Content-Type': 'text/html;charset=utf-8' },
         });
-        const vd = await verify.json();
-        turnstileOk = vd.success === true;
       }
+
+      const formData = await request.formData();
+      const key = formData.get('key') || '';
+      let turnstileOk = true;
+
+      if (turnstileSecret) {
+        const token = formData.get('cf-turnstile-response') || '';
+        if (!token) turnstileOk = false;
+        else {
+          const verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            body: `secret=${encodeURIComponent(turnstileSecret)}&response=${encodeURIComponent(token)}`,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+          const vd = await verify.json();
+          turnstileOk = vd.success === true;
+        }
+      }
+
+      if (key === gatewayKey && turnstileOk) {
+        rateStore.delete(ip);
+        const response = new Response(null, { status: 302, headers: { Location: '/' } });
+        response.headers.set('Set-Cookie', `${COOKIE_NAME}=1; Path=/; HttpOnly; SameSite=Strict; Max-Age=${COOKIE_MAX_AGE}`);
+        return response;
+      }
+      return new Response(null, { status: 302, headers: { Location: '/x7k9m2?e=1' } });
     }
 
-    if (key === gatewayKey && turnstileOk) {
-      rateStore.delete(ip);
-      logAccess(ip, url.pathname, 'AUTH_OK');
-      const dest = url.searchParams.get('r') || '/';
-      const response = new Response(null, { status: 302, headers: { Location: dest } });
-      response.headers.set('Set-Cookie', `${COOKIE_NAME}=1; Path=/; HttpOnly; SameSite=Strict; Max-Age=${COOKIE_MAX_AGE}`);
-      return response;
-    }
-    logAccess(ip, url.pathname, 'AUTH_FAIL');
-    return new Response(null, { status: 302, headers: { Location: '/?e=1' } });
+    // GET /x7k9m2 → show gateway form
+    return new Response(gatewayHtml(turnstileSiteKey, false), {
+      status: 200, headers: { 'Content-Type': 'text/html;charset=utf-8' },
+    });
   }
 
-  logAccess(ip, url.pathname, 'BLOCKED');
-  return new Response(gatewayHtml(turnstileSiteKey), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
+  // Everything else → 403 silent
+  return new Response('', { status: 403 });
 }
 
 export default { fetch: handleRequest };
