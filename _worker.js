@@ -75,7 +75,7 @@ async function handleRequest(request, env) {
 
   if (!checkRateLimit(ip)) {
     logAccess(ip, url.pathname, 'RATE_LIMITED');
-    return new Response(HTML.replace('class="locked" id="locked" style="display:none"', 'style="display:block"'), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
+    return new Response(HTML.replace('id="locked">', 'id="locked" style="display:block">'), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
   }
 
   if (url.pathname === '/__gateway' && request.method === 'POST') {
