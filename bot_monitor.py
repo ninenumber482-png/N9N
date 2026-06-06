@@ -124,10 +124,10 @@ def get_session_info():
             countdown = secs_to_draw - SESSION_SECS   # time until betting opens
         elif secs_to_draw > LOCK_S:
             status = 'OPEN'
-            countdown = secs_to_draw - LOCK_S          # time until lock (1min before draw)
+            countdown = secs_to_draw                    # time until draw (1min before draw)
         elif secs_to_draw > 0:
             status = 'LOCKED'
-            countdown = secs_to_draw                   # time until draw
+            countdown = secs_to_draw
         else:
             status = 'RESULTING'
             countdown = 0
