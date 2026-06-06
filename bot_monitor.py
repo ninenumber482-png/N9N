@@ -103,11 +103,34 @@ def fmt_timer(secs):
 
 def get_session_info():
     now = datetime.datetime.now(datetime.timezone.utc)
-    cur_bound = session_boundary(now)
-    cur_code = cur_bound.strftime('%Y%m%d%H%M')
-    secs_in = (now - cur_bound).total_seconds()
-    remain = SESSION_SECS - secs_in
-    status = 'OPEN' if remain > 0 else 'LOCKED'
+    cur_bound = session_boundary(now)          # last draw time (floor to 5-min)
+    secs_since_boundary = (now - cur_bound).total_seconds()
+
+    # Angular convention: END-time codes. After boundary+3s the next session
+    # becomes active. The 3-second window is the RESULTING phase.
+    if secs_since_boundary < 3:
+        draw_time = cur_bound                  # session that JUST drew
+        cur_code = draw_time.strftime('%Y%m%d%H%M')
+        status = 'RESULTING'
+        countdown = 3 - secs_since_boundary
+    else:
+        draw_time = cur_bound + datetime.timedelta(seconds=SESSION_SECS)
+        cur_code = draw_time.strftime('%Y%m%d%H%M')
+        secs_to_draw = (draw_time - now).total_seconds()
+        LOCK_S = 60
+
+        if secs_to_draw > SESSION_SECS:
+            status = 'NEXT'
+            countdown = secs_to_draw - SESSION_SECS   # time until betting opens
+        elif secs_to_draw > LOCK_S:
+            status = 'OPEN'
+            countdown = secs_to_draw - LOCK_S          # time until lock (1min before draw)
+        elif secs_to_draw > 0:
+            status = 'LOCKED'
+            countdown = secs_to_draw                   # time until draw
+        else:
+            status = 'RESULTING'
+            countdown = 0
 
     planned = {}
     try:
@@ -119,7 +142,7 @@ def get_session_info():
 
     upcoming = []
     for i in range(1, 11):
-        s = cur_bound + datetime.timedelta(seconds=SESSION_SECS * i)
+        s = draw_time + datetime.timedelta(seconds=SESSION_SECS * i)
         code = s.strftime('%Y%m%d%H%M')
         p = planned.get(code)
         upcoming.append({'code': code, 'd1': p[0] if p else None, 'd2': p[1] if p else None, 'd3': p[2] if p else None})
@@ -132,7 +155,7 @@ def get_session_info():
     except:
         pass
 
-    return {'code': cur_code, 'status': status, 'remain': remain, 'secs_in': secs_in,
+    return {'code': cur_code, 'status': status, 'remain': countdown, 'secs_in': secs_since_boundary,
             'upcoming': upcoming, 'last_results': last_results, 'planned': planned}
 
 def get_platform_stats():
