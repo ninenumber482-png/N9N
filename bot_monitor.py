@@ -111,7 +111,8 @@ def get_session_info():
 
     planned = {}
     try:
-        for row in supabase_get('king_planned', 'order=session_code.asc&limit=20'):
+        start_code = (cur_bound - datetime.timedelta(seconds=SESSION_SECS * 2)).strftime('%Y%m%d%H%M')
+        for row in supabase_get('king_planned', f'session_code=gte.{start_code}&order=session_code.asc&limit=20'):
             planned[row['session_code']] = (row.get('d1'), row.get('d2'), row.get('d3'))
     except:
         pass
