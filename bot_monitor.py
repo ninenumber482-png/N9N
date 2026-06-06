@@ -160,24 +160,9 @@ def get_session_info():
 
 def get_platform_stats():
     try:
-        users = supabase_get('users', 'select=id,role&limit=1000')
-        total = len(users)
-        admins = sum(1 for u in users if u.get('role') == 'admin')
-        members = total - admins
-    except:
-        total = admins = members = '?'
-    try:
-        bets = supabase_get('bets', 'select=id&limit=1000')
-        total_bets = len(bets)
-    except:
-        total_bets = '?'
-    try:
-        tx = supabase_get('transactions', 'select=id,type,status&limit=1000')
-        total_tx = len(tx)
-        pending = sum(1 for t in tx if t.get('status') == 'PENDING')
-    except:
-        total_tx = pending = '?'
-    return {'users': total, 'admins': admins, 'members': members, 'bets': total_bets, 'tx': total_tx, 'pending': pending}
+        return supabase_rpc('get_platform_stats', {})
+    except Exception as e:
+        return {'users': '?', 'admins': '?', 'members': '?', 'bets': '?', 'tx': '?', 'pending': '?'}
 
 # ── 3D King engine ────────────────────────────────────────────────────────────
 
