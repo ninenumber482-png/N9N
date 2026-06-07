@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Event, NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -16,14 +16,14 @@ import { ToastContainerComponent } from 'src/app/shared/components/toast-contain
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent implements OnInit {
+  private router = inject(Router);
+  private readonly location = inject(Location);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   private mainContent: HTMLElement | null = null;
   clientIp = '';
 
-  constructor(
-    private router: Router,
-    private readonly location: Location,
-    private readonly cdr: ChangeDetectorRef,
-  ) {
+  constructor() {
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event: Event) => {
       if (event instanceof NavigationEnd) {
         if (this.mainContent) {

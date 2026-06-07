@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -6,24 +6,24 @@ import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private auth: AuthService, private router: Router) {}
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const user = this.auth.getCurrentUser();
     if (user?.token) {
-      // Use user token for request authentication (RLS verification)
       req = req.clone({
         setHeaders: {
           'x-session-token': user.token,
-          // Do NOT use Authorization header for anon key - that's for API access only
-          // The server validates RLS via x-session-token header
         },
+        withCredentials: true,
       });
+    } else {
+      req = req.clone({ withCredentials: true });
     }
 
     return next.handle(req).pipe(
       catchError((err: HttpErrorResponse) => {
-        // Handle token expiry or auth failure
         if (err.status === 401) {
           this.auth.logout();
           this.router.navigate(['/auth/sign-in'], {
@@ -31,7 +31,7 @@ export class AuthInterceptor implements HttpInterceptor {
           });
         }
         return throwError(() => err);
-      })
+      }),
     );
   }
 }

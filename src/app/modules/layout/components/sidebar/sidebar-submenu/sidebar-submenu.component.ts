@@ -1,5 +1,5 @@
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SubMenuItem } from 'src/app/core/models/menu.model';
@@ -14,20 +14,20 @@ import { MenuService } from 'src/app/modules/layout/services/menu.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarSubmenuComponent implements OnInit {
-  @Input() public submenu = <SubMenuItem>{};
+  menuService = inject(MenuService);
 
-  constructor(public menuService: MenuService) {}
+  @Input() public submenu = <SubMenuItem>{};
 
   ngOnInit(): void {}
 
-  public toggleMenu(menu: any) {
+  public toggleMenu(menu: SubMenuItem) {
     this.menuService.toggleSubMenu(menu);
   }
 
-  private collapse(items: Array<any>) {
+  private collapse(items: Array<SubMenuItem>) {
     items.forEach((item) => {
       item.expanded = false;
-      if (item.children) this.collapse(item.children);
+      if (item.children) this.collapse(item.children as Array<SubMenuItem>);
     });
   }
 }

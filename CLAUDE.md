@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **React App** (User Betting): `/NUMBER9` — User registration, betting, wallet, history
 - **Shared Backend**: Supabase PostgreSQL + RPC functions
 
-Both apps share one Supabase project: `dqsmpdetiqsqfnidekik` (environment variables in `.env.user` and local config).
+Both apps share one Supabase project: `dqsmpdetiqsqfnidekik` (env vars in `.env.user` and Angular `src/environments/`).
 
 ---
 
@@ -44,18 +44,15 @@ supabase db push --linked  # If Supabase CLI linked
 # Key migrations (in order):
 # - 20260601010000_king_engine.sql (creates king_results, king_planned, settle_session RPC)
 # - 20260602020000_deposit_withdrawal_rpcs.sql (place_bet, approve_deposit, approve_withdrawal)
-# - Other schema/trigger migrations
 ```
 
 ### Deployment
 ```bash
-# Build both apps
-npm run build            # Angular → dist/number9systemd/browser/
-cd NUMBER9 && npm run build  # React → dist/
+npm run build                    # Angular → dist/number9systemd/browser/
+cd NUMBER9 && npm run build      # React → dist/
 
-# Deploy to Cloudflare Pages (manual via dashboard or via CLI)
-# Angular → https://admin.mynumber9.uk
-# React → https://app.mynumber9.uk
+# Angular → https://admin.mynumber9.uk (Cloudflare Pages)
+# React   → https://app.mynumber9.uk  (Cloudflare Pages)
 ```
 
 ---
@@ -68,197 +65,184 @@ cd NUMBER9 && npm run build  # React → dist/
 NUMBER9 PLATFORM (Monorepo)
 │
 ├─ ANGULAR APP (Admin)
-│  ├─ src/app/core/              # Services, guards, auth
+│  ├─ src/app/core/              # Services, guards, interceptors
+│  │  ├─ services/
+│  │  │  ├─ admin.service.ts     # All Supabase RPC wrappers (single source of truth)
+│  │  │  ├─ auth.service.ts      # Session, bcrypt login
+│  │  │  ├─ realtime.service.ts  # Supabase realtime subscriptions + BehaviorSubjects
+│  │  │  └─ notification.service.ts  # Toast wrapper
+│  │  └─ constants/menu.ts       # Sidebar menu groups + icon/route config
 │  ├─ src/app/modules/
-│  │  ├─ auth/                   # Login/logout (AuthService)
+│  │  ├─ auth/pages/sign-in/     # Login page (IP whitelist check + bcrypt)
 │  │  ├─ dashboard/
-│  │  │  ├─ pages/
-│  │  │  │  ├─ 3dking/          # Draw engine (settle_session, override category)
-│  │  │  │  ├─ users/           # User approval (syncs kyc_status)
-│  │  │  │  ├─ deposits/        # Deposit approval (calls approve_deposit RPC)
-│  │  │  │  ├─ withdrawals/     # Withdrawal approval
-│  │  │  │  ├─ kyc/             # KYC document review
-│  │  │  │  └─ wallets/         # Balance tracking (realtime)
-│  │  │  └─ services/
-│  │  │     └─ admin.service.ts # RPC wrappers (approve_user, settle_session, etc)
-│  │  └─ layout/
-│  ├─ src/assets/                # Images, icons, styles
-│  └─ dist/number9systemd/browser/ (build output)
+│  │  │  ├─ dashboard.component.ts   # Shell: prev/next nav, global realtime init
+│  │  │  ├─ dashboard-routing.module.ts
+│  │  │  └─ pages/               # One folder per admin page (inline templates, no .html)
+│  │  └─ layout/                 # Sidebar, navbar, bottom-nav components
+│  ├─ src/shared/pipes/wib-date.pipe.ts  # Asia/Jakarta date formatting
+│  └─ dist/number9systemd/browser/       # Build output
 │
 ├─ REACT APP (User Betting)
 │  ├─ NUMBER9/src/
 │  │  ├─ pages/
-│  │  │  ├─ GamePage.jsx        # Main betting interface (place_bet, realtime results)
-│  │  │  ├─ HistoryPage.jsx     # Transaction history (bets, deposits, withdrawals)
-│  │  │  ├─ DashboardPage.jsx   # Wallet, turnover, stats
-│  │  │  ├─ DepositPage.jsx     # Deposit submission (calls submit_transaction RPC)
-│  │  │  ├─ WithdrawPage.jsx    # Withdrawal submission
-│  │  │  └─ ProfilePage.jsx     # User profile, KYC status
+│  │  │  ├─ GamePage.jsx         # Main betting UI + ArenaStage result display
+│  │  │  ├─ HistoryPage.jsx      # Transaction history + P&L (only SETTLED bets count)
+│  │  │  ├─ DashboardPage.jsx    # Wallet, turnover, stats
+│  │  │  ├─ DepositPage.jsx      # submit_transaction RPC
+│  │  │  └─ WithdrawPage.jsx     # submit_transaction RPC
 │  │  ├─ store/
-│  │  │  ├─ king.js             # 3D King engine state (bets, results, sessions)
-│  │  │  ├─ wallet.js           # Wallet/transaction functions (approve_deposit RPC)
-│  │  │  └─ useStore.js         # Zustand auth + balance state
-│  │  ├─ i18n/                  # English & Indonesian translations (id.js, en.js)
-│  │  ├─ components/ui/         # Buttons, inputs, modals, dialogs
-│  │  └─ utils/                 # Helpers (date formatting, async, etc)
-│  └─ dist/                      (build output)
+│  │  │  ├─ king.js              # 3D King engine state, session calc, result display
+│  │  │  ├─ wallet.js            # Wallet/transaction functions
+│  │  │  └─ useStore.js          # Zustand auth + balance state
+│  │  └─ i18n/                   # en.js + id.js translations
+│  └─ dist/                      # Build output
 │
 └─ SUPABASE BACKEND
    ├─ Tables
-   │  ├─ users (kyc_status, account_status, registration_status)
-   │  ├─ wallet (balance_main, total_turnover)
+   │  ├─ users (kyc_status, account_status, registration_status, login_status)
+   │  ├─ wallet (balance_main, balance_bonus, total_turnover)
    │  ├─ bets (user_id, session_code, selection, stake, status, result, actual_payout)
-   │  ├─ transactions (type: DEPOSIT/WITHDRAW, status, amount, proof_url)
+   │  ├─ transactions (type: DEPOSIT/WITHDRAWAL, status, amount, proof_url)
    │  ├─ king_results (session_code PK, d1-d3, total, big_small, odd_even)
-   │  ├─ king_planned (session_code PK, d1-d3 — admin-set upcoming draws)
-   │  └─ Other: audit_log, referral, support_tickets, etc.
+   │  ├─ king_planned (session_code PK, d1-d3 — engine-generated + admin-overrideable)
+   │  └─ audit_log, user_audit_log, security_alerts, failed_login_attempts, platform_config, popup_banners, ip_whitelist
    │
    └─ RPC Functions (SECURITY DEFINER — bypass RLS, callable by anon key)
-      ├─ settle_session(code, d1, d2, d3) — Atomic settlement: publish draw, settle bets, credit winners
-      ├─ place_bet(session_code, selections[], stake, username) — Place bet, debit wallet
-      ├─ approve_deposit(txn_id, amount) — Admin approve, credit balance
-      ├─ approve_withdrawal(txn_id) — Admin approve, mark for transfer
-      ├─ submit_transaction(type, amount, method, proof_url) — User submit deposit/withdrawal
-      └─ Other: incremental settlement, referral tracking, etc.
+      ├─ settle_session(code, d1, d2, d3)   — Atomic: publish draw, settle bets, credit winners
+      ├─ place_bet(session_code, selections[], stake, username)
+      ├─ approve_deposit(txn_id, amount)    — Admin approve, credit balance
+      ├─ approve_withdrawal(txn_id)         — Admin approve, mark for transfer
+      └─ submit_transaction(type, amount, method, proof_url)
 ```
 
-### Session & Result Flow
+### Angular Admin Page Routing
 
-**Session Format**: `N9K-YYYYMMDDHHMMSS` (e.g., `N9K-202606022010`)
-- One session per 5-minute window
-- Status lifecycle: NEXT → OPEN → LOCKED (1 min before) → RESULTING → SETTLED
+`dashboard-routing.module.ts` maps routes to components. Key subtlety:
+- **`/wallet`, `/deposits`, `/withdrawals`** — all three routes load `WalletAdminComponent`, which auto-selects the correct tab from `ActivatedRoute`. Do not create separate components for deposit/withdrawal pages.
+- **`/member-balance`** — redirects to `/wallets` (legacy alias).
+- **`/system`** and **`/role-management`** — protected by `RoleGuard` (`admin` and `superadmin` roles respectively).
+- `deposits.component.ts` exists in the codebase but **is not used by any route** — it is dead code; do not reference it.
 
-**Result Generation** (Angular 3DKing component):
-1. Engine checks `king_planned` table every 100ms
-2. If session lacks result, generates random digits (0-9 each) → upserts `king_planned`
-3. At settlement time, calls `settle_session(code, d1, d2, d3)` RPC:
-   - Reads `king_planned` for authoritative result (admin can override category)
-   - Inserts into `king_results` (idempotent via session_code PK)
-   - Updates all PENDING bets for this session (WIN/LOSE + payout)
-   - Credits winners' `wallet.balance_main` in atomic transaction
+The bottom **Prev/Next navigation** in `dashboard.component.ts` (`PAGE_ORDER` array) must stay in sync with `src/app/core/constants/menu.ts`. Every routable page should appear in both; omitting a page from `PAGE_ORDER` breaks its pagination links.
 
-**Result Display** (React GamePage):
-- ArenaStage component shows: NEXT session state → OPEN (live market) → RESULTING (spinning animation) → SETTLED (result digits)
-- HistoryPage fetches results from React `store/king.js` which reads from `king_results` table
+### Session Code Internals
+
+Two representations — they must not be confused:
+
+| Format | Example | Used where |
+|--------|---------|------------|
+| Internal UTC raw digits | `202606022010` | DB keys (`king_results.session_code`, `king_planned.session_code`, `bets.session_code`) |
+| Display code (N9K- + WIB) | `N9K-202606022010` | Shown to users in React app, status headers |
+
+The `3dking.component.ts` `fmtCode()` generates the raw UTC code. `displayCode()` converts to the N9K-WIB display form. The `sessionDisplay()` in `bets.component.ts` applies the same conversion. **The DB always stores the raw UTC digits without the N9K- prefix.**
+
+Session timing: `SESSION_MS = 300_000` (5 min), `LOCK_MS = 60_000` (betting closes 1 min before draw). These constants exist in both Angular (`3dking.component.ts`) and React (`king.js`) and **must stay identical**.
+
+---
+
+## Angular Admin Panel Patterns
+
+All dashboard page components share these conventions — follow them when adding pages:
+
+1. **Inline templates** — all pages use `template: \`...\`` inside the `@Component` decorator. There are no separate `.html` files in `pages/`.
+2. **`ChangeDetectionStrategy.OnPush`** — mandatory on every component. Always call `this.cdr.markForCheck()` after any async operation or timer callback.
+3. **`inject()`** — use Angular's `inject()` function instead of constructor injection.
+4. **PrimeNG** for interactive controls: `p-select`, `p-tag`, `p-paginator`, `p-dialog`, `p-confirmdialog`, `p-datepicker`, `p-inputNumber`. All destructive actions must use `p-confirmdialog`.
+5. **`WibDatePipe`** (`| wibDate: 'short'`) for all date display. Do not use the Angular `date` pipe directly for timestamps (wrong timezone).
+6. **Pagination pattern**: use PrimeNG `p-paginator` with `(onPageChange)` emitting `{ first, rows }`. Compute `currentPage` as `Math.floor(first / rows) + 1`.
+7. **Page header icon** — wrap in `<div class="page-header-icon">`. Table cards use `class="bg-card border-border rounded-lg page-accent-card"`.
+8. **Realtime**: subscribe in `ngOnInit`, unsubscribe via `takeUntil(destroy$)` in `ngOnDestroy`.
 
 ---
 
 ## Critical Integration Points
 
-### Pending Logic (No Ambiguity)
-- **Bet Status**: PENDING = awaiting session result (stake temp-debited, P&L not calculated)
-- **Bet Status**: SETTLED = result published (WIN/LOSE, actual P&L shown)
-- **Transaction Status**: PENDING = awaiting admin approval; COMPLETED = settled (balance updated)
-- **HistoryPage** filters correctly: only SETTLED bets count toward net P&L (line 92-93 in king.js)
+### Pending Logic
+- **Bet**: PENDING = stake debited, result pending. SETTLED = WIN/LOSE assigned. Only SETTLED bets count toward P&L.
+- **Transaction**: PENDING = awaiting admin approval. COMPLETED = balance updated.
 
-### Admin Automation (No Manual SQL)
-- User approval → auto-approves KYC + unlocks login (Angular users.component.ts)
-- Deposit approval → instantly credits balance (approve_deposit RPC)
-- Withdrawal approval → debit validated, mark for bank transfer
-- All via button click; zero SQL required (implemented in admin.service.ts)
+### Admin Actions (all via RPC — no direct SQL)
+- Approve user → auto-approves all PENDING KYC docs + unlocks login (`users.component.ts`)
+- Approve deposit → `approve_deposit` RPC instantly credits `wallet.balance_main`
+- Approve withdrawal → `approve_withdrawal` RPC debits balance, marks for bank transfer
 
-### Realtime Subscriptions (Angular)
-- Dashboard components subscribe to wallet, bets, transactions tables
-- Changes appear instantly in UI (RealtimeService + SupabaseService)
-- Fallback: silent auto-refresh on 4-second interval (GamePage line 105-111)
+### Realtime Architecture
+- `RealtimeService` holds Supabase channel subscriptions and exposes BehaviorSubjects (`transactions$`, `users$`, `bets$`, `kyc$`, `wallets$`)
+- `DashboardComponent` (`ngOnInit`) starts 4 global subscriptions that persist across page navigation
+- Individual pages subscribe to the same subjects for silent background refresh
 
 ---
 
 ## Environment & Secrets
 
 ### Angular App
-- No env secrets needed in code; configuration in `angular.json`
-- `src/environments/` defines build targets (dev, prod, etc)
+- No runtime secrets in source; Supabase URL/key in `src/environments/environment.ts`
+- `src/environments/` defines build targets (dev, prod)
 
 ### React App
-- **Critical**: `.env.user` contains Supabase credentials for user app
-- Vite loads only via `--mode user` flag (see package.json scripts)
-- Without `--mode user`, app falls back to localStorage (broken in production)
-- Build command: `VITE_PORT=5175 VITE_APP_MODE=user vite build --mode user`
+- **Critical**: `.env.user` must exist with Supabase credentials; loaded only via `--mode user`
+- Without `--mode user`, app fails silently in production (falls back to localStorage)
+- Build: `VITE_PORT=5175 VITE_APP_MODE=user vite build --mode user` (already in `package.json`)
 
 ### Supabase
 - Project ID: `dqsmpdetiqsqfnidekik`
-- Both apps use anon key (RLS off; SECURITY DEFINER RPCs enforce auth)
-- Admin login via bcrypt in auth-login Edge Function (optional, currently hardcoded in users table)
-
----
-
-## Common Development Workflows
-
-### Adding a New Feature
-1. **Database first**: Create migration in `supabase/migrations/` (date-prefixed)
-2. **Angular admin**: Add component in `src/app/modules/dashboard/pages/` if admin-facing
-3. **React user**: Add page in `NUMBER9/src/pages/` or component in `NUMBER9/src/components/`
-4. **Test in dev**: `npm start` (Angular) + `npm run dev:user` (React) simultaneously
-5. **Realtime verification**: Open admin dashboard + user app side-by-side, trigger action, verify sync
-
-### Debugging a Failed Bet Settlement
-1. Check React GamePage → HistoryPage → verify bet status is SETTLED
-2. Check Supabase → `king_results` table → verify session_code exists with correct digits
-3. Check Supabase → `bets` table → filter by session_code, verify all bets updated to SETTLED
-4. Check Supabase → `wallet` table → verify balance updated for winners
-5. Check logs: `supabase logs` for RPC errors, React console for frontend errors
-
-### Modifying Session Length (Default: 5 min)
-- **React**: `king.js` lines 20-30 (session boundary calc from sessionAt function)
-- **Angular**: `3dking.component.ts` (SESSION_DURATION_MS constant)
-- Both must match; if mismatch, results may settle at wrong time
+- RLS is off; auth enforced by SECURITY DEFINER RPC functions only
+- Admin credentials: bcrypt hash stored in `users` table; verified in `auth-login` Edge Function
 
 ---
 
 ## Known Issues & Workarounds
 
-### Issue: Build fails with "Vite env undefined"
-**Cause**: React app built without `--mode user` flag
-**Fix**: Always use `npm run build` (not direct `vite build`); script includes `--mode user`
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Build fails: "Vite env undefined" | React built without `--mode user` | Always use `npm run build` in `/NUMBER9`, not bare `vite build` |
+| Results not showing in React | `king_results` table missing | Run `20260601010000_king_engine.sql` in Supabase SQL Editor |
+| View doesn't update after async | OnPush + setInterval/subscription callback | Always call `cdr.markForCheck()` after state change |
+| Pending bets counted as losses | Old HistoryPage code | Fixed: only SETTLED bets count toward P&L (king.js lines 92-93) |
 
-### Issue: Results not showing in React app
-**Cause**: `king_results` table doesn't exist (migration not applied)
-**Fix**: Execute 20260601010000_king_engine.sql in Supabase SQL Editor
+---
 
-### Issue: Angular zoneless app doesn't update view
-**Cause**: Async state changes in timer/subscription callbacks not triggering detection
-**Fix**: Call `changeDetectionRef.markForCheck()` after state update (see GamePage line 105)
+## Debugging a Failed Bet Settlement
 
-### Issue: Pending bets mixed with LOSE/WIN in P&L calculation
-**Cause**: Old code counted PENDING as loss
-**Fix**: HistoryPage.jsx lines 92-93 now only counts WIN/LOSE bets
+1. React → HistoryPage → confirm bet status shows SETTLED (not PENDING)
+2. Supabase → `king_results` table → verify session_code row exists with correct d1/d2/d3
+3. Supabase → `bets` table → filter by session_code, all bets should be SETTLED
+4. Supabase → `wallet` table → winners' `balance_main` updated
+5. Angular 3D King page → check `inflight` set isn't stuck (page refresh clears it)
+6. Supabase logs → RPC errors from `settle_session`
 
 ---
 
 ## Deployment Checklist
 
-Before pushing to production:
-- [ ] Database migration executed in Supabase (check tables/functions exist)
-- [ ] Both apps build without errors (`npm run build` + `cd NUMBER9 && npm run build`)
-- [ ] Pending logic is clear (no ambiguous states)
-- [ ] Session codes are correctly formatted (N9K-YYYYMMDDHHMMSS)
-- [ ] Results display in React app (ArenaStage component)
-- [ ] Admin can approve users/deposits/withdrawals without SQL
-- [ ] Realtime subscriptions working (open two browsers, verify sync)
-- [ ] Build outputs ready for Cloudflare: `dist/number9systemd/browser/` (Angular) + `NUMBER9/dist/` (React)
+- [ ] Migration applied in Supabase (tables/functions exist)
+- [ ] Both apps build without errors
+- [ ] Session timing constants match: `SESSION_MS`/`LOCK_MS` in Angular and `king.js`
+- [ ] `PAGE_ORDER` in `dashboard.component.ts` covers all menu routes in `menu.ts`
+- [ ] Realtime subscriptions verified (open admin + user app side-by-side, trigger an action)
+- [ ] Build outputs: `dist/number9systemd/browser/` (Angular) + `NUMBER9/dist/` (React)
 
 ---
 
-## Key Files to Understand First
+## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/app/modules/dashboard/pages/3dking/3dking.component.ts` | Draw engine logic, settle_session calls |
-| `NUMBER9/src/store/king.js` | Bet state, session calc, RPC wrappers |
-| `NUMBER9/src/pages/GamePage.jsx` | Main betting UI, ArenaStage (result display) |
-| `NUMBER9/src/pages/HistoryPage.jsx` | Transaction history, P&L calculation |
-| `src/app/modules/dashboard/services/admin.service.ts` | RPC wrappers (approve, settle, etc) |
-| `supabase/migrations/20260601010000_king_engine.sql` | Core settlement logic (settle_session function) |
-| `supabase/migrations/20260602020000_deposit_withdrawal_rpcs.sql` | Deposit/withdrawal approval logic |
+| `src/app/modules/dashboard/pages/3dking/3dking.component.ts` | Draw engine: session lifecycle, settlement, category override |
+| `src/app/modules/dashboard/dashboard-routing.module.ts` | All admin page routes — source of truth for what routes exist |
+| `src/app/core/constants/menu.ts` | Sidebar menu config — must stay in sync with routing + PAGE_ORDER |
+| `src/app/core/services/admin.service.ts` | Every Supabase query/RPC used by the admin app |
+| `src/app/core/services/realtime.service.ts` | Supabase realtime channels + BehaviorSubjects |
+| `NUMBER9/src/store/king.js` | React betting engine: session boundary calc, bet state, result display |
+| `NUMBER9/src/pages/GamePage.jsx` | Main betting UI + ArenaStage result animation |
+| `supabase/migrations/20260601010000_king_engine.sql` | Core settlement logic |
 
 ---
 
 ## Note for Future Instances
 
-This codebase has **two distinct user flows**:
-1. **Angular admin**: Approve users, settle draws, manage deposits/withdrawals
-2. **React user**: Register, place bets, submit deposits/withdrawals, view history
+**Two user flows, one backend:**
+1. **Angular admin**: approves users/KYC/deposits/withdrawals, operates the 3D King draw engine
+2. **React user**: registers, bets, submits deposits/withdrawals, views history
 
-Both are **tightly coupled to Supabase RPC functions**. Never modify RPC signatures without updating callers in both apps. Use caution with session timing logic (must be identical in Angular + React) and P&L calculation (only SETTLED bets count).
-
+**Never modify RPC signatures** without updating callers in both apps. The session timing constants and the session code format (raw UTC digits in DB, N9K-WIB display to users) are shared contracts between the two apps.

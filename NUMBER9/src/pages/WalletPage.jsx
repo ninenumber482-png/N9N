@@ -96,7 +96,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [accounts, setAccounts] = useState([]);
-  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountsLoading, setAccountsLoading] = useState(true);
   const [userTxs, setUserTxs] = useState([]);
 
   useEffect(() => {
@@ -110,7 +110,6 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
 
   useEffect(() => {
     let alive = true;
-    setAccountsLoading(true);
     fetchPlatformAccounts().then((r) => { if (alive && Array.isArray(r)) setAccounts(r); }).catch(() => {}).finally(() => { if (alive) setAccountsLoading(false); });
     return () => { alive = false; };
   }, []);
@@ -299,7 +298,6 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
 
   useEffect(() => {
     if (!auth?.id) return;
-    setDataLoading(true);
     const p1 = fetchUserBank(auth.id).then(r => { if (aliveRef.current) setBank(r); }).catch(() => {});
     const p2 = fetchTurnoverSummary(auth.id).then(r => { if (aliveRef.current) setTurnoverData(r); }).catch(() => {});
     Promise.allSettled([p1, p2]).finally(() => { if (aliveRef.current) setDataLoading(false); });
@@ -462,8 +460,7 @@ function TurnoverTab({ auth, _rtTick, aliveRef, t, setToast }) {
 
   useEffect(() => {
     if (!auth?.id) return;
-    if (isInitialLoadRef.current) setLoading(true);
-    refetch();
+    queueMicrotask(() => refetch());
   }, [auth?.id, _rtTick, refetch]);
 
   useEffect(() => {

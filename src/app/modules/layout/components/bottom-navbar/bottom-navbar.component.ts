@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 
 @Component({
@@ -10,7 +11,13 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BottomNavbarComponent implements OnInit {
+  private router = inject(Router);
+
   constructor() {}
 
   ngOnInit(): void {}
+
+  navigate(path: string): void {
+    this.router.navigate([path]);
+  }
 }

@@ -28,7 +28,6 @@ export default function RegisterPage() {
   const registerUser = useStore((s) => s.registerUser);
   const completeRegistration = useStore((s) => s.completeRegistration);
   const navigate = useNavigate();
-  const toDashboard = () => `/c/${auth?.id}/dashboard`;
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -58,7 +57,7 @@ export default function RegisterPage() {
   const { t } = useI18n();
 
   useEffect(() => {
-    if (auth) navigate(toDashboard(), { replace: true });
+    if (auth?.id) navigate(`/c/${auth.id}/dashboard`, { replace: true });
   }, [auth, navigate]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));

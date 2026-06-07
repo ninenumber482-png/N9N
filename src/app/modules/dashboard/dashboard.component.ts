@@ -1,23 +1,29 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, Router } from '@angular/router';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 
 const PAGE_ORDER = [
   { route: '/overview', label: 'Overview' },
-  { route: '/gaming', label: 'Gaming' },
   { route: '/users', label: 'Users' },
+  { route: '/member-password', label: 'Reset Password' },
+  { route: '/referrals', label: 'Referrals' },
+  { route: '/wallet', label: 'Deposit / Withdraw' },
   { route: '/transactions', label: 'Transactions' },
-  { route: '/wallet', label: 'Wallet' },
+  { route: '/wallets', label: 'Wallets' },
+  { route: '/turnover', label: 'Turnover' },
+  { route: '/gaming', label: 'Gaming' },
+  { route: '/3dking', label: '3D King' },
   { route: '/bets', label: 'Bets' },
+  { route: '/session-monitor', label: 'Session Monitor' },
   { route: '/kyc', label: 'KYC' },
   { route: '/audit', label: 'Audit' },
-  { route: '/referrals', label: 'Referrals' },
-  { route: '/3dking', label: '3D King' },
-  { route: '/cs-contact', label: 'CS Contact' },
-  { route: '/session-monitor', label: 'Session Monitor' },
   { route: '/security-center', label: 'Security Center' },
   { route: '/risk-management', label: 'Risk Management' },
+  { route: '/ip-whitelist', label: 'IP Whitelist' },
+  { route: '/popup-banner', label: 'Popup Banner' },
   { route: '/system', label: 'System' },
+  { route: '/role-management', label: 'Role Management' },
+  { route: '/cs-contact', label: 'CS Contact' },
 ];
 
 @Component({
@@ -32,9 +38,11 @@ const PAGE_ORDER = [
           <nav class="flex items-center justify-between pt-6 mt-6 border-t border-border">
             <div>
               @if (prev) {
-                <a [routerLink]="prev.route" class="group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
+                <a
+                  [routerLink]="prev.route"
+                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
                   <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                   </svg>
                   <div class="text-left">
                     <p class="text-[10px] text-muted-foreground group-hover:text-primary/70">Previous</p>
@@ -48,13 +56,15 @@ const PAGE_ORDER = [
             </div>
             <div>
               @if (next) {
-                <a [routerLink]="next.route" class="group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
+                <a
+                  [routerLink]="next.route"
+                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
                   <div class="text-right">
                     <p class="text-[10px] text-muted-foreground group-hover:text-primary/70">Next</p>
                     <p class="text-xs font-bold">{{ next.label }}</p>
                   </div>
                   <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                   </svg>
                 </a>
               }
@@ -62,14 +72,15 @@ const PAGE_ORDER = [
           </nav>
         </div>
       </div>
-    </div>,
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  pages = PAGE_ORDER;
+  private router = inject(Router);
+  private realtime = inject(RealtimeService);
 
-  constructor(private router: Router, private realtime: RealtimeService) {}
+  pages = PAGE_ORDER;
 
   ngOnInit() {
     // Global realtime subscriptions for toast notifications
@@ -89,19 +100,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get current() {
     const path = this.router.url.split('?')[0];
-    const idx = this.pages.findIndex(p => path.endsWith(p.route));
+    const normalizedPath = path.replace(/\/+$/, '') || '/';
+    const idx = this.pages.findIndex((p) => {
+      const normalizedRoute = p.route.replace(/\/+$/, '') || '/';
+      return normalizedPath === normalizedRoute || normalizedPath.endsWith(normalizedRoute);
+    });
     return idx >= 0 ? this.pages[idx] : this.pages[0];
   }
 
   get prev() {
     const path = this.router.url.split('?')[0];
-    const idx = this.pages.findIndex(p => path.endsWith(p.route));
+    const normalizedPath = path.replace(/\/+$/, '') || '/';
+    const idx = this.pages.findIndex((p) => {
+      const normalizedRoute = p.route.replace(/\/+$/, '') || '/';
+      return normalizedPath === normalizedRoute || normalizedPath.endsWith(normalizedRoute);
+    });
     return idx > 0 ? this.pages[idx - 1] : null;
   }
 
   get next() {
     const path = this.router.url.split('?')[0];
-    const idx = this.pages.findIndex(p => path.endsWith(p.route));
+    const normalizedPath = path.replace(/\/+$/, '') || '/';
+    const idx = this.pages.findIndex((p) => {
+      const normalizedRoute = p.route.replace(/\/+$/, '') || '/';
+      return normalizedPath === normalizedRoute || normalizedPath.endsWith(normalizedRoute);
+    });
     return idx >= 0 && idx < this.pages.length - 1 ? this.pages[idx + 1] : null;
   }
 }

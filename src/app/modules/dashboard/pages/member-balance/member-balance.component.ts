@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -9,21 +10,28 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 @Component({
   selector: 'app-member-balance',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AngularSvgIconModule],
   template: `
-    <div class="space-y-6">
+    <div data-page="member-balance" class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="max-sm:text-lg sm:text-2xl font-extrabold text-foreground">Tambah / Kurangi Saldo</h1>
-          <p class="text-muted-foreground mt-1 text-sm">Adjust saldo member</p>
+          <div class="flex items-center gap-3">
+          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/currency-dollar.svg" svgClass="h-4 w-4"></svg-icon></div>
+          <div>
+            <h1 class="max-sm:text-lg sm:text-xl font-bold tracking-tight text-foreground">Tambah / Kurangi Saldo</h1>
+          <p class="text-muted-foreground mt-0.5 text-xs">Adjust saldo member</p>
         </div>
-      </div>
-
-      <div class="bg-card border-border rounded-xl border shadow-sm p-4 sm:p-6">
+          </div>
+        </div>
+      </div><div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #84CC16;">
         <div class="flex flex-wrap gap-2 mb-4">
-          <input [(ngModel)]="searchUsername" placeholder="Cari username member..."
+          <input
+            [(ngModel)]="searchUsername"
+            placeholder="Cari username member..."
             class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-56" />
-          <button (click)="searchUser()" [disabled]="!searchUsername.trim() || loading"
+          <button
+            (click)="searchUser()"
+            [disabled]="!searchUsername.trim() || loading"
             class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
             {{ loading ? 'Mencari...' : 'Cari' }}
           </button>
@@ -39,23 +47,27 @@ import { NotificationService } from 'src/app/core/services/notification.service'
         @if (foundUser) {
           <div class="bg-muted/20 rounded-lg p-4 mb-4 space-y-1">
             <p class="text-sm text-foreground font-semibold">{{ foundUser.display_name || foundUser.username }}</p>
-            <p class="text-xs text-muted-foreground">&#64;{{ foundUser.username }} &middot; {{ foundUser.email || '-' }}</p>
+            <p class="text-xs text-muted-foreground">
+              &#64;{{ foundUser.username }} &middot; {{ foundUser.email || '-' }}
+            </p>
             <p class="text-[10px] text-muted-foreground font-mono select-all">{{ foundUser.id }}</p>
             <div class="flex gap-4 pt-1">
               <p class="text-xs text-muted-foreground">
-                Main Balance: <span class="text-foreground font-mono font-bold">{{ walletBalance | number:'1.2-2' }}</span>
+                Main Balance:
+                <span class="text-foreground font-mono font-bold">{{ walletBalance | number: '1.2-2' }}</span>
               </p>
               <p class="text-xs text-muted-foreground">
-                Bonus: <span class="text-foreground font-mono font-bold">{{ walletBonus | number:'1.2-2' }}</span>
+                Bonus: <span class="text-foreground font-mono font-bold">{{ walletBonus | number: '1.2-2' }}</span>
               </p>
             </div>
           </div>
 
           <div class="space-y-3 max-w-md">
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Tipe</label>
+              <label class="text-xs font-semibold text-muted-foreground block mb-1">Tipe <span class="text-destructive">*</span></label>
               <div class="flex gap-2">
-                <button (click)="adjustType = 'add'"
+                <button
+                  (click)="adjustType = 'add'"
                   class="px-4 py-2 text-xs font-bold rounded-lg border transition-colors"
                   [class.bg-emerald-500/20]="adjustType === 'add'"
                   [class.text-emerald-400]="adjustType === 'add'"
@@ -65,7 +77,8 @@ import { NotificationService } from 'src/app/core/services/notification.service'
                   [class.text-muted-foreground]="adjustType !== 'add'">
                   + Tambah
                 </button>
-                <button (click)="adjustType = 'deduct'"
+                <button
+                  (click)="adjustType = 'deduct'"
                   class="px-4 py-2 text-xs font-bold rounded-lg border transition-colors"
                   [class.bg-red-500/20]="adjustType === 'deduct'"
                   [class.text-red-400]="adjustType === 'deduct'"
@@ -78,13 +91,20 @@ import { NotificationService } from 'src/app/core/services/notification.service'
               </div>
             </div>
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Jumlah</label>
-              <input [(ngModel)]="amount" type="number" placeholder="0" min="0" step="1000"
+              <label class="text-xs font-semibold text-muted-foreground block mb-1">Jumlah <span class="text-destructive">*</span></label>
+              <input
+                [(ngModel)]="amount"
+                type="number"
+                placeholder="0"
+                min="0"
+                step="1000"
                 class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
             </div>
             <div>
               <label class="text-xs font-semibold text-muted-foreground block mb-1">Alasan</label>
-              <input [(ngModel)]="reason" placeholder="Alasan adjustment (opsional)"
+              <input
+                [(ngModel)]="reason"
+                placeholder="Alasan adjustment (opsional)"
                 class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
             </div>
 
@@ -92,16 +112,21 @@ import { NotificationService } from 'src/app/core/services/notification.service'
               <p class="text-xs text-red-400">{{ adjustError }}</p>
             }
 
-            <button (click)="submitAdjustment()" [disabled]="submitting || !amount || Number(amount) <= 0"
+            <button
+              (click)="submitAdjustment()"
+              [disabled]="submitting || !amount || Number(amount) <= 0"
               class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
-              {{ submitting ? 'Memproses...' : (adjustType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo') }}
+              {{ submitting ? 'Memproses...' : adjustType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo' }}
             </button>
 
             @if (success) {
               <div class="bg-emerald-400/10 border border-emerald-400/30 rounded-xl p-4 text-sm text-emerald-400">
                 Saldo <strong>{{ foundUser.username }}</strong> berhasil diubah.
                 @if (adjustResult) {
-                  <br/><span class="text-xs">{{ adjustResult.old_balance | number:'1.2-2' }} → {{ adjustResult.new_balance | number:'1.2-2' }}</span>
+                  <br /><span class="text-xs"
+                    >{{ adjustResult.old_balance | number: '1.2-2' }} →
+                    {{ adjustResult.new_balance | number: '1.2-2' }}</span
+                  >
                 }
               </div>
             }
@@ -113,6 +138,11 @@ import { NotificationService } from 'src/app/core/services/notification.service'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MemberBalanceComponent implements OnDestroy {
+  private admin = inject(AdminService);
+  private auth = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
+  private notification = inject(NotificationService);
+
   private destroy$ = new Subject<void>();
 
   Number = Number;
@@ -121,7 +151,7 @@ export class MemberBalanceComponent implements OnDestroy {
   amount = 0;
   reason = '';
   adjustType: 'add' | 'deduct' = 'add';
-  foundUser: any = null;
+  foundUser: { id: string; username?: string; display_name?: string; email?: string } | null = null;
   walletBalance = 0;
   walletBonus = 0;
   searchError = '';
@@ -129,14 +159,7 @@ export class MemberBalanceComponent implements OnDestroy {
   loading = false;
   submitting = false;
   success = false;
-  adjustResult: any = null;
-
-  constructor(
-    private admin: AdminService,
-    private auth: AuthService,
-    private cdr: ChangeDetectorRef,
-    private notification: NotificationService,
-  ) {}
+  adjustResult: { old_balance?: number; new_balance?: number } | null = null;
 
   ngOnDestroy() {
     this.destroy$.next();

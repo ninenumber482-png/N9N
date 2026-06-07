@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
@@ -9,21 +10,28 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 @Component({
   selector: 'app-member-password',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AngularSvgIconModule],
   template: `
-    <div class="space-y-6">
+    <div data-page="member-password" class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="max-sm:text-lg sm:text-2xl font-extrabold text-foreground">Reset Password Member</h1>
-          <p class="text-muted-foreground mt-1 text-sm">Cari user dan reset password</p>
+          <div class="flex items-center gap-3">
+          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/lock-closed.svg" svgClass="h-4 w-4"></svg-icon></div>
+          <div>
+            <h1 class="max-sm:text-lg sm:text-xl font-bold tracking-tight text-foreground">Reset Password Member</h1>
+          <p class="text-muted-foreground mt-0.5 text-xs">Cari user dan reset password</p>
         </div>
-      </div>
-
-      <div class="bg-card border-border rounded-xl border shadow-sm p-4 sm:p-6">
+          </div>
+        </div>
+      </div><div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #EC4899;">
         <div class="flex flex-wrap gap-2 mb-4">
-          <input [(ngModel)]="searchUsername" placeholder="Cari username member..."
+          <input
+            [(ngModel)]="searchUsername"
+            placeholder="Cari username member..."
             class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-56" />
-          <button (click)="searchUser()" [disabled]="!searchUsername.trim() || loading"
+          <button
+            (click)="searchUser()"
+            [disabled]="!searchUsername.trim() || loading"
             class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
             {{ loading ? 'Mencari...' : 'Cari' }}
           </button>
@@ -39,22 +47,30 @@ import { NotificationService } from 'src/app/core/services/notification.service'
         @if (foundUser) {
           <div class="bg-muted/20 rounded-lg p-4 mb-4 space-y-1">
             <p class="text-sm text-foreground font-semibold">{{ foundUser.display_name || foundUser.username }}</p>
-            <p class="text-xs text-muted-foreground">&#64;{{ foundUser.username }} &middot; {{ foundUser.email || '-' }}</p>
+            <p class="text-xs text-muted-foreground">
+              &#64;{{ foundUser.username }} &middot; {{ foundUser.email || '-' }}
+            </p>
             <p class="text-[10px] text-muted-foreground font-mono select-all">{{ foundUser.id }}</p>
             <p class="text-xs text-muted-foreground">
-              Balance: <span class="text-foreground font-mono font-semibold">{{ foundBalance | number:'1.2-2' }}</span>
+              Balance: <span class="text-foreground font-mono font-semibold">{{ foundBalance | number: '1.2-2' }}</span>
             </p>
           </div>
 
           <div class="space-y-3 max-w-md">
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Password Baru</label>
-              <input [(ngModel)]="newPassword" type="password" placeholder="Min 6 karakter"
+              <label class="text-xs font-semibold text-muted-foreground block mb-1">Password Baru <span class="text-destructive">*</span></label>
+              <input
+                [(ngModel)]="newPassword"
+                type="password"
+                placeholder="Min 6 karakter"
                 class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
             </div>
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Konfirmasi Password</label>
-              <input [(ngModel)]="confirmPassword" type="password" placeholder="Ulangi password baru"
+              <label class="text-xs font-semibold text-muted-foreground block mb-1">Konfirmasi Password <span class="text-destructive">*</span></label>
+              <input
+                [(ngModel)]="confirmPassword"
+                type="password"
+                placeholder="Ulangi password baru"
                 class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
             </div>
 
@@ -62,7 +78,9 @@ import { NotificationService } from 'src/app/core/services/notification.service'
               <p class="text-xs text-red-400">{{ passwordError }}</p>
             }
 
-            <button (click)="resetPassword()" [disabled]="submitting || !isFormValid()"
+            <button
+              (click)="resetPassword()"
+              [disabled]="submitting || !isFormValid()"
               class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50">
               {{ submitting ? 'Menyimpan...' : 'Reset Password' }}
             </button>
@@ -80,25 +98,23 @@ import { NotificationService } from 'src/app/core/services/notification.service'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MemberPasswordComponent implements OnDestroy {
+  private admin = inject(AdminService);
+  private auth = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
+  private notification = inject(NotificationService);
+
   private destroy$ = new Subject<void>();
 
   searchUsername = '';
   newPassword = '';
   confirmPassword = '';
-  foundUser: any = null;
+  foundUser: { id: string; username?: string; display_name?: string; email?: string } | null = null;
   foundBalance = 0;
   searchError = '';
   passwordError = '';
   loading = false;
   submitting = false;
   success = false;
-
-  constructor(
-    private admin: AdminService,
-    private auth: AuthService,
-    private cdr: ChangeDetectorRef,
-    private notification: NotificationService,
-  ) {}
 
   ngOnDestroy() {
     this.destroy$.next();
@@ -130,7 +146,7 @@ export class MemberPasswordComponent implements OnDestroy {
       }
       this.foundUser = users[0];
 
-      const wallets = await this.admin.getWallet(this.foundUser.id);
+      const wallets = await this.admin.getWallet(this.foundUser!.id);
       this.foundBalance = wallets?.[0]?.balance_main ?? 0;
     } catch (e) {
       this.searchError = e instanceof AdminRpcError ? e.message : 'Gagal mencari user.';
@@ -159,11 +175,11 @@ export class MemberPasswordComponent implements OnDestroy {
     this.cdr.markForCheck();
 
     try {
-      await this.admin.resetPassword(this.foundUser.id, admin.username, this.newPassword);
+      await this.admin.resetPassword(this.foundUser!.id, admin.username, this.newPassword);
       this.success = true;
       this.newPassword = '';
       this.confirmPassword = '';
-      this.notification.success('Password direset', `Password ${this.foundUser.username} berhasil direset.`);
+      this.notification.success('Password direset', `Password ${this.foundUser!.username} berhasil direset.`);
     } catch (e) {
       this.passwordError = e instanceof AdminRpcError ? e.message : 'Gagal mereset password.';
     }

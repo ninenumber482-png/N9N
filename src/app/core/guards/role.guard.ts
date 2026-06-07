@@ -1,69 +1,88 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { environment } from 'src/environments/environment';
+import { AdminService } from 'src/app/core/services/admin.service';
+import { AuditService } from 'src/app/core/services/audit.service';
 
 @Injectable({ providedIn: 'root' })
 export class RoleGuard {
-  // Rate limiting: max 10 failed attempts per minute per user
-  private failedAttempts = new Map<string, { count: number; resetAt: number }>();
+  private authService = inject(AuthService);
+  private admin = inject(AdminService);
+  private audit = inject(AuditService);
+  private router = inject(Router);
 
-  constructor(private authService: AuthService, private router: Router) {}
+  private failedAttempts = new Map<string, { count: number; resetAt: number }>();
+  private roleCache = new Map<string, { role: string; ts: number }>();
+  private readonly ROLE_CACHE_TTL = 30000;
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
     return Promise.resolve().then(async () => {
       const user = this.authService.getCurrentUser();
       if (!user) {
-        this.logFailedAccess(route, state, 'Not authenticated');
+        this.audit.logFailedAccess('ROUTE_GUARD', state.url, 'Not authenticated');
         this.router.navigate(['/auth/sign-in']);
         return false;
       }
 
-      // Check rate limiting
       if (this.isRateLimited(user.username)) {
-        this.logFailedAccess(route, state, 'Rate limited');
+        this.audit.logFailedAccess('ROUTE_GUARD', state.url, 'Rate limited');
         return false;
       }
 
       const requiredRole = route.data['requiredRole'] as string;
       if (requiredRole) {
-        // Verify role matches (frontend check is not sufficient)
         if (user.role !== requiredRole) {
           this.recordFailedAttempt(user.username);
-          this.logFailedAccess(route, state, `Role mismatch: ${user.role} != ${requiredRole}`);
+          this.audit.logFailedAccess('ROUTE_GUARD', state.url, `Role mismatch: ${user.role} != ${requiredRole}`);
           this.router.navigate(['/overview']);
           return false;
         }
 
-        // TODO: Add server-side role verification via RPC call
-        // const validRole = await this.verifyRoleWithServer(user.id, requiredRole);
-        // if (!validRole) { ... }
+        const ok = await this.verifyRoleWithServer(user.username, requiredRole);
+        if (!ok) {
+          this.recordFailedAttempt(user.username);
+          this.audit.logFailedAccess('ROUTE_GUARD', state.url, 'Server role verification failed');
+          this.router.navigate(['/overview']);
+          return false;
+        }
       }
 
       const requireUnlimited = route.data['requireUnlimited'] as boolean;
       if (requireUnlimited && !user.unlimited) {
         this.recordFailedAttempt(user.username);
-        this.logFailedAccess(route, state, 'Unlimited access required');
+        this.audit.logFailedAccess('ROUTE_GUARD', state.url, 'Unlimited access required');
         this.router.navigate(['/overview']);
         return false;
       }
 
-      // Clear failed attempts on successful access
       this.failedAttempts.delete(user.username);
+      this.audit.logAccessGranted(state.url);
       return true;
     });
+  }
+
+  private async verifyRoleWithServer(username: string, requiredRole: string): Promise<boolean> {
+    const cached = this.roleCache.get(username);
+    if (cached && Date.now() - cached.ts < this.ROLE_CACHE_TTL) {
+      return cached.role === requiredRole;
+    }
+    try {
+      const rows = await this.admin.getUserByUsername(username);
+      const serverRole = rows[0]?.['role'] as string | undefined;
+      if (serverRole) this.roleCache.set(username, { role: serverRole, ts: Date.now() });
+      return serverRole === requiredRole;
+    } catch {
+      return false;
+    }
   }
 
   private isRateLimited(username: string): boolean {
     const attempt = this.failedAttempts.get(username);
     if (!attempt) return false;
-
-    // Reset if minute has passed
     if (Date.now() > attempt.resetAt) {
       this.failedAttempts.delete(username);
       return false;
     }
-
     return attempt.count >= 10;
   }
 
@@ -74,26 +93,5 @@ export class RoleGuard {
     } else {
       attempt.count++;
     }
-  }
-
-  private logFailedAccess(route: ActivatedRouteSnapshot, state: RouterStateSnapshot, reason: string): void {
-    const user = this.authService.getCurrentUser();
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      userId: user?.username || 'unknown',
-      attemptedRoute: state.url,
-      reason,
-      ip: this.getClientIp(),
-    };
-    // TODO: Send to audit logging service
-    if (!environment.production) {
-      console.warn('[RoleGuard] Access denied:', logEntry);
-    }
-  }
-
-  private getClientIp(): string {
-    // In production, this would come from the request headers
-    // For now, return a placeholder that would be set by backend
-    return 'unknown';
   }
 }

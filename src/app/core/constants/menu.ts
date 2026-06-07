@@ -4,6 +4,7 @@ export class Menu {
   public static pages: MenuItem[] = [
     {
       group: 'Main',
+      expanded: true,
       separator: false,
       items: [
         { icon: 'assets/icons/heroicons/outline/chart-pie.svg', label: 'Overview', route: '/overview' },
@@ -16,9 +17,10 @@ export class Menu {
       group: 'Finance',
       separator: true,
       items: [
-        { icon: 'assets/icons/heroicons/outline/credit-card.svg', label: 'Wallet', route: '/wallet' },
+        { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposit / Withdraw', route: '/wallet' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Transactions', route: '/transactions' },
-        { icon: 'assets/icons/heroicons/outline/plus.svg', label: 'Adjust Saldo', route: '/member-balance' },
+        { icon: 'assets/icons/heroicons/outline/view-grid.svg', label: 'Wallets', route: '/wallets' },
+        { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Turnover', route: '/turnover' },
       ],
     },
     {
@@ -28,7 +30,7 @@ export class Menu {
         { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Gaming', route: '/gaming' },
         { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: '3D King', route: '/3dking' },
         { icon: 'assets/icons/heroicons/outline/chart-pie.svg', label: 'Bets', route: '/bets' },
-        { icon: 'assets/icons/heroicons/outline/monitor.svg', label: 'Session Monitor', route: '/session-monitor' },
+        { icon: 'assets/icons/heroicons/outline/cursor-click.svg', label: 'Session Monitor', route: '/session-monitor' },
       ],
     },
     {
@@ -40,7 +42,7 @@ export class Menu {
         { icon: 'assets/icons/heroicons/outline/shield-check.svg', label: 'Security Center', route: '/security-center' },
         { icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg', label: 'Risk Management', route: '/risk-management' },
         { icon: 'assets/icons/heroicons/outline/lock-closed.svg', label: 'IP Whitelist', route: '/ip-whitelist' },
-        { icon: 'assets/icons/heroicons/outline/photograph.svg', label: 'Popup Banner', route: '/popup-banner' },
+        { icon: 'assets/icons/heroicons/outline/view-grid.svg', label: 'Popup Banner', route: '/popup-banner' },
       ],
     },
     {
@@ -48,6 +50,7 @@ export class Menu {
       separator: true,
       items: [
         { icon: 'assets/icons/heroicons/outline/cog.svg', label: 'System', route: '/system' },
+        { icon: 'assets/icons/heroicons/outline/shield-exclamation.svg', label: 'Role Management', route: '/role-management' },
         { icon: 'assets/icons/heroicons/outline/phone.svg', label: 'CS Contact', route: '/cs-contact' },
       ],
     },

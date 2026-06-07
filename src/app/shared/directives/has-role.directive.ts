@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, OnInit, OnDestroy } from '@angular/core';
+import { Directive, Input, TemplateRef, ViewContainerRef, OnInit, inject } from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
 
 /**
@@ -9,7 +9,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
   selector: '[appHasRole]',
   standalone: true,
 })
-export class HasRoleDirective implements OnInit, OnDestroy {
+export class HasRoleDirective implements OnInit {
   private requiredRoles: string[] = [];
   private hasView = false;
 
@@ -19,18 +19,12 @@ export class HasRoleDirective implements OnInit, OnDestroy {
     this.updateView();
   }
 
-  constructor(
-    private templateRef: TemplateRef<any>,
-    private viewContainer: ViewContainerRef,
-    private authService: AuthService
-  ) {}
+  private templateRef = inject(TemplateRef<unknown>);
+  private viewContainer = inject(ViewContainerRef);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.updateView();
-  }
-
-  ngOnDestroy(): void {
-    // No cleanup needed
   }
 
   private updateView(): void {

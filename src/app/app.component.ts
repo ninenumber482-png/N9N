@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NgxSonnerToaster } from 'ngx-sonner';
 import { ThemeService } from 'src/app/core/services/theme.service';
@@ -13,7 +13,7 @@ import { ResponsiveHelperComponent } from 'src/app/shared/components/responsive-
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  title = 'Number9 System D';
+  themeService = inject(ThemeService);
 
-  constructor(public themeService: ThemeService) {}
+  title = 'Number9 System D';
 }

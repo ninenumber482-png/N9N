@@ -91,7 +91,7 @@ export default function HistoryPage() {
       }
     });
     // Re-fetch when realtime tick fires (new bet/tx from anywhere)
-  }, [auth?.id, _rtTick]);
+  }, [auth?.id, _rtTick, t, setToast, aliveRef]);
 
   const bids = auth && kingReady ? listBids() : [];
 

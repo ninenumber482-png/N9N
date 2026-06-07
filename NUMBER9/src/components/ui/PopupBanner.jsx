@@ -1,40 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { apiRpc } from '../../utils/api';
-
-const STORAGE_KEY = 'n9_dismissed_banners';
-
-function isDismissed(id) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    const ts = data[id];
-    if (!ts) return false;
-    return Date.now() - ts < 86400000;
-  } catch {
-    return false;
-  }
-}
-
-function markDismissed(id) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    data[id] = Date.now();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch { /* */ }
-}
+import { useStore } from '../../store/useStore';
 
 export default function PopupBanner() {
   const [banner, setBanner] = useState(null);
+  const auth = useStore((s) => s.auth);
+  const fetched = useRef(null);
 
   useEffect(() => {
+    const key = auth?.id || '_anon';
+    if (fetched.current === key) return;
+    fetched.current = key;
+    setBanner(null);
     apiRpc('get_active_popup_banners', {}).then((data) => {
       const arr = Array.isArray(data) ? data : [];
-      const active = arr.find((b) => !isDismissed(b.id));
-      if (active) setBanner(active);
+      if (arr.length > 0) setBanner(arr[0]);
     }).catch(() => {});
-  }, []);
+  }, [auth?.id]);
 
   if (!banner) return null;
 
@@ -52,7 +34,7 @@ export default function PopupBanner() {
           <img src={banner.image_url} alt={banner.title || ''} className="max-w-full max-h-[80vh] object-contain rounded-2xl" />
         )}
         <button
-          onClick={() => { markDismissed(banner.id); setBanner(null); }}
+          onClick={() => setBanner(null)}
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 text-sm font-bold"
         >✕</button>
         {banner.title && (

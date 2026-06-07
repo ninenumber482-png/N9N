@@ -1,5 +1,5 @@
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { SubMenuItem } from 'src/app/core/models/menu.model';
@@ -18,11 +18,11 @@ import { NavbarMobileSubmenuComponent } from 'src/app/modules/layout/components/
     RouterLink,
     RouterLinkActive,
     NavbarMobileSubmenuComponent,
-],
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarMobileMenuComponent implements OnInit {
-  constructor(public menuService: MenuService) {}
+  menuService = inject(MenuService);
 
   public toggleMenu(subMenu: SubMenuItem) {
     this.menuService.toggleMenu(subMenu);

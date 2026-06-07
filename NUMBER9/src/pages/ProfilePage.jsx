@@ -14,7 +14,6 @@ export default function ProfilePage() {
   const { clientUuid } = useParams();
   const p = (path) => `/c/${clientUuid}${path}`;
   const fetchProfile = useStore((s) => s.fetchProfile);
-  const onUserChange = useStore((s) => s.onUserChange);
   const [loading, setLoading] = useState(true);
   const [turnover, setTurnover] = useState(null);
   const [me, setMe] = useState({});
@@ -22,10 +21,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let isMounted = true;
-    if (!auth?.id) {
-      setLoading(false);
-      return;
-    }
     fetchProfile()
       .then((data) => {
         if (isMounted) {
@@ -35,12 +30,8 @@ export default function ProfilePage() {
       .catch(() => {})
       .finally(() => { if (isMounted) setLoading(false); });
     fetchTurnoverSummary(auth.id).then((d) => { if (isMounted) setTurnover(d); }).catch(() => {});
-    const unsub = onUserChange((newRow) => {
-      if (!isMounted) return;
-      setMe((prev) => ({ ...prev, ...newRow }));
-    });
-    return () => { isMounted = false; unsub(); };
-  }, [auth?.id, fetchProfile, onUserChange]);
+    return () => { isMounted = false; };
+  }, [auth?.id, fetchProfile]);
 
   const userName = me.displayName || auth?.displayName || auth?.username || "User";
   const uid      = me.uuid || auth?.id || "";

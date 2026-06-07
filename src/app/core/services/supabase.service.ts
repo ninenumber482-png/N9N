@@ -9,6 +9,7 @@ export interface SupabaseLoginPayload {
 
 export interface SupabaseLoginResult {
   success: boolean;
+  token?: string;
   user?: {
     id: string;
     email: string;
@@ -38,6 +39,7 @@ export class SupabaseService {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${environment.supabaseKey}`,
         },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 

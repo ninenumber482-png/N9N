@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { AuthService } from 'src/app/core/services/auth.service';
 
@@ -7,28 +8,39 @@ export class AdminRpcError extends Error {
     message: string,
     public readonly code: 'FORBIDDEN' | 'TX_NOT_FOUND' | 'TX_NOT_PENDING' | 'UNKNOWN',
     public readonly detail?: string,
-  ) { super(message); this.name = 'AdminRpcError'; }
+  ) {
+    super(message);
+    this.name = 'AdminRpcError';
+  }
 
   static fromMessage(msg: string): AdminRpcError {
-    if (msg.startsWith('FORBIDDEN:')) return new AdminRpcError('Akses ditolak. Hanya admin yang dapat melakukan tindakan ini.', 'FORBIDDEN', msg.slice(10).trim());
-    if (msg === 'TX_NOT_FOUND') return new AdminRpcError('Transaksi tidak ditemukan atau sudah diproses.', 'TX_NOT_FOUND');
+    if (msg.startsWith('FORBIDDEN:'))
+      return new AdminRpcError(
+        'Akses ditolak. Hanya admin yang dapat melakukan tindakan ini.',
+        'FORBIDDEN',
+        msg.slice(10).trim(),
+      );
+    if (msg === 'TX_NOT_FOUND')
+      return new AdminRpcError('Transaksi tidak ditemukan atau sudah diproses.', 'TX_NOT_FOUND');
     if (msg === 'TX_NOT_PENDING') return new AdminRpcError('Transaksi sudah diproses sebelumnya.', 'TX_NOT_PENDING');
     if (msg === 'CANNOT_SELF_APPROVE') return new AdminRpcError('Tidak dapat menyetujui akun sendiri.', 'FORBIDDEN');
     if (msg === 'CANNOT_SELF_REJECT') return new AdminRpcError('Tidak dapat menolak akun sendiri.', 'FORBIDDEN');
-    if (msg === 'USER_NOT_FOUND_OR_NOT_PENDING') return new AdminRpcError('User tidak ditemukan atau sudah diproses.', 'TX_NOT_FOUND');
+    if (msg === 'USER_NOT_FOUND_OR_NOT_PENDING')
+      return new AdminRpcError('User tidak ditemukan atau sudah diproses.', 'TX_NOT_FOUND');
     return new AdminRpcError(msg, 'UNKNOWN');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   private proxyUrl = `${environment.supabaseUrl}/functions/v1/admin-proxy`;
 
   /** In-memory cache with TTL (5s) and user context to prevent data leakage */
-  private cache = new Map<string, { data: any; ts: number }>();
+  private cache = new Map<string, { data: unknown; ts: number }>();
   private readonly CACHE_TTL = 5000;
-
-  constructor(private auth: AuthService) {}
 
   private getCacheKey(baseKey: string): string {
     // Include user ID in cache key to prevent cross-user data leakage
@@ -43,42 +55,46 @@ export class AdminService {
     if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
       return Promise.resolve(cached.data as T);
     }
-    return fetcher().then(data => {
+    return fetcher().then((data) => {
       this.cache.set(cacheKey, { data, ts: Date.now() });
       return data;
     });
   }
 
-  private getToken(): string {
+  private async proxy<T>(method: string, path: string, body?: unknown, prefer?: string): Promise<T> {
     const user = this.auth.getCurrentUser();
-    if (!user?.token) {
-      // Token missing - this should not happen in production
-      throw new Error('User token not available. User may not be authenticated.');
-    }
-    return user.token;
-  }
-
-  private async proxy<T>(method: string, path: string, body?: any, prefer?: string): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       apikey: environment.supabaseKey,
       Authorization: `Bearer ${environment.supabaseKey}`,
-      'x-session-token': this.getToken(),
     };
+    if (user?.token) headers['x-session-token'] = user.token;
     if (prefer) headers['Prefer'] = prefer;
 
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
       headers,
+      credentials: 'include',
       body: JSON.stringify({ method, path, body, prefer }),
     });
     if (!res.ok) {
+      if (res.status === 401) {
+        this.auth.logout();
+        this.router.navigate(['/auth/sign-in'], {
+          queryParams: { reason: 'token-expired', message: 'Session expired. Please log in again.' },
+        });
+        throw new AdminRpcError('Session expired', 'UNKNOWN');
+      }
       const text = await res.text();
       throw AdminRpcError.fromMessage(text.length < 200 ? text : `${res.status}`);
     }
     const text = await res.text();
-    if (!text) return undefined as any;
-    try { return JSON.parse(text); } catch { return text as any; }
+    if (!text) return undefined as unknown as T;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text as unknown as T;
+    }
   }
 
   private async get<T>(table: string, query = ''): Promise<T[]> {
@@ -88,6 +104,48 @@ export class AdminService {
     return this.cached(cacheKey, () => this.proxy<T[]>('GET', path));
   }
 
+  async getPaginated<T>(table: string, query = '', page = 1, pageSize = 20): Promise<{ data: T[]; total: number }> {
+    const start = (page - 1) * pageSize;
+    const sep = table.includes('?') ? '&' : '?';
+    const path = query
+      ? `/${table}${sep}${query}${query.includes('limit=') ? '' : `&limit=${pageSize}`}`
+      : `/${table}?limit=${pageSize}`;
+    const proxyPath = `${path.startsWith('/') ? '' : '/'}${path}`;
+    let total = 0;
+    const user = this.auth.getCurrentUser();
+    const res = await fetch(this.proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: environment.supabaseKey,
+        Authorization: `Bearer ${environment.supabaseKey}`,
+        ...(user?.token ? { 'x-session-token': user.token } : {}),
+        Prefer: 'count=exact',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ method: 'GET', path: `${proxyPath}&offset=${start}`, prefer: 'count=exact' }),
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        this.auth.logout();
+        this.router.navigate(['/auth/sign-in'], {
+          queryParams: { reason: 'token-expired', message: 'Session expired. Please log in again.' },
+        });
+        throw new AdminRpcError('Session expired', 'UNKNOWN');
+      }
+      const text = await res.text();
+      throw AdminRpcError.fromMessage(text.length < 200 ? text : `${res.status}`);
+    }
+    const range = res.headers.get('content-range');
+    if (range) {
+      const match = range.match(/\/(\d+)$/);
+      total = match ? Number(match[1]) : 0;
+    }
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : [];
+    return { data, total };
+  }
+
   async count(table: string, query = ''): Promise<number> {
     const path = `/${table}?${query}&select=count`;
     const cacheKey = `COUNT:${path}`;
@@ -95,17 +153,28 @@ export class AdminService {
     if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
       return Promise.resolve(cached.data as number);
     }
+    const user = this.auth.getCurrentUser();
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         apikey: environment.supabaseKey,
         Authorization: `Bearer ${environment.supabaseKey}`,
-        'x-session-token': this.getToken(),
+        ...(user?.token ? { 'x-session-token': user.token } : {}),
       },
+      credentials: 'include',
       body: JSON.stringify({ method: 'GET', path, prefer: 'count=exact' }),
     });
-    if (!res.ok) return 0;
+    if (!res.ok) {
+      if (res.status === 401) {
+        this.auth.logout();
+        this.router.navigate(['/auth/sign-in'], {
+          queryParams: { reason: 'token-expired', message: 'Session expired. Please log in again.' },
+        });
+        return 0;
+      }
+      return 0;
+    }
     const val = Number(res.headers.get('content-range')?.split('/')[1] || 0);
     this.cache.set(cacheKey, { data: val, ts: Date.now() });
     return val;
@@ -130,13 +199,13 @@ export class AdminService {
       return usernameOrId;
     }
     const rows = await this.get<any>(`users?username=eq.${usernameOrId}&select=id&limit=1`);
-    const id = rows[0]?.id;
+    const id = rows[0]?.['id'] as string | undefined;
     if (!id) throw new Error(`Admin not found: ${usernameOrId}`);
     this.adminIdCache[usernameOrId] = id;
     return id;
   }
 
-  async rpc(name: string, params: Record<string, any> = {}): Promise<any> {
+  async rpc(name: string, params: Record<string, unknown> = {}): Promise<any> {
     const cacheKey = `RPC:${name}:${JSON.stringify(params)}`;
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
@@ -149,16 +218,25 @@ export class AdminService {
 
   // ── USERS ──
   // getUsers unused — getUsersWithWallets is used instead
-  getUsersWithWallets(limit = 100) { return this.get<any>('users', `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`); }
+  getUsersWithWallets(limit = 100) {
+    return this.get<any>(
+      'users',
+      `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`,
+    );
+  }
   // getUser unused — queries by UUID
-  updateUser(id: string, data: any) { return this.updateRow('users', id, data); }
+  updateUser(id: string, data: Record<string, unknown>) {
+    return this.updateRow('users', id, data);
+  }
   // deleteUser unused — no delete UI
-  countUsers() { return this.count('users'); }
+  countUsers() {
+    return this.count('users');
+  }
   getUserSessionsForUser(userId: string, limit = 5) {
     return this.get<any>(`sessions?user_id=eq.${userId}&order=last_activity.desc&limit=${limit}`);
   }
   getActiveSessionsForUsers(userIds: string[]) {
-    const filter = userIds.map(id => `user_id=eq.${id}`).join(',');
+    const filter = userIds.map((id) => `user_id=eq.${id}`).join(',');
     return this.get<any>(`sessions?or=(${filter})&logged_out_at=is.null&order=last_activity.desc`);
   }
   getAuditLogsByResource(resourceId: string, limit = 10) {
@@ -169,29 +247,53 @@ export class AdminService {
   }
 
   // ── WALLET ──
-  getWallets(limit = 100) { return this.get<any>('wallet', `select=user_id,balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover,updated_at,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc&limit=${limit}`); }
-  getWallet(userId: string) { return this.get<any>(`wallet?user_id=eq.${userId}`, 'limit=1'); }
-  updateWalletRow(userId: string, data: any) {
+  getWallets(limit = 100) {
+    return this.get<any>(
+      'wallet',
+      `select=user_id,balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover,updated_at,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc&limit=${limit}`,
+    );
+  }
+  getWallet(userId: string) {
+    return this.get<any>(`wallet?user_id=eq.${userId}`, 'limit=1');
+  }
+  updateWalletRow(userId: string, data: Record<string, unknown>) {
     return this.proxy<any>('PATCH', `/wallet?user_id=eq.${userId}`, data);
   }
 
   // ── PLATFORM ACCOUNTS ──
-  getPlatformAccounts() { return this.get<any>('platform_accounts', 'order=created_at.asc'); }
-  createPlatformAccount(data: any) { return this.insertRow<any>('platform_accounts', data); }
-  updatePlatformAccount(id: string, data: any) {
+  getPlatformAccounts() {
+    return this.get<any>('platform_accounts', 'order=created_at.asc');
+  }
+  createPlatformAccount(data: Record<string, unknown>) {
+    return this.insertRow<any>('platform_accounts', data);
+  }
+  updatePlatformAccount(id: string, data: Record<string, unknown>) {
     return this.updateRow('platform_accounts', id, { ...data, updated_at: new Date().toISOString() });
   }
 
   // ── TRANSACTIONS (used for deposits, withdrawals, all tx) ──
   getTransactions(type?: string, limit = 100) {
     const typeFilter = type ? `&type=eq.${type}` : '';
-    return this.get<any>('transactions', `select=*,user:users!transactions_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}${typeFilter}`);
+    return this.get<any>(
+      'transactions',
+      `select=*,user:users!transactions_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}${typeFilter}`,
+    );
   }
-  getDeposits() { return this.getTransactions('DEPOSIT'); }
-  getWithdrawals() { return this.getTransactions('WITHDRAWAL'); }
-  updateTransaction(id: string, data: any) { return this.updateRow('transactions', id, data); }
-  countTransactions() { return this.count('transactions'); }
-  countPending(type: string) { return this.count('transactions', `type=eq.${type}&status=eq.PENDING`); }
+  getDeposits() {
+    return this.getTransactions('DEPOSIT');
+  }
+  getWithdrawals() {
+    return this.getTransactions('WITHDRAWAL');
+  }
+  updateTransaction(id: string, data: Record<string, unknown>) {
+    return this.updateRow('transactions', id, data);
+  }
+  countTransactions() {
+    return this.count('transactions');
+  }
+  countPending(type: string) {
+    return this.count('transactions', `type=eq.${type}&status=eq.PENDING`);
+  }
   // resolveUserId unused (identical to resolveAdminId)
   async approveDeposit(txId: string, usernameOrId: string) {
     const adminId = await this.resolveAdminId(usernameOrId);
@@ -211,7 +313,11 @@ export class AdminService {
   }
 
   // ── BETS ──
-  getBets(limit = 100) { return this.get<any>(`bets?select=*,user:users!bets_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}`); }
+  getBets(limit = 100) {
+    return this.get<any>(
+      `bets?select=*,user:users!bets_user_id_fkey(username,display_name)&order=created_at.desc&limit=${limit}`,
+    );
+  }
   getBetsByUser(userId: string, limit = 50) {
     return this.get<any>(`bets?user_id=eq.${userId}&order=created_at.desc&limit=${limit}`);
   }
@@ -232,9 +338,18 @@ export class AdminService {
     return this.get<any>(`king_planned?order=session_code.desc&limit=${limit}`);
   }
   setPlanned(code: string, d1: number, d2: number, d3: number) {
-    return this.proxy<any>('POST', '/king_planned?on_conflict=session_code', {
-      session_code: code, d1, d2, d3, updated_at: new Date().toISOString(),
-    }, 'resolution=merge-duplicates,return=representation');
+    return this.proxy<any>(
+      'POST',
+      '/king_planned?on_conflict=session_code',
+      {
+        session_code: code,
+        d1,
+        d2,
+        d3,
+        updated_at: new Date().toISOString(),
+      },
+      'resolution=merge-duplicates,return=representation',
+    );
   }
   getDepositLocks() {
     return this.get<any>('deposit_locks', 'select=user_id,turnover_required,turnover_applied');
@@ -244,26 +359,38 @@ export class AdminService {
   }
 
   // ── KYC DOCUMENTS ──
-  getKycDocuments() { return this.rpc('get_kyc_documents_admin_list'); }
-  getKycDocumentUrl(id: string) { return this.rpc('get_kyc_document_url', { p_id: id }); }
+  getKycDocuments() {
+    return this.rpc('get_kyc_documents_admin_list');
+  }
+  getKycDocumentUrl(id: string) {
+    return this.rpc('get_kyc_document_url', { p_id: id });
+  }
   updateKycStatus(id: string, status: string, rejectionReason?: string) {
     return this.updateRow('kyc_documents', id, {
-      status, rejection_reason: rejectionReason || null, reviewed_at: new Date().toISOString(),
+      status,
+      rejection_reason: rejectionReason || null,
+      reviewed_at: new Date().toISOString(),
     });
   }
 
   // ── REFERRALS ──
-  getReferrals() { return this.get<any>('referrals', 'select=*,creator:users!referrals_created_by_fkey(username,display_name)&order=created_at.desc'); }
+  getReferrals() {
+    return this.get<any>(
+      'referrals',
+      'select=*,creator:users!referrals_created_by_fkey(username,display_name)&order=created_at.desc',
+    );
+  }
   // getReferralStats unused — data from referrals table directly
   async generateReferralCode(usernameOrId: string): Promise<string> {
     const adminId = await this.resolveAdminId(usernameOrId);
     const result = await this.rpc('generate_referral_code', { p_admin_id: adminId });
     if (Array.isArray(result) && result.length > 0) {
-      return result[0]?.generate_referral_code || String(result[0]);
+      const row = result[0] as Record<string, unknown> | undefined;
+      return String(row?.['generate_referral_code'] || result[0]);
     }
     return String(result);
   }
-  updateReferral(id: string, data: any) {
+  updateReferral(id: string, data: Record<string, unknown>) {
     return this.updateRow('referrals', id, { ...data, updated_at: new Date().toISOString() });
   }
   getUsersByReferral(referralId: string) {
@@ -274,7 +401,17 @@ export class AdminService {
   }
 
   getUserByUsername(username: string) {
-    return this.get<any>('users', `username=eq.${encodeURIComponent(username)}&select=id,username,display_name,email,role&limit=1`);
+    return this.get<any>(
+      'users',
+      `username=eq.${encodeURIComponent(username)}&select=id,username,display_name,email,role&limit=1`,
+    );
+  }
+
+  getAdminUsers() {
+    return this.get<any>(
+      'users',
+      'or=(role.eq.admin,role.eq.superadmin)&select=id,username,email,role,login_status&order=username.asc',
+    );
   }
 
   // ── MEMBER MANAGEMENT ──
@@ -282,7 +419,12 @@ export class AdminService {
     return this.rpc('admin_reset_password', { p_admin_id: adminId, p_user_id: userId, p_new_password: newPassword });
   }
   async adjustBalance(adminId: string, userId: string, amount: number, reason?: string) {
-    return this.rpc('admin_adjust_balance', { p_admin_id: adminId, p_user_id: userId, p_amount: amount, p_reason: reason || null });
+    return this.rpc('admin_adjust_balance', {
+      p_admin_id: adminId,
+      p_user_id: userId,
+      p_amount: amount,
+      p_reason: reason || null,
+    });
   }
 
   // ── USER APPROVAL ──
@@ -302,14 +444,28 @@ export class AdminService {
   }
 
   // ── USER SESSIONS (login sessions) ──
-  getUserSessions(limit = 50) { return this.get<any>(`sessions?order=last_activity.desc&limit=${limit}`); }
+  getUserSessions(limit = 50) {
+    return this.get<any>(`sessions?order=last_activity.desc&limit=${limit}`);
+  }
   endUserSession(sessionId: string) {
-    return this.updateRow('sessions', sessionId, { logged_out_at: new Date().toISOString(), logout_reason: 'Admin terminated' });
+    return this.updateRow('sessions', sessionId, {
+      logged_out_at: new Date().toISOString(),
+      logout_reason: 'Admin terminated',
+    });
   }
 
   // ── AUDIT LOGS ──
-  getAuditLogs(limit = 50) { return this.get<any>(`audit_log?order=created_at.desc&limit=${limit}`); }
-  async logAction(usernameOrId: string, action: string, resourceType: string, resourceId?: string, oldValue?: string, newValue?: string) {
+  getAuditLogs(limit = 50) {
+    return this.get<any>(`audit_log?order=created_at.desc&limit=${limit}`);
+  }
+  async logAction(
+    usernameOrId: string,
+    action: string,
+    resourceType: string,
+    resourceId?: string,
+    oldValue?: string,
+    newValue?: string,
+  ) {
     const adminId = await this.resolveAdminId(usernameOrId);
     return this.rpc('log_admin_action', {
       p_admin_id: adminId,
@@ -322,35 +478,46 @@ export class AdminService {
   }
 
   // ── TRANSACTION AUDIT ──
-  getTransactionAudit(limit = 100) { return this.get<any>(`transaction_audit?order=created_at.desc&limit=${limit}`); }
-  getUserAudit(limit = 50) { return this.get<any>(`user_audit?order=created_at.desc&limit=${limit}`); }
-  getSecurityAlerts(limit = 50) { return this.get<any>(`security_alerts?order=created_at.desc&limit=${limit}`); }
-  getFailedLogins(limit = 50) { return this.get<any>(`failed_logins?order=attempted_at.desc&limit=${limit}`); }
+  getTransactionAudit(limit = 100) {
+    return this.get<any>(`transaction_audit?order=created_at.desc&limit=${limit}`);
+  }
+  getUserAudit(limit = 50) {
+    return this.get<any>(`user_audit?order=created_at.desc&limit=${limit}`);
+  }
+  getSecurityAlerts(limit = 50) {
+    return this.get<any>(`security_alerts?order=created_at.desc&limit=${limit}`);
+  }
+  getFailedLogins(limit = 50) {
+    return this.get<any>(`failed_logins?order=attempted_at.desc&limit=${limit}`);
+  }
   // getTransactionAudit unused — audit_component uses getUserAudit instead
   // getMetrics unused
 
   // ── GAME SESSIONS (grouped from bets table by session_code) ──
-  async getGameSessions(): Promise<any[]> {
+  async getGameSessions() {
     const bets = await this.getBets(1000);
     const grouped: Record<string, any[]> = {};
     bets.forEach((b: any) => {
-      if (!b.session_code) return;
-      if (!grouped[b.session_code]) grouped[b.session_code] = [];
-      grouped[b.session_code].push(b);
+      const sc = b.session_code || b['session_code'];
+      if (!sc) return;
+      if (!grouped[sc]) grouped[sc] = [];
+      grouped[sc].push(b);
     });
-    return Object.entries(grouped).map(([code, sessionBets]: [string, any]) => {
-      const totalStake = sessionBets.reduce((s: number, b: any) => s + Number(b.stake), 0);
-      const totalPayout = sessionBets.reduce((s: number, b: any) => s + Number(b.actual_payout || 0), 0);
-      const settled = sessionBets.every((b: any) => b.status === 'SETTLED');
-      return {
-        session_code: code,
-        status: settled ? 'SETTLED' : 'OPEN',
-        bet_count: sessionBets.length,
-        total_stake: totalStake,
-        total_payout: totalPayout,
-        created_at: sessionBets[0]?.created_at,
-      };
-    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return Object.entries(grouped)
+      .map(([code, sessionBets]) => {
+        const totalStake = (sessionBets as any[]).reduce((s: number, b: any) => s + Number(b.stake || b['stake']), 0);
+        const totalPayout = (sessionBets as any[]).reduce((s: number, b: any) => s + Number(b.actual_payout || b['actual_payout'] || 0), 0);
+        const settled = (sessionBets as any[]).every((b: any) => (b.status || b['status']) === 'SETTLED');
+        return {
+          session_code: code,
+          status: settled ? 'SETTLED' : 'OPEN',
+          bet_count: (sessionBets as any[]).length,
+          total_stake: totalStake,
+          total_payout: totalPayout,
+          created_at: (sessionBets as any[])[0]?.created_at || (sessionBets as any[])[0]?.['created_at'],
+        };
+      })
+      .sort((a: any, b: any) => new Date(b.created_at || b['created_at']).getTime() - new Date(a.created_at || a['created_at']).getTime());
   }
 
   // ── PLATFORM CONFIG (CS Contact, etc.) ──
@@ -358,14 +525,14 @@ export class AdminService {
     const path = query ? `/platform_config?${query}` : '/platform_config';
     return this.proxy<any[]>('GET', path);
   }
-  async getConfig(key: string): Promise<any> {
+  async getConfig(key: string): Promise<unknown> {
     const rows = await this.get<any>('platform_config', `key=eq.${key}&limit=1`);
     return rows[0] || null;
   }
   async updateConfig(key: string, value: string): Promise<void> {
     await this.proxy<void>('PATCH', `/platform_config?key=eq.${key}`, { value, updated_at: new Date().toISOString() });
   }
-  async insertConfig(data: { key: string; value: string }): Promise<any[]> {
+  async insertConfig(data: { key: string; value: string }): Promise<{ key: string; value: string }[]> {
     return this.insertRow('platform_config', data);
   }
 
@@ -376,19 +543,18 @@ export class AdminService {
   deletePopupBannerRow(id: string) {
     return this.deleteRow('popup_banners', id);
   }
-  updatePopupBannerRow(id: string, data: any) {
+  updatePopupBannerRow(id: string, data: Record<string, unknown>) {
     return this.updateRow('popup_banners', id, data);
   }
-  async uploadPopupImage(dataUrl: string, title: string, linkUrl = '', bannerId?: string): Promise<any> {
-    const token = this.getToken();
+  async uploadPopupImage(dataUrl: string, title: string, linkUrl = '', bannerId?: string): Promise<unknown> {
     const res = await fetch(`${environment.supabaseUrl}/functions/v1/admin-popup-image`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         apikey: environment.supabaseKey,
         Authorization: `Bearer ${environment.supabaseKey}`,
-        'x-session-token': token,
       },
+      credentials: 'include',
       body: JSON.stringify({ dataUrl, title, linkUrl, bannerId }),
     });
     const data = await res.json();
@@ -405,5 +571,88 @@ export class AdminService {
       this.rpc('count_kyc_by_status', { p_status: 'PENDING' }),
     ]);
     return { totalUsers: users, totalTransactions: totalTx, pendingBets, pendingKyc: Number(pendingKyc) || 0 };
+  }
+
+  // ── SMART DASHBOARD STATS ──
+  async getTodayRegistrations(): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return this.count('users', `created_at=gte.${today.toISOString()}`);
+  }
+
+  async getYesterdayRegistrations(): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return this.count('users', `created_at=gte.${yesterday.toISOString()}&created_at=lt.${today.toISOString()}`);
+  }
+
+  async getTodayTransactionVolume(type: string): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const rows = await this.get<any>(
+      'transactions',
+      `type=eq.${type}&created_at=gte.${today.toISOString()}&status=eq.APPROVED&select=amount`,
+    );
+    return rows.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+  }
+
+  async getTotalWalletBalance(): Promise<{ main: number; bonus: number }> {
+    const rows = await this.get<any>('wallet', 'select=balance_main,balance_bonus');
+    return {
+      main: rows.reduce((s: number, r: any) => s + Number(r.balance_main || 0), 0),
+      bonus: rows.reduce((s: number, r: any) => s + Number(r.balance_bonus || 0), 0),
+    };
+  }
+
+  async getActiveUsers(): Promise<number> {
+    return this.count('users', 'login_status=eq.ACTIVE');
+  }
+
+  async getOnlineSessions(): Promise<number> {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const rows = await this.get<any>('sessions', `logged_out_at=is.null&last_activity=gte.${fiveMinAgo}&select=id`);
+    return rows.length;
+  }
+
+  async getWeeklyUserGrowth(): Promise<{ date: string; count: number }[]> {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    const rows = await this.get<any>('users', `created_at=gte.${sevenDaysAgo.toISOString()}&select=created_at`);
+    const map = new Map<string, number>();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      map.set(d.toISOString().slice(0, 10), 0);
+    }
+    for (const r of rows) {
+      if (!r.created_at) continue;
+      const day = r.created_at.slice(0, 10);
+      if (map.has(day)) map.set(day, map.get(day)! + 1);
+    }
+    return Array.from(map.entries()).map(([date, count]) => ({ date, count }));
+  }
+
+  async getTodayVolume(): Promise<{ deposits: number; withdrawals: number }> {
+    const [depositVol, withdrawalVol] = await Promise.all([
+      this.getTodayTransactionVolume('DEPOSIT'),
+      this.getTodayTransactionVolume('WITHDRAWAL'),
+    ]);
+    return { deposits: depositVol, withdrawals: withdrawalVol };
+  }
+
+  async getPlatformHealth(): Promise<{
+    activeUsers: number;
+    onlineNow: number;
+    totalBalance: { main: number; bonus: number };
+    pendingCount: number;
+  }> {
+    const [activeUsers, onlineNow, totalBalance, pendingKyc] = await Promise.all([
+      this.getActiveUsers(),
+      this.getOnlineSessions(),
+      this.getTotalWalletBalance(),
+      this.rpc('count_kyc_by_status', { p_status: 'PENDING' }),
+    ]);
+    return { activeUsers, onlineNow, totalBalance, pendingCount: Number(pendingKyc) || 0 };
   }
 }

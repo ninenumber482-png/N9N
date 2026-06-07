@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, OnInit } from '@angular/core';
+import { Directive, Input, TemplateRef, ViewContainerRef, OnInit, inject } from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
 
 /**
@@ -19,11 +19,9 @@ export class HasPermissionDirective implements OnInit {
     this.updateView();
   }
 
-  constructor(
-    private templateRef: TemplateRef<any>,
-    private viewContainer: ViewContainerRef,
-    private authService: AuthService
-  ) {}
+  private templateRef = inject(TemplateRef<unknown>);
+  private viewContainer = inject(ViewContainerRef);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.updateView();

@@ -1,23 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 
 const SESSION_MS = 300_000;
-const LOCK_MS = 60_000;   // betting + result-editing close 1 min before draw (kept in sync with king.js)
+const LOCK_MS = 60_000; // betting + result-editing close 1 min before draw (kept in sync with king.js)
 const RESULT_MS = 3_000;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
 function fmtCode(resultMs: number) {
   const d = new Date(resultMs);
-  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth()+1)}${pad2(d.getUTCDate())}${pad2(d.getUTCHours())}${pad2(Math.floor(d.getUTCMinutes()/5)*5)}`;
+  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}${pad2(d.getUTCHours())}${pad2(Math.floor(d.getUTCMinutes() / 5) * 5)}`;
 }
 
 /* WIB (Asia/Jakarta) date-parts for a UTC session code — DISPLAY only. */
 function wibParts(code: string): string[] | null {
   if (!code || code.length < 12) return null;
-  const dt = new Date(Date.UTC(+code.slice(0,4), +code.slice(4,6)-1, +code.slice(6,8), +code.slice(8,10), +code.slice(10,12)));
+  const dt = new Date(
+    Date.UTC(+code.slice(0, 4), +code.slice(4, 6) - 1, +code.slice(6, 8), +code.slice(8, 10), +code.slice(10, 12)),
+  );
   return dt.toLocaleString('en-CA', { timeZone: 'Asia/Jakarta', hour12: false }).split(/[-, :]+/);
 }
 
@@ -38,13 +41,20 @@ function displayCode(code: string): string {
 const fmtTimer = (ms: number) => {
   if (ms < 0) ms = 0;
   const s = Math.ceil(ms / 1000);
-  return `${pad2(Math.floor(s/60))}:${pad2(s%60)}`;
+  return `${pad2(Math.floor(s / 60))}:${pad2(s % 60)}`;
 };
 
-interface DrawResult { d1: number; d2: number; d3: number; total: number; bs: string; oe: string; }
+interface DrawResult {
+  d1: number;
+  d2: number;
+  d3: number;
+  total: number;
+  bs: string;
+  oe: string;
+}
 
-const PAST_SLOTS = 6;   // recently-settled rows shown above the current session
-const TOTAL_ROWS = 20;  // total rows rendered (past + current + upcoming)
+const PAST_SLOTS = 6; // recently-settled rows shown above the current session
+const TOTAL_ROWS = 20; // total rows rendered (past + current + upcoming)
 const SWEEP_SLOTS = 12; // completed boundaries the engine catches up on (1 hour)
 
 const randDigit = () => Math.floor(Math.random() * 10);
@@ -64,9 +74,31 @@ interface SessionRow {
   oe: string;
   betCount: number;
   totalStake: number;
-  settled: boolean;   // result published in king_results (final, money settled)
+  settled: boolean; // result published in king_results (final, money settled)
   hasResult: boolean; // digits to show (either settled actual OR an admin-planned draw)
-  editable: boolean;  // admin may set/change the result (status NEXT or OPEN)
+  editable: boolean; // admin may set/change the result (status NEXT or OPEN)
+}
+
+interface PlannedRow {
+  session_code: string;
+  d1: number;
+  d2: number;
+  d3: number;
+}
+
+interface KingResultRow {
+  session_code: string;
+  d1: number;
+  d2: number;
+  d3: number;
+  total: number;
+  big_small: string;
+  odd_even: string;
+}
+
+interface BetRow {
+  session_code: string;
+  stake: number;
 }
 
 /* total / BIG-SMALL / ODD-EVEN derived from three digits. */
@@ -108,15 +140,18 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
 @Component({
   selector: 'app-3dking',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AngularSvgIconModule],
   template: `
-    <div class="space-y-4">
+    <div data-page="3dking" class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-foreground tracking-tight">3D King Engine</h2>
+        <div class="flex items-center gap-3">
+        <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/cube.svg" svgClass="h-4 w-4"></svg-icon></div>
+        <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">3D King Engine</h1>
+      </div>
         <span class="text-[11px] text-muted-foreground">Settlement Engine</span>
       </div>
 
-      <div class="bg-card border border-border rounded-lg p-4">
+      <div class="bg-card border border-border page-accent-card p-5" style="border-top: 3px solid #D946EF;">
         <div class="grid grid-cols-4 gap-4 text-[11px]">
           <div>
             <p class="text-muted-foreground uppercase tracking-wider mb-0.5">Session</p>
@@ -157,13 +192,24 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
             </thead>
             <tbody>
               @for (s of displaySessions; track s.code; let i = $index) {
-                <tr class="border-b border-border hover:bg-muted/5 transition-colors text-muted-foreground"
+                <tr
+                  class="border-b border-border hover:bg-muted/5 transition-colors text-muted-foreground"
                   [class.opacity-40]="s.settled">
                   <td class="px-3 py-2 font-mono text-[10px]">{{ s.index }}</td>
                   <td class="px-3 py-2 font-mono text-foreground">{{ s.display }}</td>
                   <td class="px-3 py-2 font-mono text-[10px]">{{ s.wib }}</td>
                   <td class="px-3 py-2">
-                    <span class="text-[10px]">{{ s.status === 'SETTLED' ? 'Settled' : s.status === 'RESULTING' ? 'Resulting' : s.status === 'LOCKED' ? 'Locked' : s.status === 'OPEN' ? 'Open' : 'Next' }}</span>
+                    <span class="text-[10px]">{{
+                      s.status === 'SETTLED'
+                        ? 'Settled'
+                        : s.status === 'RESULTING'
+                          ? 'Resulting'
+                          : s.status === 'LOCKED'
+                            ? 'Locked'
+                            : s.status === 'OPEN'
+                              ? 'Open'
+                              : 'Next'
+                    }}</span>
                   </td>
                   <td class="px-3 py-2 text-right font-mono text-[10px]">{{ fmtTimer(s.countdown) }}</td>
                   <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d1 : '—' }}</td>
@@ -173,14 +219,30 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                   <td class="px-2 py-2 text-center">
                     @if (s.editable) {
                       <div class="inline-flex gap-1">
-                        <button type="button" (click)="overrideCategory(s.code,'bs','BIG')" title="Force BIG"
+                        <button
+                          type="button"
+                          (click)="overrideCategory(s.code, 'bs', 'BIG')"
+                          title="Force BIG"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
-                          [class.bg-muted]="s.bs!=='BIG'" [class.text-foreground]="s.bs!=='BIG'"
-                          [class.bg-amber-400]="s.bs==='BIG'" [class.text-background]="s.bs==='BIG'" [class.font-bold]="s.bs==='BIG'">B</button>
-                        <button type="button" (click)="overrideCategory(s.code,'bs','SMALL')" title="Force SMALL"
+                          [class.bg-muted]="s.bs !== 'BIG'"
+                          [class.text-foreground]="s.bs !== 'BIG'"
+                          [class.bg-amber-400]="s.bs === 'BIG'"
+                          [class.text-background]="s.bs === 'BIG'"
+                          [class.font-bold]="s.bs === 'BIG'">
+                          B
+                        </button>
+                        <button
+                          type="button"
+                          (click)="overrideCategory(s.code, 'bs', 'SMALL')"
+                          title="Force SMALL"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
-                          [class.bg-muted]="s.bs!=='SMALL'" [class.text-foreground]="s.bs!=='SMALL'"
-                          [class.bg-amber-400]="s.bs==='SMALL'" [class.text-background]="s.bs==='SMALL'" [class.font-bold]="s.bs==='SMALL'">S</button>
+                          [class.bg-muted]="s.bs !== 'SMALL'"
+                          [class.text-foreground]="s.bs !== 'SMALL'"
+                          [class.bg-amber-400]="s.bs === 'SMALL'"
+                          [class.text-background]="s.bs === 'SMALL'"
+                          [class.font-bold]="s.bs === 'SMALL'">
+                          S
+                        </button>
                       </div>
                     } @else {
                       <span class="text-muted-foreground">{{ s.hasResult ? s.bs : '—' }}</span>
@@ -189,21 +251,39 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                   <td class="px-2 py-2 text-center">
                     @if (s.editable) {
                       <div class="inline-flex gap-1">
-                        <button type="button" (click)="overrideCategory(s.code,'oe','ODD')" title="Force ODD"
+                        <button
+                          type="button"
+                          (click)="overrideCategory(s.code, 'oe', 'ODD')"
+                          title="Force ODD"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
-                          [class.bg-muted]="s.oe!=='ODD'" [class.text-foreground]="s.oe!=='ODD'"
-                          [class.bg-amber-400]="s.oe==='ODD'" [class.text-background]="s.oe==='ODD'" [class.font-bold]="s.oe==='ODD'">O</button>
-                        <button type="button" (click)="overrideCategory(s.code,'oe','EVEN')" title="Force EVEN"
+                          [class.bg-muted]="s.oe !== 'ODD'"
+                          [class.text-foreground]="s.oe !== 'ODD'"
+                          [class.bg-amber-400]="s.oe === 'ODD'"
+                          [class.text-background]="s.oe === 'ODD'"
+                          [class.font-bold]="s.oe === 'ODD'">
+                          O
+                        </button>
+                        <button
+                          type="button"
+                          (click)="overrideCategory(s.code, 'oe', 'EVEN')"
+                          title="Force EVEN"
                           class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
-                          [class.bg-muted]="s.oe!=='EVEN'" [class.text-foreground]="s.oe!=='EVEN'"
-                          [class.bg-amber-400]="s.oe==='EVEN'" [class.text-background]="s.oe==='EVEN'" [class.font-bold]="s.oe==='EVEN'">E</button>
+                          [class.bg-muted]="s.oe !== 'EVEN'"
+                          [class.text-foreground]="s.oe !== 'EVEN'"
+                          [class.bg-amber-400]="s.oe === 'EVEN'"
+                          [class.text-background]="s.oe === 'EVEN'"
+                          [class.font-bold]="s.oe === 'EVEN'">
+                          E
+                        </button>
                       </div>
                     } @else {
                       <span class="text-muted-foreground">{{ s.hasResult ? s.oe : '—' }}</span>
                     }
                   </td>
                   <td class="px-3 py-2 text-right text-foreground">{{ s.betCount || 0 }}</td>
-                  <td class="px-3 py-2 text-right text-foreground">{{ s.totalStake ? (s.totalStake | number) + 'P' : '—' }}</td>
+                  <td class="px-3 py-2 text-right text-foreground">
+                    {{ s.totalStake ? (s.totalStake | number) + 'P' : '—' }}
+                  </td>
                 </tr>
               }
             </tbody>
@@ -212,19 +292,31 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
         <div class="flex items-center justify-between px-3 py-2 border-t border-border text-[11px]">
           <span class="text-muted-foreground">{{ displaySessions.length }} of {{ sessions.length }} sessions</span>
           <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [class.opacity-30]="page === 0"
-              class="px-2 py-1 rounded text-foreground hover:bg-muted/20 transition-colors disabled:opacity-30">← Prev</button>
+            <button
+              (click)="prevPage()"
+              [class.opacity-30]="page === 0"
+              class="px-2 py-1 rounded text-foreground hover:bg-muted/20 transition-colors disabled:opacity-30">
+              ← Prev
+            </button>
             <span class="text-muted-foreground">{{ page + 1 }} / {{ totalPages }}</span>
-            <button (click)="nextPage()" [class.opacity-30]="(page + 1) * pageSize >= sessions.length"
-              class="px-2 py-1 rounded text-foreground hover:bg-muted/20 transition-colors disabled:opacity-30">Next →</button>
+            <button
+              (click)="nextPage()"
+              [class.opacity-30]="(page + 1) * pageSize >= sessions.length"
+              class="px-2 py-1 rounded text-foreground hover:bg-muted/20 transition-colors disabled:opacity-30">
+              Next →
+            </button>
           </div>
         </div>
       </div>
-    </div>,
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThreeDKingComponent implements OnInit, OnDestroy {
+  private admin = inject(AdminService);
+  private cdr = inject(ChangeDetectorRef);
+  private notification = inject(NotificationService);
+
   sessions: SessionRow[] = [];
   lastResult: number | null = null;
   currentCode = '';
@@ -234,8 +326,8 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
   page = 0;
   pageSize = 20;
 
-  private timerId: any;
-  private dataId: any;
+  private timerId: ReturnType<typeof setInterval> | undefined;
+  private dataId: ReturnType<typeof setInterval> | undefined;
   /* Published draws keyed by session_code — the shared source of truth (Supabase). */
   private results = new Map<string, DrawResult>();
 
@@ -246,8 +338,12 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
   get totalPages() {
     return Math.max(1, Math.ceil(this.sessions.length / this.pageSize));
   }
-  nextPage() { if ((this.page + 1) * this.pageSize < this.sessions.length) this.page++; }
-  prevPage() { if (this.page > 0) this.page--; }
+  nextPage() {
+    if ((this.page + 1) * this.pageSize < this.sessions.length) this.page++;
+  }
+  prevPage() {
+    if (this.page > 0) this.page--;
+  }
   /* The engine's own draw per session (king_planned). settle_session treats this
      as the authoritative result; the admin only re-rolls its category. */
   private planned = new Map<string, { d1: number; d2: number; d3: number }>();
@@ -267,8 +363,6 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
   private fillPlanErrorNotified = new Set<string>();
   private overrideErrorNotified = new Set<string>();
   private betsErrorNotified = false;
-
-  constructor(private admin: AdminService, private cdr: ChangeDetectorRef, private notification: NotificationService) {}
 
   ngOnInit() {
     this.loadData();
@@ -307,11 +401,22 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       const sStart = resultMs + RESULT_MS;
       let newStatus = s.status;
       let newCd = s.countdown;
-      if (utc < startMs) { newStatus = 'NEXT'; newCd = startMs - utc; }
-      else if (utc < lockMs) { newStatus = 'OPEN'; newCd = lockMs - utc; }
-      else if (utc < resultMs) { newStatus = 'LOCKED'; newCd = resultMs - utc; }
-      else if (utc < sStart) { newStatus = 'RESULTING'; newCd = 0; }
-      else { newStatus = 'SETTLED'; newCd = 0; }
+      if (utc < startMs) {
+        newStatus = 'NEXT';
+        newCd = startMs - utc;
+      } else if (utc < lockMs) {
+        newStatus = 'OPEN';
+        newCd = lockMs - utc;
+      } else if (utc < resultMs) {
+        newStatus = 'LOCKED';
+        newCd = resultMs - utc;
+      } else if (utc < sStart) {
+        newStatus = 'RESULTING';
+        newCd = 0;
+      } else {
+        newStatus = 'SETTLED';
+        newCd = 0;
+      }
       if (newStatus !== s.status || newCd !== s.countdown) {
         s.status = newStatus;
         s.countdown = newCd;
@@ -320,7 +425,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       }
     }
     // Update header countdown
-    const active = this.sessions.find(s => s.status === 'OPEN' || s.status === 'LOCKED');
+    const active = this.sessions.find((s) => s.status === 'OPEN' || s.status === 'LOCKED');
     if (active) {
       this.currentCode = active.code;
       this.currentDisplay = displayCode(active.code);
@@ -342,16 +447,28 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     if (!code || code.length !== 12) return null;
     try {
       return Date.UTC(
-        +code.slice(0,4), +code.slice(4,6)-1, +code.slice(6,8),
-        +code.slice(8,10), +code.slice(10,12)
+        +code.slice(0, 4),
+        +code.slice(4, 6) - 1,
+        +code.slice(6, 8),
+        +code.slice(8, 10),
+        +code.slice(10, 12),
       );
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
   private nowUtc(): number {
     const d = new Date();
-    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
-      d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+    return Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+      d.getUTCMilliseconds(),
+    );
   }
 
   buildSessions() {
@@ -360,19 +477,26 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     if (utc % SESSION_MS === 0) r += SESSION_MS;
     const firstResultMs = r - PAST_SLOTS * SESSION_MS;
 
-    let curCode = '', curDisplay = '', curStatus = '', curCountdown = 0, curFound = false;
+    let curCode = '',
+      curDisplay = '',
+      curStatus = '',
+      curCountdown = 0,
+      curFound = false;
     const rows: SessionRow[] = [];
     for (let i = 0; i < TOTAL_ROWS; i++) {
       const resultMs = firstResultMs + i * SESSION_MS;
-      const startMs = resultMs - SESSION_MS;  // its betting window opens here
+      const startMs = resultMs - SESSION_MS; // its betting window opens here
       const lockMs = resultMs - LOCK_MS;
       const sStart = resultMs + RESULT_MS;
       const code = fmtCode(resultMs);
 
       let status: string;
-      if (utc < startMs) status = 'NEXT';        // scheduled — window not open yet
-      else if (utc < lockMs) status = 'OPEN';    // betting + result-editing open
-      else if (utc < resultMs) status = 'LOCKED';// final minute — locked in
+      if (utc < startMs)
+        status = 'NEXT'; // scheduled — window not open yet
+      else if (utc < lockMs)
+        status = 'OPEN'; // betting + result-editing open
+      else if (utc < resultMs)
+        status = 'LOCKED'; // final minute — locked in
       else if (utc < sStart) status = 'RESULTING';
       else status = 'SETTLED';
 
@@ -382,13 +506,17 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       const res = this.results.get(code) ?? (plan ? deriveDraw(plan.d1, plan.d2, plan.d3) : undefined);
       const settled = this.results.has(code);
       const hasResult = !!res;
-      const cd = status === 'OPEN' ? lockMs - utc : status === 'LOCKED' ? resultMs - utc
-        : status === 'NEXT' ? startMs - utc : 0;
+      const cd =
+        status === 'OPEN' ? lockMs - utc : status === 'LOCKED' ? resultMs - utc : status === 'NEXT' ? startMs - utc : 0;
       const agg = this.betAgg.get(code);
 
       // The "current" session = first active (OPEN/LOCKED) row, i.e. the live one.
       if (!curFound && (status === 'OPEN' || status === 'LOCKED')) {
-        curCode = code; curDisplay = displayCode(code); curStatus = status; curCountdown = cd; curFound = true;
+        curCode = code;
+        curDisplay = displayCode(code);
+        curStatus = status;
+        curCountdown = cd;
+        curFound = true;
       }
 
       rows.push({
@@ -398,11 +526,17 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
         wib: toWIB(code),
         status,
         countdown: cd,
-        d1: res?.d1 ?? 0, d2: res?.d2 ?? 0, d3: res?.d3 ?? 0, total: res?.total ?? 0,
-        bs: res?.bs ?? '', oe: res?.oe ?? '',
+        d1: res?.d1 ?? 0,
+        d2: res?.d2 ?? 0,
+        d3: res?.d3 ?? 0,
+        total: res?.total ?? 0,
+        bs: res?.bs ?? '',
+        oe: res?.oe ?? '',
         betCount: agg?.count ?? 0,
         totalStake: agg?.stake ?? 0,
-        settled, hasResult, editable,
+        settled,
+        hasResult,
+        editable,
       });
     }
     this.sessions = rows;
@@ -421,7 +555,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     const lastBoundary = Math.floor(utc / SESSION_MS) * SESSION_MS;
     for (let k = 0; k < SWEEP_SLOTS; k++) {
       const resultMs = lastBoundary - k * SESSION_MS;
-      if (utc < resultMs) continue;            // result time not reached
+      if (utc < resultMs) continue; // result time not reached
       const code = fmtCode(resultMs);
       if (this.results.has(code) || this.inflight.has(code)) continue;
       this.settle(code);
@@ -442,14 +576,15 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     this.filling.add(code);
     this.planned.set(code, d); // optimistic; loadPlanned merges DB over local
     this.pendingPlanWrites.add(code);
-    this.admin.setPlanned(code, d.d1, d.d2, d.d3)
+    this.admin
+      .setPlanned(code, d.d1, d.d2, d.d3)
       .then(() => this.pendingPlanWrites.delete(code))
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         this.pendingPlanWrites.delete(code);
         // fillPlan failed
         if (!this.fillPlanErrorNotified.has(code)) {
           this.fillPlanErrorNotified.add(code);
-          this.notification.error('Plan save failed', `Session ${code}: ${(err?.message || String(err)).slice(0, 60)}`);
+          this.notification.error('Plan save failed', `Session ${code}: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`);
         }
       });
   }
@@ -470,14 +605,15 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     this.buildSessions();
     this.cdr.markForCheck();
     this.pendingPlanWrites.add(code);
-    this.admin.setPlanned(code, rolled.d1, rolled.d2, rolled.d3)
+    this.admin
+      .setPlanned(code, rolled.d1, rolled.d2, rolled.d3)
       .then(() => this.pendingPlanWrites.delete(code))
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         this.pendingPlanWrites.delete(code);
         // overrideCategory failed
         if (!this.overrideErrorNotified.has(code)) {
           this.overrideErrorNotified.add(code);
-          this.notification.error('Override failed', `Session ${code}: ${(err?.message || String(err)).slice(0, 60)}`);
+          this.notification.error('Override failed', `Session ${code}: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`);
         }
       });
   }
@@ -493,7 +629,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadPlanned() {
     try {
-      const rows = await this.admin.getPlanned();
+      const rows = await this.admin.getPlanned() as unknown as PlannedRow[];
       // Merge DB over local so optimistic writes that haven't landed yet survive.
       // BUT don't overwrite codes that have a write still in-flight.
       const map = new Map(this.planned);
@@ -505,12 +641,12 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       this.planLoaded = true;
       this.planLoadAttempts = 0;
       this.dbErrorShown = false;
-    } catch (err: any) {
+    } catch (err: unknown) {
       this.planLoadAttempts++;
       // ROOT-CAUSE FIX: never block the engine forever because of a DB error.
       // The engine must always generate local draws so the admin UI stays alive.
       this.planLoaded = true;
-      const msg = err?.message || String(err);
+      const msg = err instanceof Error ? err.message : String(err);
       // loadPlanned failed
       // Show a toast once so the admin knows the DB is unreachable.
       if (!this.dbErrorShown && this.planLoadAttempts <= 3) {
@@ -533,16 +669,17 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     const d1 = plan?.d1 ?? randDigit();
     const d2 = plan?.d2 ?? randDigit();
     const d3 = plan?.d3 ?? randDigit();
-    this.admin.settleSession(code, d1, d2, d3)
+    this.admin
+      .settleSession(code, d1, d2, d3)
       .then(() => this.loadResults())
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         // settle failed
         // Only notify once per batch of failures to avoid toast spam.
         if (!this.dbErrorShown) {
           this.dbErrorShown = true;
           this.notification.error(
             'Settlement failed',
-            `Session ${code} could not be settled: ${(err?.message || String(err)).slice(0, 80)}`,
+            `Session ${code} could not be settled: ${(err instanceof Error ? err.message : String(err)).slice(0, 80)}`,
           );
         }
       })
@@ -551,23 +688,27 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadResults() {
     try {
-      const rows = await this.admin.getKingResults(200);
+      const rows = await this.admin.getKingResults(200) as unknown as KingResultRow[];
       const map = new Map<string, DrawResult>();
       for (const r of rows) {
         map.set(r.session_code, {
-          d1: r.d1, d2: r.d2, d3: r.d3, total: r.total,
-          bs: r.big_small, oe: r.odd_even,
+          d1: r.d1,
+          d2: r.d2,
+          d3: r.d3,
+          total: r.total,
+          bs: r.big_small,
+          oe: r.odd_even,
         });
       }
       this.results = map;
       this.lastResult = rows.length ? Number(rows[0].total) : this.lastResult;
-    } catch (err: any) {
+    } catch (err: unknown) {
       // loadResults failed
       if (!this.dbErrorShown) {
         this.dbErrorShown = true;
         this.notification.error(
           '3D King result sync failed',
-          `Could not load settled results: ${(err?.message || String(err)).slice(0, 80)}`,
+          `Could not load settled results: ${(err instanceof Error ? err.message : String(err)).slice(0, 80)}`,
         );
       }
     }
@@ -575,21 +716,25 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadBets() {
     try {
-      const bets = await this.admin.getBets(2000);
+      const bets = await this.admin.getBets(2000) as unknown as BetRow[];
       const agg = new Map<string, { count: number; stake: number }>();
       for (const b of bets) {
         if (!b.session_code) continue;
         const a = agg.get(b.session_code) || { count: 0, stake: 0 };
-        a.count += 1; a.stake += Number(b.stake) || 0;
+        a.count += 1;
+        a.stake += Number(b.stake) || 0;
         agg.set(b.session_code, a);
       }
       this.betAgg = agg;
       this.betsErrorNotified = false;
-    } catch (err: any) {
+    } catch (err: unknown) {
       // loadBets failed
       if (!this.betsErrorNotified) {
         this.betsErrorNotified = true;
-        this.notification.error('Bet sync failed', `Could not load bet aggregates: ${(err?.message || String(err)).slice(0, 60)}`);
+        this.notification.error(
+          'Bet sync failed',
+          `Could not load bet aggregates: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`,
+        );
       }
     }
   }

@@ -1,7 +1,7 @@
-import telebot, psutil, threading, os, subprocess, sys, time, datetime, random
+import telebot, psutil, threading, os, subprocess, sys, time, datetime, random, gc, resource
 from flask import Flask, jsonify, request, abort, make_response
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-import urllib.request, urllib.error, json
+import urllib.request, urllib.error, json, urllib3
 
 TOKEN      = os.environ['TELEGRAM_BOT_TOKEN']  # MUST be set in env
 API_KEY    = os.environ.get('MONITOR_API_KEY', '362745')
@@ -12,6 +12,7 @@ SUPABASE_URL = 'https://dqsmpdetiqsqfnidekik.supabase.co'
 SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxc21wZGV0aXFzcWZuaWRla2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjUyOTMsImV4cCI6MjA5NTY0MTI5M30.e429MImfeQcj3_DMbxkYHKD_5GS0ZwYD8QyZTaD0Lv0'
 
 SESSION_SECS = 300  # 5 minutes, must match Angular SESSION_MS = 300_000
+MEMORY_LIMIT_MB = 400           # Restart if RSS exceeds this
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -20,6 +21,7 @@ app = Flask(__name__)
 
 _settled_cache = set()          # codes we've confirmed settled this run
 _last_settlement_dt = None      # datetime.datetime or None
+_loop_count = 0                 # GC every N iterations
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,13 @@ def is_admin(uid):
 
 def is_allowed_chat(cid):
     return cid == GROUP_ID or cid > 0
+
+def check_memory():
+    """Auto-restart if RSS exceeds limit."""
+    rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+    if rss_mb > MEMORY_LIMIT_MB:
+        print(f'[MEMORY] RSS {rss_mb}MB > {MEMORY_LIMIT_MB}MB — restarting')
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 def supabase_get(table, filters=''):
     url = f'{SUPABASE_URL}/rest/v1/{table}?{filters}'
@@ -182,9 +191,10 @@ def session_boundary(utc_dt: datetime.datetime) -> datetime.datetime:
     return utc_dt.replace(minute=m, second=0, microsecond=0)
 
 def king_engine_loop():
-    global _settled_cache, _last_settlement_dt
+    global _settled_cache, _last_settlement_dt, _loop_count
     print('[ENGINE] King engine started — 24/7 server-side settlement')
     while True:
+        _loop_count += 1
         try:
             now_utc   = datetime.datetime.now(datetime.timezone.utc)
             cur_bound = session_boundary(now_utc)
@@ -229,6 +239,11 @@ def king_engine_loop():
 
             if len(_settled_cache) > 200:
                 _settled_cache = set(sorted(_settled_cache)[-200:])
+
+            # GC + memory check every 30 loops (~5 min)
+            if _loop_count % 30 == 0:
+                gc.collect()
+                check_memory()
 
         except Exception as e:
             print(f'[ENGINE] Loop error: {e}')
@@ -698,7 +713,17 @@ def on_callback(call):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def run_flask():
-    app.run(host='0.0.0.0', port=5000)
+    import socket
+    port = int(os.environ.get('FLASK_PORT', 5000))
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('0.0.0.0', port))
+        sock.close()
+    except OSError as e:
+        print(f'Port {port} unavailable: {e}')
+        return
+    app.run(host='0.0.0.0', port=port, threaded=True, processes=1)
 
 if __name__ == '__main__':
     threading.Thread(target=run_flask, daemon=True).start()

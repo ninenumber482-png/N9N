@@ -6,6 +6,7 @@ import SectionHead from '../components/ui/SectionHead'
 import { useI18n } from '../i18n'
 import { supabase } from '../utils/supabase'
 import { useParams } from 'react-router-dom'
+import { setCsConfig as cacheCsConfig, getCsConfig } from '../utils/csConfigCache'
 
 const inp = 'h-9 w-full rounded border border-[#1f2128] bg-[#0e1117] px-3 text-[12px] text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/60'
 
@@ -28,25 +29,17 @@ export default function SupportPage() {
   const p = (path) => `/c/${clientUuid}${path}`
   const [openFaq, setOpenFaq] = useState(-1)
 
-  const [csConfig, setCsConfig] = useState(null)
+  const [csConfig, setCsConfig] = useState(() => getCsConfig())
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('n9_cs_config')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Date.now() - parsed.ts < 5 * 60 * 1000) {
-          setCsConfig(parsed.data)
-          return
-        }
-      }
-    } catch { /* ignore */ }
+    if (csConfig) return
     supabase.from('platform_config').select('key, value').then(({ data, error }) => {
       if (error || !data) return
       const map = {}
       data.forEach(r => map[r.key] = r.value)
+      cacheCsConfig(map)
       setCsConfig(map)
     })
-  }, [])
+  }, [csConfig])
 
   const FAQS = [
     { q: t('support.faq_1_q'), a: t('support.faq_1_a') },

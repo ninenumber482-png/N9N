@@ -1,26 +1,25 @@
 <nav
   [ngClass]="menuService.showSideBar ? 'w-[210px] xl:w-[280px]' : 'w-[70px]'"
-  class="bg-background hidden h-full flex-col justify-between pt-3 transition-all duration-300 lg:flex">
+  class="bg-sidebar hidden h-full flex-col justify-between pt-3 transition-all duration-300 lg:flex border-r border-sidebar-border">
   <div class="flex-1 min-h-0 overflow-hidden">
     <!-- Logo -->
     <div
       [ngClass]="menuService.showSideBar ? 'justify-between' : 'justify-center'"
-      class="mx-4 mb-2 flex h-9 items-center">
+      class="mx-4 mb-4 flex h-10 items-center">
       @if (menuService.showSideBar) {
-        <div class="flex items-center">
-          <a
-            (click)="toggleSidebar()"
-            class="bg-primary flex cursor-pointer items-center justify-center rounded-sm p-2 focus:outline-hidden focus:ring-1">
+        <div class="flex items-center gap-2.5">
+          <div class="bg-primary flex items-center justify-center rounded-lg p-2 shadow-sm shadow-primary/20">
             <svg-icon src="assets/icons/logo.svg"> </svg-icon>
-          </a>
-          <b class="text-foreground ps-2 ml-1 grow text-sm font-bold">
-            NUMBER9
-          </b>
+          </div>
+          <div>
+            <b class="text-sidebar-foreground block text-sm font-bold leading-tight">NUMBER9</b>
+            <span class="text-sidebar-foreground/40 text-[9px] font-medium tracking-wider uppercase">Control Panel</span>
+          </div>
         </div>
       }
       <button
         (click)="toggleSidebar()"
-        class="text-muted-foreground/50 hover:text-muted-foreground flex items-center justify-center rounded-md p-2 transition-all duration-200 focus:outline-hidden"
+        class="text-sidebar-foreground/30 hover:text-sidebar-foreground flex items-center justify-center rounded-lg p-1.5 transition-all duration-200 hover:bg-sidebar-hover focus:outline-hidden"
         [ngClass]="{ 'rotate-180': !menuService.showSideBar }">
         <svg-icon src="assets/icons/heroicons/solid/chevron-double-left.svg"> </svg-icon>
       </button>
@@ -28,22 +27,22 @@
 
     <!-- Menu Items -->
     <div
-      class="scrollbar-thumb--sm scrollbar-track-rounded scrollbar-thin scrollbar-track-transparent scrollbar-thumb-card h-full overflow-auto px-4">
+      class="h-full overflow-auto px-3">
       <app-sidebar-menu></app-sidebar-menu>
     </div>
   </div>
 
-  <div class="mx-4 my-4 space-y-1">
-    <!-- Version -->
-    <div class="group flex h-9 cursor-pointer items-center justify-start p-2">
-      <svg-icon
-        src="assets/icons/heroicons/outline/information-circle.svg"
-        [svgClass]="'h-5 w-5 text-muted-foreground/50'">
-      </svg-icon>
-
-      <div class="ml-3 truncate text-[10px] font-semibold tracking-wide focus:outline-hidden">
-        <span class="text-muted-foreground/50">NUMBER9</span>
+  <div class="mx-3 my-3 rounded-lg bg-sidebar-hover p-2.5">
+    <div class="flex items-center gap-2.5">
+      <div class="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-accent text-sidebar-accent-foreground">
+        <svg-icon src="assets/icons/heroicons/outline/information-circle.svg" [svgClass]="'h-4 w-4'"></svg-icon>
       </div>
+      @if (menuService.showSideBar) {
+        <div class="min-w-0 flex-1">
+          <p class="text-sidebar-foreground/60 truncate text-[10px] font-medium">System D v1.0</p>
+          <p class="text-sidebar-foreground/30 truncate text-[9px]">Connected</p>
+        </div>
+      }
     </div>
   </div>
 </nav>

@@ -1,15 +1,8 @@
-/* eslint-disable no-empty */
-
-/* ============================================================
-   WALLET + TRANSACTIONS + TURNOVER + DEPOSIT LOCK
-   100% SUPABASE SOURCE OF TRUTH — NO LOCALSTORAGE DEPENDENCY
-   ============================================================ */
-
-import { supabase, realtimeEnabled } from "../utils/supabase";
+import { supabase } from "../utils/supabase";
 import { apiSelect, apiSelectAll, apiRpc, apiInvoke } from "../utils/api";
 import { DEPOSIT_LOCK_MS } from "../constants";
 
-
+const _warn = (msg, e) => { if (import.meta.env.DEV) console.warn('[wallet]', msg, e); };
 
 /* ---------- platform accounts ---------- */
 export async function fetchPlatformAccounts() {
@@ -29,7 +22,8 @@ export async function fetchPlatformAccounts() {
         note: a.instructions || '',
       }));
     }
-  } catch {
+  } catch (e) {
+    _warn('fetchPlatformAccounts failed', e);
   }
   return [];
 }
@@ -51,7 +45,8 @@ export async function fetchWalletBalance(userId) {
         totalTurnover: Number(data.total_turnover ?? 0),
       };
     }
-  } catch {
+  } catch (e) {
+    _warn('fetchWalletBalance failed', e);
   }
   return { main: 0, bonus: 0, totalDeposited: 0, totalWithdrawn: 0, totalTurnover: 0 };
 }
@@ -88,7 +83,8 @@ export async function checkWithdrawEligibility(userId) {
     const achieved = outstanding.reduce((s, r) => s + Number(r.turnover_applied), 0);
     const remaining = Math.max(0, required - achieved);
     return { isUnlocked: remaining <= 0, required, achieved, remaining };
-  } catch {
+  } catch (e) {
+    _warn('checkWithdrawEligibility failed', e);
     return { isUnlocked: false, required: 0, achieved: 0, remaining: 0 };
   }
 }
@@ -127,7 +123,8 @@ async function uploadProof(userUuid, base64DataUrl) {
   try {
     const data = await apiInvoke('upload-proof', { dataUrl: base64DataUrl, kind: 'deposit' });
     return data?.url || null;
-  } catch {
+  } catch (e) {
+    _warn('uploadProof failed', e);
     return null;
   }
 }
@@ -168,9 +165,6 @@ export async function requestWithdraw(params) {
   }
 }
 
-/* ── Realtime subscriptions ───────────────────────────────────────────────── */
-let _realtimeChannel = null;
-
 /* ── Supabase-based data fetchers ────────────────────────────────────────── */
 
 export async function fetchUserBank(userId) {
@@ -185,7 +179,9 @@ export async function fetchUserBank(userId) {
       bankAccountNumber: data.bank_account_number || '',
       bankAccountName: data.bank_account_name || '',
     };
-  } catch {}
+  } catch (e) {
+    _warn('fetchUserBank failed', e);
+  }
   return { bankName: '', bankAccountNumber: '', bankAccountName: '' };
 }
 
@@ -211,7 +207,8 @@ export async function fetchTurnoverSummary(userId) {
     const remaining = Math.max(0, required - achieved);
     const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
     return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
-  } catch {
+  } catch (e) {
+    _warn('fetchTurnoverSummary failed', e);
     return defaultTurnover();
   }
 }
@@ -247,58 +244,10 @@ export async function fetchUserTransactions(userId, limit = 100) {
       };
       return mapped;
     });
-  } catch {}
+  } catch (e) {
+    _warn('fetchUserTransactions failed', e);
+  }
   return [];
-}
-
-export async function subscribeWalletRealtime(userUuid, onWalletUpdate, onTxUpdate) {
-  if (!realtimeEnabled) return;
-  if (_realtimeChannel) {
-    supabase.removeChannel(_realtimeChannel);
-    _realtimeChannel = null;
-  }
-  try {
-    _realtimeChannel = supabase
-      .channel(`wallet_rt_${userUuid}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'wallet',
-        filter: `user_id=eq.${userUuid}`,
-      }, payload => {
-        const w = payload.new;
-        const main = Number(w.balance_main ?? 0);
-        const bonus = Number(w.balance_bonus ?? 0);
-        onWalletUpdate?.(main, bonus);
-      })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'transactions',
-        filter: `user_id=eq.${userUuid}`,
-      }, payload => {
-        const tx = payload.new;
-        onTxUpdate?.(tx);
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'transactions',
-        filter: `user_id=eq.${userUuid}`,
-      }, payload => {
-        const tx = payload.new;
-        onTxUpdate?.(tx);
-      })
-      .subscribe();
-  } catch {
-  }
-}
-
-export function unsubscribeWalletRealtime() {
-  if (_realtimeChannel) {
-    supabase.removeChannel(_realtimeChannel);
-    _realtimeChannel = null;
-  }
 }
 
 

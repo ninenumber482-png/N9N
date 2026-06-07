@@ -1,17 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { SecurityService } from 'src/app/core/services/security.service';
 import { SupabaseService, SupabaseLoginResult } from 'src/app/core/services/supabase.service';
 
 export interface User {
+  id?: string;
   username: string;
   isAuthenticated: boolean;
-  token?: string;
   timestamp?: number;
   role?: string;
   unlimited?: boolean;
   email?: string;
+  token?: string;
 }
 
 export interface Credentials {
@@ -23,16 +24,14 @@ export interface Credentials {
   providedIn: 'root',
 })
 export class AuthService {
+  private router = inject(Router);
+  private securityService = inject(SecurityService);
+  private supabaseService = inject(SupabaseService);
+
   private userSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   public user$ = this.userSubject.asObservable();
 
-  private readonly TOKEN_EXPIRY = 3600000; // 1 hour
-
-  constructor(
-    private router: Router,
-    private securityService: SecurityService,
-    private supabaseService: SupabaseService,
-  ) {}
+  private readonly TOKEN_EXPIRY = 3600000;
 
   async authenticate(credentials: Credentials): Promise<SupabaseLoginResult | null> {
     if (!this.securityService.checkRateLimit('login_attempt', 5)) {
@@ -62,16 +61,14 @@ export class AuthService {
     return result;
   }
 
-  login(user: User, serverToken?: string): void {
-    const token = serverToken || this.securityService.generateToken();
-    const userWithToken: User = {
+  login(user: User): void {
+    const userWithTimestamp: User = {
       ...user,
-      token,
       timestamp: Date.now(),
     };
 
-    localStorage.setItem('auth_user', JSON.stringify(userWithToken));
-    this.userSubject.next(userWithToken);
+    localStorage.setItem('auth_user', JSON.stringify(userWithTimestamp));
+    this.userSubject.next(userWithTimestamp);
   }
 
   logout(): void {
@@ -84,6 +81,12 @@ export class AuthService {
   isAuthenticated(): boolean {
     const user = this.getStoredUser();
     if (!user) return false;
+
+    // Old sessions without a token are invalid (migrated to cookie+token auth)
+    if (!user.token) {
+      this.logout();
+      return false;
+    }
 
     if (user.timestamp && this.securityService.isTokenExpired(user.timestamp, this.TOKEN_EXPIRY)) {
       this.logout();

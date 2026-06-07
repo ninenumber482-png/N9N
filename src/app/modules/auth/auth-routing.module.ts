@@ -4,6 +4,7 @@ import { AuthComponent } from 'src/app/modules/auth/auth.component';
 import { SignInComponent } from 'src/app/modules/auth/pages/sign-in/sign-in.component';
 import { NewPasswordComponent } from 'src/app/modules/auth/pages/new-password/new-password.component';
 import { ForbiddenComponent } from 'src/app/modules/auth/pages/forbidden/forbidden.component';
+import { ForgotPasswordComponent } from 'src/app/modules/auth/pages/forgot-password/forgot-password.component';
 
 const routes: Routes = [
   {
@@ -13,6 +14,7 @@ const routes: Routes = [
       { path: '', redirectTo: 'sign-in', pathMatch: 'full' },
       { path: 'sign-in', component: SignInComponent },
       { path: 'new-password', component: NewPasswordComponent },
+      { path: 'forgot-password', component: ForgotPasswordComponent },
       { path: 'forbidden', component: ForbiddenComponent },
       { path: '**', redirectTo: 'sign-in', pathMatch: 'full' },
     ],

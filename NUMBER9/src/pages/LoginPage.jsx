@@ -31,7 +31,7 @@ export default function LoginPage() {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => { if (auth) navigate(toDashboard(), { replace: true }) }, [auth, navigate])
+  useEffect(() => { if (auth?.id) navigate(toDashboard(), { replace: true }) }, [auth, navigate, toDashboard])
 
   if (maintenance) {
     return (

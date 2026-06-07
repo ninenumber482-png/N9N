@@ -1,42 +1,35 @@
-// Direct Supabase REST API calls with x-user-token header.
-// Bypasses supabase-js client which may not pass custom headers properly in v2.107+.
+// Direct Supabase REST API calls.
+// Uses httpOnly cookies for authentication (credentials: 'include').
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_KEY;
 const TIMEOUT_MS = 15000;
 
 function getHeaders() {
-  let token = null;
-  try {
-    const raw = localStorage.getItem('n9_auth');
-    if (raw) token = JSON.parse(raw)?.token || null;
-  } catch { /* ignore */ }
-  return {
+  const headers = {
     'Content-Type': 'application/json',
     apikey: key,
     Authorization: `Bearer ${key}`,
-    ...(token ? { 'x-user-token': token } : {}),
   };
+  try {
+    const authRaw = localStorage.getItem('n9_auth');
+    if (authRaw) {
+      const auth = JSON.parse(authRaw);
+      if (auth.token) headers['x-user-token'] = auth.token;
+    }
+  } catch {}
+  return headers;
 }
 
 async function apiFetch(url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
+    const res = await fetch(url, { ...options, credentials: 'include', signal: controller.signal });
     if (res.status === 401 || res.status === 403) {
-      // Session expired or unauthorized — check if user should be redirected to login
-      try {
-        const raw = localStorage.getItem('n9_auth');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.token) {
-            localStorage.removeItem('n9_auth');
-            window.location.href = '/login';
-            return null;
-          }
-        }
-      } catch { /* ignore */ }
+      localStorage.removeItem('n9_auth');
+      window.location.href = '/login';
+      return null;
     }
     return res;
   } finally {

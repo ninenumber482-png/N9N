@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { toast } from 'ngx-sonner';
 import { ToastService } from 'src/app/core/services/toast.service';
 
@@ -6,7 +6,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
   providedIn: 'root',
 })
 export class NotificationService {
-  constructor(private toastService: ToastService) {}
+  private toastService = inject(ToastService);
 
   success(message: string, description?: string): void {
     // Show both ngx-sonner toast AND badge notification
@@ -51,10 +51,7 @@ export class NotificationService {
     });
   }
 
-  promise<T>(
-    promise: Promise<T>,
-    messages: { loading: string; success: string; error: string },
-  ): void {
+  promise<T>(promise: Promise<T>, messages: { loading: string; success: string; error: string }): void {
     toast.promise(promise, {
       loading: messages.loading,
       success: messages.success,

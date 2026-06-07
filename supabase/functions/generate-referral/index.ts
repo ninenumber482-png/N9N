@@ -5,6 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Credentials": "true",
 };
 
 serve(async (req) => {
@@ -14,11 +15,18 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseServiceKey = Deno.env.get("N9_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verify caller is admin via session token (not user-supplied created_by)
-    const token = req.headers.get("x-session-token") || "";
+    const token = (() => {
+      const headerToken = req.headers.get('x-session-token') || '';
+      if (headerToken) return headerToken;
+      const cookieHeader = req.headers.get('cookie') || '';
+      const match = cookieHeader.match(/n9_session=([^;]+)/);
+      if (match) return match[1];
+      return '';
+    })();
     if (!token) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),

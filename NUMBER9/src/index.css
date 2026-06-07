@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./styles/db.css";
 
 /* Global in-button loading spinner (see lib/buttonLoading.js).
    The label is hidden via transparent color; the spinner inherits the

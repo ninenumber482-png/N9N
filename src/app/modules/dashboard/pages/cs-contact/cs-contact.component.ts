@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
@@ -8,16 +9,21 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 @Component({
   selector: 'app-cs-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AngularSvgIconModule],
   template: `
-    <div class="space-y-6">
+    <div data-page="cs-contact" class="space-y-6">
       <div>
-        <h1 class="max-sm:text-lg sm:text-2xl font-extrabold text-foreground">Customer Service Contact</h1>
-        <p class="text-muted-foreground mt-1 text-sm">Manage the WhatsApp customer service widget displayed on the platform</p>
+        <div class="flex items-center gap-3">
+          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/user-circle.svg" svgClass="h-4 w-4"></svg-icon></div>
+          <div>
+            <h1 class="max-sm:text-lg sm:text-xl font-bold tracking-tight text-foreground">Customer Service Contact</h1>
+        <p class="text-muted-foreground mt-0.5 text-xs">
+          Manage the WhatsApp customer service widget displayed on the platform
+        </p>
       </div>
-
-      @if (loading) {
-        <div class="bg-card border-border rounded-xl border p-5 shadow-sm">
+        </div>
+      </div>@if (loading) {
+        <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #A78BFA;">
           <div class="animate-pulse space-y-4">
             <div class="h-8 rounded-lg bg-zinc-700/20 w-48"></div>
             <div class="h-10 rounded-lg bg-zinc-700/20 w-full"></div>
@@ -28,45 +34,64 @@ import { NotificationService } from 'src/app/core/services/notification.service'
       } @else {
         <div class="grid gap-6 lg:grid-cols-2">
           <!-- Settings Form -->
-          <div class="bg-card border-border rounded-xl border p-5 shadow-sm">
+          <div class="bg-card border-border rounded-lg p-5">
             <h3 class="text-sm font-bold text-foreground mb-4">WhatsApp Configuration</h3>
 
             <div class="space-y-4">
               <div>
-                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1">WhatsApp Number</label>
-                <input [(ngModel)]="form.wa_number" placeholder="e.g. 13088802313 (without +)"
+                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1"
+                  >WhatsApp Number <span class="text-destructive">*</span></label
+                >
+                <input
+                  [(ngModel)]="form.wa_number"
+                  placeholder="e.g. 13088802313 (without +)"
                   class="bg-muted border-border text-foreground rounded-lg border px-3 py-2.5 text-sm outline-none w-full focus:border-primary/50 transition-colors" />
                 <p class="text-muted-foreground text-[10px] mt-1">International format, no leading + or spaces</p>
               </div>
 
               <div>
-                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1">Display Name</label>
-                <input [(ngModel)]="form.display_name" placeholder="e.g. Customer Service"
+                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1"
+                  >Display Name</label
+                >
+                <input
+                  [(ngModel)]="form.display_name"
+                  placeholder="e.g. Customer Service"
                   class="bg-muted border-border text-foreground rounded-lg border px-3 py-2.5 text-sm outline-none w-full focus:border-primary/50 transition-colors" />
               </div>
 
               <div>
-                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1">Welcome Message</label>
-                <input [(ngModel)]="form.welcome_message" placeholder="e.g. Hello, I need assistance."
+                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1"
+                  >Welcome Message</label
+                >
+                <input
+                  [(ngModel)]="form.welcome_message"
+                  placeholder="e.g. Hello, I need assistance."
                   class="bg-muted border-border text-foreground rounded-lg border px-3 py-2.5 text-sm outline-none w-full focus:border-primary/50 transition-colors" />
               </div>
 
               <div>
-                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1">Avatar URL</label>
-                <input [(ngModel)]="form.avatar_url" placeholder="e.g. https://example.com/avatar.png"
+                <label class="text-muted-foreground text-xs font-semibold uppercase tracking-wider block mb-1"
+                  >Avatar URL</label
+                >
+                <input
+                  [(ngModel)]="form.avatar_url"
+                  placeholder="e.g. https://example.com/avatar.png"
                   class="bg-muted border-border text-foreground rounded-lg border px-3 py-2.5 text-sm outline-none w-full focus:border-primary/50 transition-colors" />
               </div>
 
               <div class="flex items-center gap-3">
                 <label class="relative inline-flex cursor-pointer items-center">
                   <input type="checkbox" [(ngModel)]="form.active" class="peer sr-only" />
-                  <div class="peer h-6 w-11 rounded-full bg-zinc-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full"></div>
+                  <div
+                    class="peer h-6 w-11 rounded-full bg-zinc-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full"></div>
                 </label>
                 <span class="text-sm font-semibold text-foreground">Widget Active</span>
               </div>
 
               <div class="flex gap-3 pt-2">
-                <button (click)="save()" [disabled]="saving"
+                <button
+                  (click)="save()"
+                  [disabled]="saving"
                   class="bg-primary text-primary-foreground hover:bg-primary/80 rounded-lg px-5 py-2.5 text-sm font-bold transition-colors disabled:opacity-50 flex items-center gap-2">
                   @if (saving) {
                     <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -82,7 +107,7 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 
           <!-- Preview + Info -->
           <div class="space-y-4">
-            <div class="bg-card border-border rounded-xl border p-5 shadow-sm">
+            <div class="bg-card border-border rounded-lg p-5">
               <h3 class="text-sm font-bold text-foreground mb-4">Widget Preview</h3>
               @if (form.active && form.wa_number) {
                 <div class="flex flex-col items-center gap-3 py-6">
@@ -92,13 +117,21 @@ import { NotificationService } from 'src/app/core/services/notification.service'
                         <img [src]="form.avatar_url" class="h-16 w-16 rounded-full object-cover" />
                       } @else {
                         <svg class="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       }
                     </div>
-                    <div class="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-card flex items-center justify-center">
+                    <div
+                      class="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-card flex items-center justify-center">
                       <svg class="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        <path
+                          fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd" />
                       </svg>
                     </div>
                   </div>
@@ -106,31 +139,47 @@ import { NotificationService } from 'src/app/core/services/notification.service'
                     <p class="text-sm font-bold text-foreground">{{ form.display_name || 'Customer Service' }}</p>
                     <p class="text-xs text-muted-foreground mt-1">Online</p>
                   </div>
-                  <a [href]="'https://wa.me/' + form.wa_number + '?text=' + encodeURI(form.welcome_message)" target="_blank"
+                  <a
+                    [href]="'https://wa.me/' + form.wa_number + '?text=' + encodeURI(form.welcome_message)"
+                    target="_blank"
                     class="bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-6 py-2.5 text-sm font-bold transition-colors flex items-center gap-2">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      <path
+                        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                     </svg>
                     Chat via WhatsApp
                   </a>
                 </div>
               } @else {
                 <div class="py-8 text-center">
-                  <svg class="h-12 w-12 mx-auto text-zinc-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  <svg
+                    class="h-12 w-12 mx-auto text-zinc-600 mb-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  <p class="text-muted-foreground text-sm">Activate the widget and set a WhatsApp number to see a preview</p>
+                  <p class="text-muted-foreground text-sm">
+                    Activate the widget and set a WhatsApp number to see a preview
+                  </p>
                 </div>
               }
             </div>
 
-            <div class="bg-card border-border rounded-xl border p-5 shadow-sm">
+            <div class="bg-card border-border rounded-lg p-5">
               <h3 class="text-sm font-bold text-foreground mb-2">Quick Links</h3>
               <div class="space-y-2">
-                <a [href]="'https://wa.me/' + form.wa_number" target="_blank"
+                <a
+                  [href]="'https://wa.me/' + form.wa_number"
+                  target="_blank"
                   class="flex items-center gap-3 rounded-lg border border-border p-3 text-sm font-semibold text-foreground hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-colors">
                   <svg class="h-5 w-5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    <path
+                      d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                   </svg>
                   Open WhatsApp Direct
                 </a>
@@ -139,11 +188,16 @@ import { NotificationService } from 'src/app/core/services/notification.service'
           </div>
         </div>
       }
-    </div>,
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CsContactComponent implements OnInit {
+  private admin = inject(AdminService);
+  private auth = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
+  private notification = inject(NotificationService);
+
   form = {
     wa_number: '',
     display_name: 'Customer Service',
@@ -154,16 +208,13 @@ export class CsContactComponent implements OnInit {
   loading = true;
   saving = false;
 
-  constructor(
-    private admin: AdminService,
-    private auth: AuthService,
-    private cdr: ChangeDetectorRef,
-    private notification: NotificationService,
-  ) {}
+  ngOnInit() {
+    this.load();
+  }
 
-  ngOnInit() { this.load(); }
-
-  encodeURI(s: string) { return encodeURIComponent(s); }
+  encodeURI(s: string) {
+    return encodeURIComponent(s);
+  }
 
   async load() {
     this.loading = true;
@@ -176,8 +227,8 @@ export class CsContactComponent implements OnInit {
       this.form.welcome_message = map['cs_welcome_message'] || 'Hello, I need assistance.';
       this.form.avatar_url = map['cs_avatar_url'] || '';
       this.form.active = map['cs_active'] === 'true';
-    } catch (e: any) {
-      this.notification.error('Load failed', e?.message || 'Could not load CS config.');
+    } catch (e: unknown) {
+      this.notification.error('Load failed', e instanceof Error ? e.message : 'Could not load CS config.');
     }
     this.loading = false;
     this.cdr.markForCheck();
@@ -187,7 +238,6 @@ export class CsContactComponent implements OnInit {
     this.saving = true;
     try {
       const admin = this.auth.getCurrentUser();
-      const now = new Date().toISOString();
       const entries = [
         { key: 'cs_wa_number', value: this.form.wa_number },
         { key: 'cs_display_name', value: this.form.display_name },
@@ -204,11 +254,18 @@ export class CsContactComponent implements OnInit {
         }
       }
       if (admin) {
-        await this.admin.logAction(admin.username, 'UPDATE_CS_CONTACT', 'platform_config', '', '', JSON.stringify(this.form));
+        await this.admin.logAction(
+          admin.username,
+          'UPDATE_CS_CONTACT',
+          'platform_config',
+          '',
+          '',
+          JSON.stringify(this.form),
+        );
       }
       this.notification.success('Saved', 'CS contact settings updated successfully.');
-    } catch (e: any) {
-      this.notification.error('Save failed', e?.message || 'Could not save CS config.');
+    } catch (e: unknown) {
+      this.notification.error('Save failed', e instanceof Error ? e.message : 'Could not save CS config.');
     }
     this.saving = false;
     this.cdr.markForCheck();

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -16,31 +16,32 @@ import { SecurityService } from 'src/app/core/services/security.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewPasswordComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly securityService = inject(SecurityService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   form!: FormGroup;
   submitted = false;
   passwordVisible = false;
   confirmVisible = false;
   isLoading = false;
 
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly router: Router,
-    private readonly authService: AuthService,
-    private readonly notificationService: NotificationService,
-    private readonly securityService: SecurityService,
-    private readonly cdr: ChangeDetectorRef,
-  ) {}
-
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/auth/sign-in']);
       return;
     }
-    this.form = this.fb.group({
-      oldPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', Validators.required],
-    }, { validators: this.passwordMatchValidator });
+    this.form = this.fb.group(
+      {
+        oldPassword: ['', Validators.required],
+        newPassword: ['', [Validators.required, Validators.minLength(8)]],
+        confirmPassword: ['', Validators.required],
+      },
+      { validators: this.passwordMatchValidator },
+    );
   }
 
   get f() {
@@ -63,7 +64,6 @@ export class NewPasswordComponent implements OnInit {
     this.submitted = true;
     if (this.form.invalid) return;
 
-    const { oldPassword, newPassword } = this.form.value;
     const user = this.authService.getCurrentUser();
     if (!user) {
       this.notificationService.error('Session expired');
@@ -75,11 +75,11 @@ export class NewPasswordComponent implements OnInit {
     try {
       // TODO: Wire to backend password change endpoint when available
       // For now, simulate success after validation
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 800));
       this.notificationService.success('Password updated successfully');
       this.router.navigate(['/overview']);
-    } catch (e: any) {
-      this.notificationService.error(e?.message || 'Failed to update password');
+    } catch (e: unknown) {
+      this.notificationService.error(e instanceof Error ? e.message : 'Failed to update password');
     }
     this.isLoading = false;
     this.cdr.markForCheck();

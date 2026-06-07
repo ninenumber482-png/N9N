@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../store/useStore'
 import { Icon } from '../components/icons'
 import { fetchUserTransactions } from '../store/wallet'
-import { listBids, refreshKingData } from '../store/king'
+import { listBids } from '../store/king'
 import { useI18n } from '../i18n'
 import PageShell from '../components/ui/PageShell'
 import { SkeletonCard, Shimmer } from '../components/ui/Skeleton'
@@ -18,7 +18,6 @@ export default function DashboardPage() {
   const ab = useStore(s => s.availableBalance)
   const lb = useStore(s => s.lockedBalance)
   const _rtTick = useStore(s => s._rtTick)
-  const fetchBalances = useStore(s => s.fetchBalances)
   const p = (path) => `/c/${clientUuid}${path}`
   const who = auth?.displayName || auth?.username || 'User'
   const { t } = useI18n()
@@ -28,13 +27,11 @@ export default function DashboardPage() {
   const [userTxs, setUserTxs] = useState([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    Promise.all([
-      fetchBalances(),
-      auth?.id ? fetchUserTransactions(auth.id, 10) : Promise.resolve([]),
-    ]).then(([, txs]) => {
+    if (!auth?.id) { setUserTxs([]); setLoading(false); return }
+    fetchUserTransactions(auth.id, 10).then(txs => {
       setUserTxs(txs || [])
     }).catch(() => {}).finally(() => setLoading(false))
-  }, [fetchBalances, auth?.id, _rtTick])
+  }, [auth?.id, _rtTick])
 
   const acts = useMemo(() => {
     if (!auth?.username) return []
@@ -59,7 +56,7 @@ export default function DashboardPage() {
       status: b.result,
     }))
     return [...txActs, ...bidActs].sort((a, b) => b.ts - a.ts).slice(0, 5)
-  }, [userTxs, auth?.id, t])
+  }, [userTxs, auth?.username, t])
 
   if (loading) {
     return (

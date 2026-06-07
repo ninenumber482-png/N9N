@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -7,49 +8,76 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
-import { ConfirmDialogComponent } from 'src/app/shared/components/confirm-dialog/confirm-dialog.component';
-import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { DialogModule } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { PaginatorModule } from 'primeng/paginator';
+import { InputTextModule } from 'primeng/inputtext';
+
+interface WithdrawTx {
+  id: string;
+  user?: { username: string; display_name?: string };
+  amount: number;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
+  withdrawal_fee?: number;
+  status: string;
+  created_at: string;
+  processed_at?: string;
+  notes?: string;
+}
+
+interface PageEvent {
+  first: number;
+  rows: number;
+}
 
 @Component({
   selector: 'app-withdrawals',
   standalone: true,
-  imports: [CommonModule, FormsModule, WibDatePipe, ConfirmDialogComponent, PaginationComponent],
+  imports: [CommonModule, FormsModule,
+    AngularSvgIconModule, WibDatePipe, SelectModule, TagModule, DialogModule, ConfirmDialogModule, PaginatorModule, InputTextModule],
+  providers: [ConfirmationService],
   template: `
-    <div class="space-y-6">
+    <div data-page="withdrawals" class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="max-sm:text-lg sm:text-2xl font-extrabold text-foreground">Withdrawals</h1>
-          <p class="text-muted-foreground mt-1 text-sm">Proses permintaan penarikan dana pengguna</p>
+          <div class="flex items-center gap-3">
+          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/arrow-long-right.svg" svgClass="h-4 w-4"></svg-icon></div>
+          <div>
+            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Withdrawals</h1>
+          <p class="text-muted-foreground mt-0.5 text-xs">Proses permintaan penarikan dana pengguna</p>
         </div>
-        <button (click)="load()" class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-3 py-2 text-xs font-semibold transition-colors">
-          ↻ Refresh
+          </div>
+        </div><button (click)="load()" class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors">
+          <svg class="h-3.5 w-3.5 inline mr-1" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
         </button>
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <input [(ngModel)]="search" (ngModelChange)="applyFilter()" placeholder="Cari username, nominal…"
-          class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-48" />
-        <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()" class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs font-semibold outline-none">
-          <option value="">Semua Status</option>
-          <option value="PENDING">Pending</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="FAILED">Failed</option>
-        </select>
+        <input pInputText [(ngModel)]="search" (ngModelChange)="applyFilter()" placeholder="Cari username, nominal…"
+          class="!w-48 !text-xs !py-1.5 !px-2.5" />
+        <p-select [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()" [options]="statusOptions" optionLabel="label" optionValue="value"
+          placeholder="Semua Status" class="w-36" styleClass="!text-xs !w-full" />
       </div>
 
       @if (error) {
-        <div class="bg-red-400/10 border border-red-400/30 rounded-xl p-4 text-sm text-red-400">
-          <p class="font-bold">Gagal memuat withdrawal</p>
-          <p class="text-xs mt-1">{{ error }}</p>
-          <button (click)="load()" class="mt-2 bg-card border border-border rounded-lg px-3 py-1.5 text-xs font-semibold">Coba Lagi</button>
+        <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
+          <p class="font-medium text-foreground">Gagal memuat withdrawal</p>
+          <p class="mt-0.5">{{ error }}</p>
+          <button (click)="load()" class="mt-2 bg-card border-border rounded border px-2.5 py-1 text-xs font-medium">Coba Lagi</button>
         </div>
       }
 
       @if (loading) {
-        <div class="text-muted-foreground py-12 text-center">Memuat withdrawal...</div>
+        <div class="text-muted-foreground py-12 text-center text-xs">Memuat withdrawal...</div>
       }
 
-      <div class="bg-card border-border rounded-xl border shadow-sm" [class.hidden]="loading">
+      <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
           <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
             <thead>
@@ -66,97 +94,82 @@ import { PaginationComponent } from 'src/app/shared/components/pagination/pagina
             </thead>
             <tbody>
               @for (tx of displayItems; track tx.id) {
-                <tr class="border-border hover:bg-muted/30 border-b text-xs transition-colors cursor-pointer"
+                <tr class="border-border hover:bg-accent/30 border-b text-xs transition-colors cursor-pointer"
                     (click)="toggleDetail(tx)">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono text-[10px] text-muted-foreground">{{ tx.id.slice(0,8).toUpperCase() }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                     <p class="font-semibold text-foreground">{{ tx.user?.display_name || tx.user?.username || '—' }}</p>
                     <p class="text-muted-foreground text-[10px]">&#64;{{ tx.user?.username }}</p>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-bold text-amber-400">-{{ tx.amount | number:'1.0-0' }} P</td>
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-bold text-muted-foreground">-{{ tx.amount | number:'1.0-0' }} P</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                     <p class="text-foreground font-semibold text-[10px]">{{ tx.bank_name || '-' }}</p>
                     <p class="text-muted-foreground text-[9px]">{{ tx.bank_account_number }} · {{ tx.bank_account_name }}</p>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[10px] text-red-400">{{ tx.withdrawal_fee ? (tx.withdrawal_fee | number:'1.0-0') + ' P' : '-' }}</td>
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[10px] text-muted-foreground">{{ tx.withdrawal_fee ? (tx.withdrawal_fee | number:'1.0-0') + ' P' : '-' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <span [class]="'rounded px-2 py-0.5 text-[10px] font-bold ' + statusClass(tx.status)">{{ tx.status }}</span>
+                    <p-tag [value]="tx.status" [severity]="txStatusSeverity(tx.status)" />
                   </td>
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap text-[10px]">{{ tx.created_at | wibDate:'short' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       @if (tx.status === 'PENDING') {
-                        <button (click)="confirmAction('approve', tx)" [disabled]="processing.has(tx.id)"
-                          class="bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">
-                          {{ processing.has(tx.id) ? '...' : '✓ Proses' }}
+                        <button (click)="confirmApprove(tx)" [disabled]="processing.has(tx.id)"
+                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[10px] font-medium">
+                          {{ processing.has(tx.id) ? '...' : 'Proses' }}
                         </button>
-                        <button (click)="confirmAction('reject', tx)" [disabled]="processing.has(tx.id)"
-                          class="bg-red-400/10 text-red-400 hover:bg-red-400/20 disabled:opacity-50 rounded px-2 py-1 text-[10px] font-bold">✕ Tolak</button>
+                        <button (click)="confirmReject(tx)" [disabled]="processing.has(tx.id)"
+                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[10px] font-medium">Tolak</button>
                       }
                     </div>
                   </td>
                 </tr>
-
               } @empty {
-                <tr><td colspan="8" class="text-muted-foreground px-4 py-12 text-center">Tidak ada withdrawal ditemukan.</td></tr>
+                <tr><td colspan="8" class="text-muted-foreground px-4 py-12 text-center text-xs">Tidak ada withdrawal ditemukan.</td></tr>
               }
             </tbody>
           </table>
         </div>
-        <app-pagination [currentPage]="currentPage" [totalItems]="filtered.length" (pageChange)="onPageChange($event)"></app-pagination>
+        <p-paginator (onPageChange)="onPageChange($event)" [first]="(currentPage - 1) * pageSize" [rows]="pageSize" [totalRecords]="filtered.length" [showCurrentPageReport]="true" currentPageReportTemplate="" />
       </div>
-    </div>
 
-    <!-- Detail Modal -->
-    @if (selectedTx) {
-      <div class="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-black/60" (click)="closeDetail()">
-        <div class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between px-5 py-4 border-b border-border">
-            <h3 class="text-sm font-extrabold text-foreground">Detail Penarikan</h3>
-            <button (click)="closeDetail()" class="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
-          </div>
-          <div class="px-5 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
-            <div class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-              <p class="text-xs"><span class="text-muted-foreground">ID: </span><span class="font-mono text-[10px]">{{ selectedTx.id }}</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-amber-400">{{ selectedTx.amount | number:'1.2-2' }} P</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">Fee: </span><span class="text-red-400">{{ selectedTx.withdrawal_fee | number:'1.2-2' }} P</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">Status: </span><span [class]="'rounded px-2 py-0.5 text-[10px] font-bold ' + statusClass(selectedTx.status)">{{ selectedTx.status }}</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">Bank: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_name }}</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">No. Rek: </span><span class="font-mono font-semibold text-foreground">{{ selectedTx.bank_account_number }}</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">Nama: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_account_name }}</span></p>
-              <p class="text-xs"><span class="text-muted-foreground">Diminta: </span><span>{{ selectedTx.created_at | wibDate:'medium' }}</span></p>
-              @if (selectedTx.processed_at) {
-                <p class="text-xs"><span class="text-muted-foreground">Diproses: </span><span>{{ selectedTx.processed_at | wibDate:'medium' }}</span></p>
+      <p-dialog [(visible)]="detailVisible" [modal]="true" [style]="{ width: '500px' }"
+        [draggable]="false" [resizable]="false" [closable]="true" (onHide)="closeDetail()">
+        <ng-template pTemplate="header">
+          <span class="text-sm font-bold text-foreground">Detail Penarikan</span>
+        </ng-template>
+        <ng-template pTemplate="content">
+          @if (selectedTx) {
+            <div class="space-y-3">
+              <div class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                <p class="text-xs"><span class="text-muted-foreground">ID: </span><span class="font-mono text-[10px] text-foreground">{{ selectedTx.id }}</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-muted-foreground">{{ selectedTx.amount | number:'1.2-2' }} P</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Fee: </span><span class="text-muted-foreground">{{ selectedTx.withdrawal_fee | number:'1.2-2' }} P</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Status: </span><p-tag [value]="selectedTx.status" [severity]="txStatusSeverity(selectedTx.status)" /></p>
+                <p class="text-xs"><span class="text-muted-foreground">Bank: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_name }}</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">No. Rek: </span><span class="font-mono font-semibold text-foreground">{{ selectedTx.bank_account_number }}</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Nama: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_account_name }}</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Diminta: </span><span class="text-foreground">{{ selectedTx.created_at | wibDate:'medium' }}</span></p>
+                @if (selectedTx.processed_at) {
+                  <p class="text-xs"><span class="text-muted-foreground">Diproses: </span><span class="text-foreground">{{ selectedTx.processed_at | wibDate:'medium' }}</span></p>
+                }
+              </div>
+              @if (selectedTx.notes) {
+                <p class="text-xs border-t border-border pt-2"><span class="text-muted-foreground">Catatan: </span><span class="text-muted-foreground">{{ selectedTx.notes }}</span></p>
               }
             </div>
-            @if (selectedTx.notes) {
-              <p class="text-xs border-t border-border pt-2"><span class="text-muted-foreground">Catatan: </span><span class="text-red-400">{{ selectedTx.notes }}</span></p>
-            }
-          </div>
-        </div>
-      </div>
-    }
+          }
+        </ng-template>
+      </p-dialog>
 
-    <app-confirm-dialog
-      [open]="confirm.open"
-      [title]="confirm.title"
-      [message]="confirm.message"
-      [icon]="confirm.icon"
-      [iconBg]="confirm.iconBg"
-      [confirmText]="confirm.confirmText"
-      [cancelText]="confirm.cancelText"
-      [loading]="confirm.loading"
-      [loadingText]="confirm.loadingText"
-      [confirmVariant]="confirm.confirmVariant"
-      (onConfirm)="executeConfirm()"
-      (onCancel)="cancelDialog()"
-    />,
+      <p-confirmdialog />
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WithdrawalsComponent implements OnInit, OnDestroy {
-  all: any[] = [];
-  filtered: any[] = [];
+  all: WithdrawTx[] = [];
+  filtered: WithdrawTx[] = [];
   currentPage = 1;
   pageSize = 20;
   get displayItems() {
@@ -165,30 +178,29 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
   }
   search = '';
   statusFilter = '';
-  selectedTx: any = null;
+  selectedTx: WithdrawTx | null = null;
+  detailVisible = false;
   loading = false;
   error: string | null = null;
   processing = new Set<string>();
   private destroy$ = new Subject<void>();
 
-  confirm = {
-    open: false, title: '', message: '', icon: '', iconBg: 'bg-primary/10',
-    confirmText: 'Confirm', cancelText: 'Cancel', loading: false,
-    loadingText: 'Processing…', confirmVariant: 'primary' as 'primary' | 'danger' | 'success' | 'warning',
-    action: '', tx: null as any, rejectReason: '',
-  };
+  statusOptions = [
+    { label: 'Semua Status', value: '' },
+    { label: 'Pending', value: 'PENDING' },
+    { label: 'Completed', value: 'COMPLETED' },
+    { label: 'Failed', value: 'FAILED' },
+  ];
 
-  constructor(
-    private admin: AdminService,
-    private auth: AuthService,
-    private notification: NotificationService,
-    private cdr: ChangeDetectorRef,
-    private realtime: RealtimeService,
-  ) {}
+  private admin = inject(AdminService);
+  private auth = inject(AuthService);
+  private notification = inject(NotificationService);
+  private cdr = inject(ChangeDetectorRef);
+  private realtime = inject(RealtimeService);
+  private confirmation = inject(ConfirmationService);
 
   ngOnInit() {
     this.load();
-    // Hapus polling timer — realtime subscription sudah cukup
     this.realtime.subscribeTransactions();
     this.realtime.transactions$
       .pipe(takeUntil(this.destroy$))
@@ -210,9 +222,10 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
     try {
       this.all = await this.admin.getWithdrawals();
       this.applyFilter();
-    } catch (e: any) {
-      this.error = e?.message || 'Unknown error';
-      this.notification.error('Load gagal', e.message);
+    } catch (e: unknown) {
+      const message = (e instanceof Error ? e.message : String(e)) || 'Unknown error';
+      this.error = message;
+      this.notification.error('Load gagal', message);
     } finally {
       this.loading = false;
       this.cdr.markForCheck();
@@ -224,9 +237,7 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
       this.all = await this.admin.getWithdrawals();
       this.applyFilter();
       this.cdr.markForCheck();
-    } catch (e: any) {
-      // silent refresh failed
-    }
+    } catch { /* silent */ }
   }
 
   applyFilter() {
@@ -240,60 +251,34 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
     this.filtered = r;
   }
 
-  toggleDetail(tx: any) { this.selectedTx = this.selectedTx?.id === tx.id ? null : tx; }
-
-  closeDetail() { this.selectedTx = null; }
-
-  onPageChange(p: number) { this.currentPage = p; }
-
-  cancelDialog() {
-    this.confirm.open = false;
-    this.confirm.rejectReason = '';
-    this.cdr.markForCheck();
+  toggleDetail(tx: WithdrawTx) {
+    this.selectedTx = this.selectedTx?.id === tx.id ? null : tx;
+    this.detailVisible = !!this.selectedTx;
   }
 
-  confirmAction(action: string, tx: any) {
-    this.confirm.loading = false;
-    this.confirm.tx = tx;
-    this.confirm.action = action;
-    this.confirm.rejectReason = '';
-    if (action === 'approve') {
-      this.confirm.title = 'Proses Withdrawal';
-      this.confirm.message = `Proses withdrawal -${tx.amount.toLocaleString()} P untuk ${tx.bank_account_name} (${tx.bank_name} ${tx.bank_account_number})? Dana akan dikirim ke rekening tujuan.`;
-      this.confirm.icon = '✓';
-      this.confirm.iconBg = 'bg-emerald-400/10';
-      this.confirm.confirmText = 'Proses';
-      this.confirm.confirmVariant = 'success';
-    } else {
-      this.confirm.title = 'Tolak Withdrawal';
-      this.confirm.message = `Tolak withdrawal -${tx.amount.toLocaleString()} P dari ${tx.user?.username || tx.id.slice(0,8)}? Dana akan dikembalikan ke wallet.`;
-      this.confirm.icon = '✕';
-      this.confirm.iconBg = 'bg-red-400/10';
-      this.confirm.confirmText = 'Tolak';
-      this.confirm.confirmVariant = 'danger';
-    }
-    this.confirm.open = true;
-    this.cdr.markForCheck();
+  closeDetail() { this.selectedTx = null; this.detailVisible = false; }
+
+  confirmApprove(tx: WithdrawTx) {
+    this.confirmation.confirm({
+      message: `Proses withdrawal -${tx.amount.toLocaleString()} P untuk ${tx.bank_account_name} (${tx.bank_name} ${tx.bank_account_number})? Dana akan dikirim ke rekening tujuan.`,
+      header: 'Proses Withdrawal',
+      rejectLabel: 'Batal',
+      acceptLabel: 'Proses',
+      accept: () => this.approve(tx),
+    });
   }
 
-  async executeConfirm() {
-    const action = this.confirm.action;
-    const tx = this.confirm.tx;
-    if (!tx) return;
-    this.confirm.loading = true;
-    this.cdr.markForCheck();
-    try {
-      if (action === 'approve') await this.approve(tx);
-      else await this.confirmReject(tx);
-    } finally {
-      this.confirm.open = false;
-      this.confirm.loading = false;
-      this.confirm.tx = null;
-      this.cdr.markForCheck();
-    }
+  confirmReject(tx: WithdrawTx) {
+    this.confirmation.confirm({
+      message: `Tolak withdrawal -${tx.amount.toLocaleString()} P dari ${tx.user?.username || tx.id.slice(0,8)}? Dana akan dikembalikan ke wallet.`,
+      header: 'Tolak Withdrawal',
+      rejectLabel: 'Batal',
+      acceptLabel: 'Tolak',
+      accept: () => this.reject(tx),
+    });
   }
 
-  async approve(tx: any) {
+  async approve(tx: WithdrawTx) {
     if (this.processing.has(tx.id)) return;
     this.processing.add(tx.id);
     this.cdr.markForCheck();
@@ -305,8 +290,9 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
       tx.processed_at = new Date().toISOString();
       this.applyFilter();
       this.notification.success('Withdrawal diproses', `${tx.amount.toLocaleString()} P → ${tx.bank_account_name}`);
-    } catch (e: any) {
-      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(message);
       this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Gagal', err.message);
     } finally {
       this.processing.delete(tx.id);
@@ -314,20 +300,21 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
     }
   }
 
-  async confirmReject(tx: any) {
+  async reject(tx: WithdrawTx) {
     if (this.processing.has(tx.id)) return;
     this.processing.add(tx.id);
     this.cdr.markForCheck();
     const admin = this.auth.getCurrentUser();
     if (!admin) { this.processing.delete(tx.id); return; }
     try {
-      await this.admin.rejectWithdrawal(tx.id, admin.username, this.confirm.rejectReason || undefined);
+      await this.admin.rejectWithdrawal(tx.id, admin.username, 'Ditolak oleh admin');
       tx.status = 'FAILED';
-      tx.notes = this.confirm.rejectReason || 'Rejected by admin';
+      tx.notes = 'Ditolak oleh admin';
       this.applyFilter();
       this.notification.success('Withdrawal ditolak', tx.user?.username || tx.id);
-    } catch (e: any) {
-      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(message);
       this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Gagal', err.message);
     } finally {
       this.processing.delete(tx.id);
@@ -335,8 +322,10 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
     }
   }
 
-  statusClass(s: string) {
-    const m: Record<string, string> = { COMPLETED: 'bg-emerald-400/10 text-emerald-400', PENDING: 'bg-amber-400/10 text-amber-400', FAILED: 'bg-red-400/10 text-red-400' };
-    return m[s] || 'bg-zinc-400/10 text-zinc-400';
+  onPageChange(event: PageEvent) { this.currentPage = Math.floor(event.first / event.rows) + 1; this.pageSize = event.rows; }
+
+  txStatusSeverity(s: string) {
+    const m: Record<string, string> = { COMPLETED: 'success', PENDING: 'warn', FAILED: 'danger' };
+    return m[s] || 'secondary';
   }
 }

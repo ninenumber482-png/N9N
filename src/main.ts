@@ -8,6 +8,8 @@ import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthInterceptor } from './app/core/interceptor/auth.interceptor';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeuix/themes/aura';
 
 if (environment.production && typeof window !== 'undefined') {
   selfXSSWarning();
@@ -20,6 +22,14 @@ bootstrapApplication(AppComponent, {
     provideZonelessChangeDetection(),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    providePrimeNG({
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: '.dark',
+        },
+      },
+    }),
   ],
 }).catch((err) => console.error(err));
 

@@ -6,6 +6,8 @@ import { OverviewComponent } from 'src/app/modules/dashboard/pages/overview/over
 import { UsersComponent } from 'src/app/modules/dashboard/pages/users/users.component';
 import { TransactionsComponent } from 'src/app/modules/dashboard/pages/transactions/transactions.component';
 import { WalletAdminComponent } from 'src/app/modules/dashboard/pages/wallet-admin/wallet-admin.component';
+import { WalletsComponent } from 'src/app/modules/dashboard/pages/wallets/wallets.component';
+import { TurnoverComponent } from 'src/app/modules/dashboard/pages/turnover/turnover.component';
 import { BetsComponent } from 'src/app/modules/dashboard/pages/bets/bets.component';
 import { KycComponent } from 'src/app/modules/dashboard/pages/kyc/kyc.component';
 import { AuditComponent } from 'src/app/modules/dashboard/pages/audit/audit.component';
@@ -18,9 +20,10 @@ import { SecurityCenterComponent } from 'src/app/modules/dashboard/pages/securit
 import { RiskManagementComponent } from 'src/app/modules/dashboard/pages/risk-management/risk-management.component';
 import { SystemComponent } from 'src/app/modules/dashboard/pages/system/system.component';
 import { MemberPasswordComponent } from 'src/app/modules/dashboard/pages/member-password/member-password.component';
-import { MemberBalanceComponent } from 'src/app/modules/dashboard/pages/member-balance/member-balance.component';
 import { IpWhitelistComponent } from 'src/app/modules/dashboard/pages/ip-whitelist/ip-whitelist.component';
 import { PopupBannerComponent } from 'src/app/modules/dashboard/pages/popup-banner/popup-banner.component';
+import { RoleManagementComponent } from 'src/app/modules/dashboard/pages/role-management/role-management.component';
+import { NotFoundComponent } from 'src/app/shared/components/not-found/not-found.component';
 
 const routes: Routes = [
   {
@@ -32,11 +35,11 @@ const routes: Routes = [
       { path: 'gaming', component: GamingComponent },
       { path: 'users', component: UsersComponent },
       { path: 'transactions', component: TransactionsComponent },
-      { path: 'wallet', component: WalletAdminComponent },
-      { path: 'deposits', redirectTo: 'wallet', pathMatch: 'full' },
-      { path: 'withdrawals', redirectTo: 'wallet', pathMatch: 'full' },
-      { path: 'turnover', redirectTo: 'wallet', pathMatch: 'full' },
-      { path: 'wallets', redirectTo: 'wallet', pathMatch: 'full' },
+      { path: 'wallet', component: WalletAdminComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'wallets', component: WalletsComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'turnover', component: TurnoverComponent },
+      { path: 'deposits', component: WalletAdminComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'withdrawals', component: WalletAdminComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'bets', component: BetsComponent },
       { path: 'kyc', component: KycComponent },
       { path: 'audit', component: AuditComponent },
@@ -47,11 +50,13 @@ const routes: Routes = [
       { path: 'security-center', component: SecurityCenterComponent },
       { path: 'risk-management', component: RiskManagementComponent },
       { path: 'system', component: SystemComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
-      { path: 'member-password', component: MemberPasswordComponent },
-      { path: 'member-balance', component: MemberBalanceComponent },
-      { path: 'ip-whitelist', component: IpWhitelistComponent },
-      { path: 'popup-banner', component: PopupBannerComponent },
-      { path: '**', redirectTo: 'overview' },
+      { path: 'member-password', component: MemberPasswordComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'member-balance', redirectTo: 'wallets', pathMatch: 'full' },
+      { path: 'ip-whitelist', component: IpWhitelistComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'popup-banner', component: PopupBannerComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
+      { path: 'role-management', component: RoleManagementComponent, canActivate: [RoleGuard], data: { requiredRole: 'superadmin' } },
+      { path: '404', component: NotFoundComponent },
+      { path: '**', component: NotFoundComponent },
     ],
   },
 ];

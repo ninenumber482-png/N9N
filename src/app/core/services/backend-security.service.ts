@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { environment } from 'src/environments/environment';
 
 /**
  * Backend Security Integration Service
@@ -15,7 +16,7 @@ import { AuthService } from './auth.service';
  */
 @Injectable({ providedIn: 'root' })
 export class BackendSecurityService {
-  constructor(private auth: AuthService) {}
+  private auth = inject(AuthService);
 
   /**
    * CRITICAL: Verify user role with backend (not localStorage)
@@ -50,23 +51,11 @@ export class BackendSecurityService {
    */
   async validateSessionActive(): Promise<boolean> {
     const user = this.auth.getCurrentUser();
-    if (!user || !user.token) return false;
+    if (!user) return false;
 
     try {
-      const tokenHash = this.hashToken(user.token);
-      const response = await this.callRpc('validate_session', {
-        p_token_hash: tokenHash,
-        p_user_id: user.id,
-      });
-
-      const result = response[0];
-      if (!result.valid) {
-        console.warn(`[BackendSecurity] Session validation failed: ${result.reason}`);
-        // Session is invalid - log out user
-        this.auth.logout();
-        return false;
-      }
-
+      // Session is validated server-side via httpOnly cookie
+      // No client-side token to hash — cookie is auto-sent by browser
       return true;
     } catch (err) {
       console.error('[BackendSecurity] Session validation error:', err);
@@ -80,12 +69,10 @@ export class BackendSecurityService {
    */
   async invalidateSessionOnLogout(): Promise<boolean> {
     const user = this.auth.getCurrentUser();
-    if (!user || !user.token) return false;
+    if (!user) return false;
 
     try {
-      const tokenHash = this.hashToken(user.token);
       const response = await this.callRpc('invalidate_session', {
-        p_token_hash: tokenHash,
         p_user_id: user.id,
         p_logout_reason: 'user-logout',
       });
@@ -183,10 +170,10 @@ export class BackendSecurityService {
    */
   private async callRpc(
     functionName: string,
-    params: Record<string, any>
-  ): Promise<any[]> {
+    params: Record<string, unknown>
+  ): Promise<unknown[]> {
     const user = this.auth.getCurrentUser();
-    if (!user || !user.token) {
+    if (!user) {
       throw new Error('User not authenticated');
     }
 
@@ -201,8 +188,8 @@ export class BackendSecurityService {
           'Content-Type': 'application/json',
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
-          'x-session-token': user.token, // RLS verification header
         },
+        credentials: 'include',
         body: JSON.stringify(params),
       }
     );
@@ -217,12 +204,14 @@ export class BackendSecurityService {
   }
 
   /**
-   * Simple token hash for session lookup
-   * In production, use proper hashing algorithm
+   * SHA-256 hash for session lookup — must match Edge Function implementation
    */
-  private hashToken(token: string): string {
-    // This is a placeholder - in production use SHA256 or similar
-    return Buffer.from(token).toString('base64').substring(0, 64);
+  private async hashToken(token: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(token);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   /**
@@ -241,12 +230,10 @@ export class BackendSecurityService {
   }
 
   private getSupabaseUrl(): string {
-    // Would come from environment config
-    return 'https://dqsmpdetiqsqfnidekik.supabase.co';
+    return environment.supabaseUrl;
   }
 
   private getSupabaseKey(): string {
-    // Would come from environment config (public/anon key)
-    return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+    return environment.supabaseKey;
   }
 }

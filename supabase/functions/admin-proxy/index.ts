@@ -26,6 +26,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
+  "Access-Control-Allow-Credentials": "true",
   "Access-Control-Expose-Headers": "content-range",
 };
 
@@ -33,11 +34,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
-  // Read session token from custom header (not Authorization, which
-  // Supabase gateway validates as JWT). The Angular admin app sends
-  // the real session token here; Authorization carries the anon key
-  // to satisfy the gateway.
-  const token = req.headers.get('x-session-token') || ''
+  // Read session token: header first (fresh from login), cookie fallback
+  const token = (() => {
+    const headerToken = req.headers.get('x-session-token') || '';
+    if (headerToken) return headerToken;
+    const cookieHeader = req.headers.get('cookie') || '';
+    const match = cookieHeader.match(/n9_session=([^;]+)/);
+    if (match) return match[1];
+    return '';
+  })()
 
   if (!token) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -68,33 +73,60 @@ Deno.serve(async (req) => {
 
   // Validate session by token_hash (compare hashed token)
   const tokenHash = await sha256(token);
+  const debugHash = tokenHash.slice(0, 8);
 
-  const { data: session, error: sessionErr } = await supabase
-    .from('sessions')
-    .select('id, user_id, logged_out_at, last_activity, expires_at')
-    .eq('token_hash', tokenHash)
-    .single()
+  let sessionUserId: string | null = null;
+  let sessionId: string | null = null;
 
-  if (sessionErr || !session || session.logged_out_at) {
-    return new Response(JSON.stringify({ error: 'Invalid or expired session' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+  // 1) Try users.session_token first
+  const { data: userRow, error: userErr } = await supabase
+    .from('users')
+    .select('id, session_expires_at')
+    .eq('session_token', tokenHash)
+    .maybeSingle()
+
+  if (!userErr && userRow) {
+    if (userRow.session_expires_at && new Date(userRow.session_expires_at) < new Date()) {
+      return new Response(JSON.stringify({ error: 'Session expired', debug: { hash: debugHash, source: 'user' } }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      })
+    }
+    sessionUserId = userRow.id;
+    sessionId = 'users-table';
+  } else {
+    // 2) Fallback: try sessions table
+    const { data: session, error: sessionErr } = await supabase
+      .from('sessions')
+      .select('id, user_id, logged_out_at, last_activity, expires_at')
+      .eq('token_hash', tokenHash)
+      .maybeSingle()
+
+    if (!sessionErr && session && !session.logged_out_at) {
+      const now = new Date()
+      if (session.expires_at && new Date(session.expires_at) < now) {
+        return new Response(JSON.stringify({ error: 'Session expired', debug: { hash: debugHash, source: 'session' } }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        })
+      }
+      sessionUserId = session.user_id;
+      sessionId = session.id;
+      await supabase
+        .from('sessions')
+        .update({ last_activity: now.toISOString() })
+        .eq('id', session.id)
+    } else {
+      // Both failed — debug output
+      const { count: totalSessions } = await supabase.from('sessions').select('id', { count: 'exact', head: true })
+      const { count: totalUsers } = await supabase.from('users').select('id', { count: 'exact', head: true })
+      console.error(`[ADMIN-PROXY] BOTH LOOKUPS FAILED — hash:${debugHash} totalUsers:${totalUsers} totalSessions:${totalSessions} userErr:${userErr?.message || 'none'} sessionErr:${sessionErr?.message || 'none'}`)
+      return new Response(JSON.stringify({ error: 'Invalid or expired session', debug: { hash: debugHash, totalUsers, totalSessions, userErr: userErr?.message, sessionErr: sessionErr?.message } }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      })
+    }
   }
-
-  const now = new Date()
-  if (session.expires_at && new Date(session.expires_at) < now) {
-    return new Response(JSON.stringify({ error: 'Session expired' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
-  }
-
-  // Sliding window: update last_activity
-  await supabase
-    .from('sessions')
-    .update({ last_activity: now.toISOString() })
-    .eq('id', session.id)
 
   let payload
   try {
@@ -127,13 +159,31 @@ Deno.serve(async (req) => {
     '/users', '/wallet', '/transactions', '/bets',
     '/king_results', '/king_planned', '/platform_accounts',
     '/kyc_documents', '/referrals', '/sessions',
-    '/audit_log', '/rpc/',
+    '/audit_log',
     '/platform_config', '/security_alerts', '/failed_logins',
     '/transaction_audit', '/user_audit', '/metrics',
     '/deposit_locks', '/engine_status',
     '/popup_banners',
+    '/n9_users',
   ]
-  const pathAllowed = ALLOWED_PREFIXES.some(p => path.startsWith(p))
+
+  // Explicit RPC allowlist — no wildcard
+  const ALLOWED_RPCS = new Set([
+    'approve_deposit', 'reject_deposit',
+    'approve_withdrawal', 'reject_withdrawal',
+    'approve_user', 'reject_user',
+    'admin_reset_password', 'admin_adjust_balance',
+    'settle_session', 'generate_referral_code', 'log_admin_action',
+    'get_kyc_documents_admin_list', 'get_kyc_documents_by_user', 'get_kyc_document_url',
+    'count_kyc_by_status',
+    'add_allowed_ip', 'remove_allowed_ip', 'is_ip_allowed', 'get_allowed_ips',
+    'create_popup_banner', 'update_popup_banner', 'delete_popup_banner',
+    'check_rate_limit', 'log_failed_login',
+    'get_platform_stats',
+  ])
+
+  const pathAllowed = ALLOWED_PREFIXES.some(p => path.startsWith(p)) ||
+    (path.startsWith('/rpc/') && ALLOWED_RPCS.has(path.replace('/rpc/', '').split('?')[0]))
   if (!pathAllowed) {
     return new Response(JSON.stringify({ error: 'Access denied: path not allowed' }), {
       status: 403,
@@ -165,12 +215,12 @@ Deno.serve(async (req) => {
   // Audit log (fire-and-forget)
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('host') || ''
   supabase.from('audit_log').insert({
-    admin_id: session.user_id,
+    admin_id: sessionUserId,
     action: `${method} ${path.slice(0, 80)}`,
     resource_type: 'admin_proxy',
-    resource_id: session.id,
+    resource_id: sessionId || 'cookie-fallback',
     ip_address: ip,
-    created_at: now.toISOString(),
+    created_at: new Date().toISOString(),
   }).then(({ error }) => {
     if (error) console.warn('[admin-proxy] audit log failed:', error.message)
   })

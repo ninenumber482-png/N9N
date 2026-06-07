@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Icon } from './icons';
 import { useI18n } from '../i18n';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { getCsConfig } from '../utils/csConfigCache';
 
 export default function LoginForm({
   username,
@@ -19,21 +20,17 @@ export default function LoginForm({
   const hasError = !!error;
   const isDisabled = loading || !username || !password;
 
-  const [csHref, setCsHref] = useState(null);
-  useEffect(() => {
+  const [csHref] = useState(() => {
     try {
-      const raw = localStorage.getItem('n9_cs_config');
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Date.now() - parsed.ts > 5 * 60 * 1000) return;
-      const cfg = parsed.data;
-      if (cfg.cs_active === 'true' && cfg.cs_wa_number) {
+      const cfg = getCsConfig();
+      if (cfg?.cs_active === 'true' && cfg.cs_wa_number) {
         const wa = cfg.cs_wa_number.replace(/[^\d]/g, '');
         const msg = encodeURIComponent(cfg.cs_welcome_message || 'Hello, I need assistance.');
-        setCsHref(`https://wa.me/${wa}?text=${msg}`);
+        return `https://wa.me/${wa}?text=${msg}`;
       }
     } catch { /* ignore */ }
-  }, []);
+    return null;
+  });
 
   return (
     <div className="relative min-h-screen bg-[#050607] px-4 py-10 overflow-hidden">

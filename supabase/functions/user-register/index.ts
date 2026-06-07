@@ -12,6 +12,7 @@ const ch = (req: Request) => ({
   "Access-Control-Allow-Origin": corsOrigin(req),
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Credentials": "true",
 });
 
 const json = (body: unknown, status = 200, req: Request) =>
@@ -58,6 +59,20 @@ Deno.serve(async (req: Request) => {
       const serviceRoleKey = Deno.env.get('N9_SERVICE_ROLE_KEY')
       if (!supabaseUrl || !serviceRoleKey) return json({ error: 'Server misconfiguration' }, 500, req)
       const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+      // ── Rate limiting for registrations ──
+      if (!data.validateOnly && data.step !== 2 && data.username) {
+        const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
+        const cutoff = new Date(Date.now() - 3600000).toISOString(); // 1 hour
+        const { count } = await supabase
+          .from('users')
+          .select('id', { count: 'exact', head: true })
+          .or(`username.eq.${data.username},email.eq.${data.email || '__none__'}`)
+          .gte('created_at', cutoff);
+        if ((count || 0) >= 3) {
+          return json({ error: 'Too many registration attempts. Please try again later.' }, 429, req);
+        }
+      }
 
       // ── validateOnly: referral preview ──
       if (data.validateOnly) {

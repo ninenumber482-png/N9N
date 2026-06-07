@@ -26,21 +26,28 @@
 
   --shadow-custom: 0px 0px 50px 0px rgb(82 63 105 / 15%);
 
-  --color-border: var(--border);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-border: var(--border, #E2E8F0);
+  --color-background: var(--background, #F8FAFC);
+  --color-foreground: var(--foreground, #0F172A);
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary, #2563EB);
+  --color-primary-foreground: var(--primary-foreground, #FFFFFF);
 
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive: var(--destructive, #EF4444);
+  --color-destructive-foreground: var(--destructive-foreground, #FAFAFA);
 
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted, #F1F5F9);
+  --color-muted-foreground: var(--muted-foreground, #64748B);
 
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card, #FFFFFF);
+  --color-card-foreground: var(--card-foreground, #0F172A);
+
+  --color-sidebar: var(--sidebar, #1E293B);
+  --color-sidebar-foreground: var(--sidebar-foreground, #F8FAFC);
+  --color-sidebar-border: var(--sidebar-border, #334155);
+  --color-sidebar-accent: var(--sidebar-accent, #3B82F6);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground, #FFFFFF);
+  --color-sidebar-hover: var(--sidebar-hover, rgba(255,255,255,0.06));
 
   @keyframes wiggle {
 
@@ -156,110 +163,104 @@
   }
 }
 
-@layer base {
-  :root {
-    --background: #FFFFFF;
-    --foreground: #000000;
-    --card: #F8FAFC;
-    --card-foreground: #000000;
-    --primary: #E11D48;
-    --primary-foreground: #FFFFFF;
-    --muted: #E2E8F0;
-    --muted-foreground: #475569;
-    --destructive: #CC0033;
-    --destructive-foreground: #FAFAFA;
-    --border: #E2E8F0;
-  }
+:root {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --destructive: #EF4444;
+  --destructive-foreground: #FAFAFA;
+  --border: #E2E8F0;
 
-  .dark {
-    --background: #0A0A0A;
-    --foreground: #F2F2F2;
-    --card: #121212;
-    --card-foreground: #262626;
-    --muted: #262626;
-    --muted-foreground: #A3A3A3;
-    --border: #262626;
-  }
-
-  :root[data-theme='violet'] {
-    --primary: #6E56CF;
-  }
-
-  .dark[data-theme='violet'] {
-    --background: #060815;
-    --foreground: #F6F8FB;
-    --card: #0B0F1A;
-    --card-foreground: #F6F8FB;
-    --primary-foreground: #F6F8FB;
-    --muted: #232B3D;
-    --muted-foreground: #A1A8BF;
-    --border: #232B3D;
-  }
-
-  :root[data-theme='red'] {
-    --primary: #CC0033;
-  }
-
-  .dark[data-theme='red'] {
-    --primary-foreground: #FFE5E5;
-  }
-
-  :root[data-theme='blue'] {
-    --primary: #2490FF;
-  }
-
-  .dark[data-theme='blue'] {
-    --background: #02080F;
-    --foreground: #F8FAFC;
-    --card: #0B1117;
-    --card-foreground: #F8FAFC;
-    --primary-foreground: #0F1729;
-    --muted: #1E293B;
-    --muted-foreground: #94A3B8;
-    --border: #1E293B;
-  }
-
-  :root[data-theme='orange'] {
-    --primary: #EA580C;
-  }
-
-  .dark[data-theme='orange'] {
-    --background: #0C0A09;
-    --foreground: #FAFAF9;
-    --card: #141110;
-    --card-foreground: #FAFAF9;
-    --primary-foreground: #FAFAF9;
-    --muted: #292524;
-    --muted-foreground: #A8A29E;
-    --border: #292524;
-  }
-
-  :root[data-theme='yellow'] {
-    --primary: #FACC15;
-  }
-
-  .dark[data-theme='yellow'] {
-    --background: #0C0A09;
-    --foreground: #FAFAF9;
-    --card: #141110;
-    --card-foreground: #FAFAF9;
-    --primary: #FACC15;
-    --primary-foreground: #422006;
-    --muted: #292524;
-    --muted-foreground: #A8A29E;
-    --border: #292524;
-  }
-
-  :root[data-theme='green'] {
-    --primary: #22C55E;
-  }
-
-  .dark[data-theme='green'] {
-    --primary: #22C55E;
-    --primary-foreground: #052E16;
-  }
-
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-border: #334155;
+  --sidebar-accent: #3B82F6;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-hover: rgba(255,255,255,0.06);
 }
+
+.dark {
+  --background: #0F172A;
+  --foreground: #F1F5F9;
+  --card: #1E293B;
+  --card-foreground: #334155;
+  --primary: #3B82F6;
+  --primary-foreground: #FFFFFF;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --destructive: #EF4444;
+  --destructive-foreground: #FAFAFA;
+  --border: #334155;
+
+  --sidebar: #0B1120;
+  --sidebar-foreground: #E2E8F0;
+  --sidebar-border: #1E293B;
+  --sidebar-accent: #3B82F6;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-hover: rgba(255,255,255,0.04);
+}
+
+/** ── Dashboard page accents ── **/
+[data-page] .page-header-icon {
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-sm;
+}
+[data-page="overview"] .page-header-icon { @apply bg-blue-500/15 text-blue-600 dark:text-blue-400; }
+[data-page="deposits"] .page-header-icon { @apply bg-emerald-500/15 text-emerald-600 dark:text-emerald-400; }
+[data-page="withdrawals"] .page-header-icon { @apply bg-amber-500/15 text-amber-600 dark:text-amber-400; }
+[data-page="transactions"] .page-header-icon { @apply bg-cyan-500/15 text-cyan-600 dark:text-cyan-400; }
+[data-page="wallets"] .page-header-icon { @apply bg-violet-500/15 text-violet-600 dark:text-violet-400; }
+[data-page="wallet-admin"] .page-header-icon { @apply bg-purple-500/15 text-purple-600 dark:text-purple-400; }
+[data-page="bets"] .page-header-icon { @apply bg-rose-500/15 text-rose-600 dark:text-rose-400; }
+[data-page="gaming"] .page-header-icon { @apply bg-indigo-500/15 text-indigo-600 dark:text-indigo-400; }
+[data-page="3dking"] .page-header-icon { @apply bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400; }
+[data-page="turnover"] .page-header-icon { @apply bg-orange-500/15 text-orange-600 dark:text-orange-400; }
+[data-page="users"] .page-header-icon { @apply bg-sky-500/15 text-sky-600 dark:text-sky-400; }
+[data-page="kyc"] .page-header-icon { @apply bg-teal-500/15 text-teal-600 dark:text-teal-400; }
+[data-page="session-monitor"] .page-header-icon { @apply bg-slate-500/15 text-slate-600 dark:text-slate-400; }
+[data-page="security-center"] .page-header-icon { @apply bg-red-500/15 text-red-600 dark:text-red-400; }
+[data-page="audit"] .page-header-icon { @apply bg-stone-500/15 text-stone-600 dark:text-stone-400; }
+[data-page="risk-management"] .page-header-icon { @apply bg-yellow-500/15 text-yellow-600 dark:text-yellow-400; }
+[data-page="member-balance"] .page-header-icon { @apply bg-lime-500/15 text-lime-600 dark:text-lime-400; }
+[data-page="member-password"] .page-header-icon { @apply bg-pink-500/15 text-pink-600 dark:text-pink-400; }
+[data-page="referrals"] .page-header-icon { @apply bg-emerald-500/15 text-emerald-600 dark:text-emerald-400; }
+[data-page="role-management"] .page-header-icon { @apply bg-blue-500/15 text-blue-600 dark:text-blue-400; }
+[data-page="ip-whitelist"] .page-header-icon { @apply bg-slate-500/15 text-slate-600 dark:text-slate-400; }
+[data-page="system"] .page-header-icon { @apply bg-neutral-500/15 text-neutral-600 dark:text-neutral-400; }
+[data-page="cs-contact"] .page-header-icon { @apply bg-violet-500/15 text-violet-600 dark:text-violet-400; }
+[data-page="popup-banner"] .page-header-icon { @apply bg-amber-500/15 text-amber-600 dark:text-amber-400; }
+
+[data-page] .page-accent-card {
+  @apply border-t-[3px] rounded-lg overflow-hidden;
+}
+[data-page="overview"] .page-accent-card { border-top-color: #3B82F6; }
+[data-page="deposits"] .page-accent-card { border-top-color: #10B981; }
+[data-page="withdrawals"] .page-accent-card { border-top-color: #F59E0B; }
+[data-page="transactions"] .page-accent-card { border-top-color: #06B6D4; }
+[data-page="wallets"] .page-accent-card { border-top-color: #8B5CF6; }
+[data-page="wallet-admin"] .page-accent-card { border-top-color: #A855F7; }
+[data-page="bets"] .page-accent-card { border-top-color: #F43F5E; }
+[data-page="gaming"] .page-accent-card { border-top-color: #6366F1; }
+[data-page="3dking"] .page-accent-card { border-top-color: #D946EF; }
+[data-page="turnover"] .page-accent-card { border-top-color: #F97316; }
+[data-page="users"] .page-accent-card { border-top-color: #0EA5E9; }
+[data-page="kyc"] .page-accent-card { border-top-color: #14B8A6; }
+[data-page="session-monitor"] .page-accent-card { border-top-color: #64748B; }
+[data-page="security-center"] .page-accent-card { border-top-color: #EF4444; }
+[data-page="audit"] .page-accent-card { border-top-color: #78716C; }
+[data-page="risk-management"] .page-accent-card { border-top-color: #EAB308; }
+[data-page="member-balance"] .page-accent-card { border-top-color: #84CC16; }
+[data-page="member-password"] .page-accent-card { border-top-color: #EC4899; }
+[data-page="referrals"] .page-accent-card { border-top-color: #34D399; }
+[data-page="role-management"] .page-accent-card { border-top-color: #60A5FA; }
+[data-page="ip-whitelist"] .page-accent-card { border-top-color: #94A3B8; }
+[data-page="system"] .page-accent-card { border-top-color: #737373; }
+[data-page="cs-contact"] .page-accent-card { border-top-color: #A78BFA; }
+[data-page="popup-banner"] .page-accent-card { border-top-color: #FBBF24; }
 
 /** Scroll bar **/
 @supports selector(::-webkit-scrollbar) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MenuService } from 'src/app/modules/layout/services/menu.service';
 import { NavbarMenuComponent } from 'src/app/modules/layout/components/navbar/navbar-menu/navbar-menu.component';
@@ -17,6 +17,12 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+  private menuService = inject(MenuService);
+  private themeService = inject(ThemeService);
+  authService = inject(AuthService);
+  private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
+
   isDarkMode = false;
   user$ = this.authService.user$;
   currentTime = '';
@@ -25,25 +31,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isMuted = false;
   notifications: ToastMessage[] = [];
   private clockTimer: ReturnType<typeof setInterval> | null = null;
-  private unreadSub: any;
-  private historySub: any;
-
-  constructor(
-    private menuService: MenuService,
-    private themeService: ThemeService,
-    public authService: AuthService,
-    private toastService: ToastService,
-  ) {}
+  private unreadSub: { unsubscribe: () => void } | undefined;
+  private historySub: { unsubscribe: () => void } | undefined;
 
   ngOnInit(): void {
     this.isDarkMode = this.themeService.isDarkMode();
     this.updateClock();
     this.clockTimer = setInterval(() => this.updateClock(), 1000);
-    this.unreadSub = this.toastService.unread$.subscribe(count => {
+    this.unreadSub = this.toastService.unread$.subscribe((count) => {
       this.unreadCount = count;
+      this.cdr.markForCheck();
     });
-    this.historySub = this.toastService.history$.subscribe(list => {
+    this.historySub = this.toastService.history$.subscribe((list) => {
       this.notifications = list;
+      this.cdr.markForCheck();
     });
   }
 

@@ -1,46 +1,91 @@
 <div class="flex h-screen items-center justify-center bg-background px-4">
   <div class="w-full max-w-sm">
-    <div class="mb-8">
-      <h1 class="text-xl font-semibold text-foreground tracking-tight">Admin Login</h1>
-      <p class="text-muted-foreground text-[13px] mt-1">Sign in to the control panel</p>
-    </div>
+    @if (checkingIp) {
+      <div class="text-center">
+        <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-foreground border-r-transparent"></span>
+        <p class="text-muted-foreground text-[13px] mt-2">Verifying access...</p>
+      </div>
+    } @else if (ipBlocked) {
+      <div class="text-center">
+        <div class="text-4xl mb-3">⛔</div>
+        <h1 class="text-xl font-semibold text-foreground tracking-tight">Akses Ditolak</h1>
+        <p class="text-muted-foreground text-[13px] mt-2 leading-relaxed">
+          IP Anda (<span class="font-mono text-foreground font-semibold">{{ blockedIp }}</span>) tidak terdaftar dalam whitelist.
+        </p>
 
-    <form class="space-y-5" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="space-y-4">
-        <div>
-          <label for="username" class="text-[11px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Username</label>
-          <input type="text" id="username" formControlName="username"
-            class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/30 transition-colors"
-            placeholder="Enter username" />
-          @if (submitted && f['username'].errors) {
-            <p class="text-destructive text-[11px] mt-1">Username is required (min 3 characters)</p>
-          }
-        </div>
-
-        <div>
-          <label for="password" class="text-[11px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Password</label>
-          <div class="relative">
-            <input [type]="passwordVisible ? 'text' : 'password'" id="password" formControlName="password"
-              class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/30 transition-colors"
-              placeholder="Enter password" />
-            <button type="button" (click)="togglePasswordVisibility()"
-              class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground text-[11px] transition-colors">
-              {{ passwordVisible ? 'Hide' : 'Show' }}
-            </button>
+        @if (unlockSuccess) {
+          <div class="mt-4 p-3 rounded-lg bg-card border border-border">
+            <p class="text-foreground text-[13px] font-medium">Berhasil! Memuat ulang...</p>
           </div>
-          @if (submitted && f['password'].errors) {
-            <p class="text-destructive text-[11px] mt-1">Password is required</p>
+        } @else {
+          <hr class="border-border my-5">
+          <p class="text-[11px] text-muted-foreground uppercase tracking-wider mb-3">Emergency Whitelist</p>
+          <input type="password" [(ngModel)]="unlockKey" [ngModelOptions]="{standalone: true}"
+            placeholder="Gateway Key"
+            class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/50 transition-colors text-center mb-2"
+            (keyup.enter)="emergencyUnlock()" />
+          @if (unlockError) {
+            <p class="text-destructive text-[11px] mb-2">{{ unlockError }}</p>
           }
-        </div>
+          <button (click)="emergencyUnlock()" [disabled]="unlocking"
+            class="w-full bg-foreground text-background rounded-lg px-4 py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2">
+            @if (unlocking) {
+              <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+            }
+            {{ unlocking ? 'Memproses...' : 'BUKA WHITELIST' }}
+          </button>
+          <p class="text-[11px] text-muted-foreground/50 mt-3">Masukkan gateway key untuk mendaftarkan IP Anda secara otomatis</p>
+        }
+
+        <p class="text-xs text-muted-foreground/50 mt-6">NUMBER9 Security Gateway — System D</p>
+      </div>
+    } @else {
+      <div class="mb-8">
+        <h1 class="text-xl font-semibold text-foreground tracking-tight">Admin Login</h1>
+        <p class="text-muted-foreground text-[13px] mt-1">Sign in to the control panel</p>
       </div>
 
-      <button type="submit" [disabled]="isLoading"
-        class="w-full bg-foreground text-background rounded-lg px-4 py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2">
-        @if (isLoading) {
-          <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
-        }
-        {{ isLoading ? 'Signing in...' : 'Sign In' }}
-      </button>
-    </form>
+      <form class="space-y-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="space-y-4">
+          <div>
+            <label for="username" class="text-[11px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Username <span class="text-destructive">*</span></label>
+            <input type="text" id="username" formControlName="username"
+              class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/30 transition-colors"
+              placeholder="Enter username" />
+            @if (submitted && f['username'].errors) {
+              <p class="text-destructive text-[11px] mt-1">Username is required (min 3 characters)</p>
+            }
+          </div>
+
+          <div>
+            <label for="password" class="text-[11px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Password <span class="text-destructive">*</span></label>
+            <div class="relative">
+              <input [type]="passwordVisible ? 'text' : 'password'" id="password" formControlName="password"
+                class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/30 transition-colors"
+                placeholder="Enter password" />
+              <button type="button" (click)="togglePasswordVisibility()"
+                class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground text-[11px] transition-colors">
+                {{ passwordVisible ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+            @if (submitted && f['password'].errors) {
+              <p class="text-destructive text-[11px] mt-1">Password is required</p>
+            }
+          </div>
+        </div>
+
+        <button type="submit" [disabled]="isLoading"
+          class="w-full bg-foreground text-background rounded-lg px-4 py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2">
+          @if (isLoading) {
+            <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+          }
+          {{ isLoading ? 'Signing in...' : 'Sign In' }}
+        </button>
+
+        <p class="text-center text-xs text-muted-foreground">
+          <a routerLink="/auth/forgot-password" class="text-foreground hover:underline">Forgot Password?</a>
+        </p>
+      </form>
+    }
   </div>
 </div>

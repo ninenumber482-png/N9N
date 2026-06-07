@@ -1,10 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { TOAST_DURATION_MS } from "../../constants";
 
 export default function Toast({ toast, onClose }) {
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
   useEffect(() => {
     if (!toast) return;
-    const timerId = setTimeout(() => onClose?.(), TOAST_DURATION_MS);
+    const timerId = setTimeout(() => onCloseRef.current?.(), TOAST_DURATION_MS);
     return () => clearTimeout(timerId);
   }, [toast]);
 

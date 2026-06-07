@@ -10,4 +10,24 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-dom/client', 'react/jsx-dev-runtime', 'react/jsx-runtime', 'react-router-dom', 'zustand'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/') || id.includes('node_modules/react-router')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'vendor-supabase';
+          }
+          if (id.includes('node_modules/zustand') || id.includes('node_modules/bcryptjs')) {
+            return 'vendor-utils';
+          }
+          if (id.includes('node_modules')) {
+            return 'vendor-other';
+          }
+        },
+      },
+    },
+  },
 })

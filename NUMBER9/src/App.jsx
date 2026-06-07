@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet, useParams, useNavigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { useStore, isDemoMode, clearAllData, setDemoMode } from "./store/useStore";
-import { subscribeToWalletAndTransactions, subscribeToSettledBets } from "./store/realtimeManager";
+import { useStore, isDemoMode, setDemoMode } from "./store/useStore";
 import { usePolling } from "./hooks/usePolling";
 import { supabase } from "./utils/supabase";
 import { refreshKingData, listBids } from "./store/king";
@@ -92,95 +91,10 @@ function AppContent() {
 
 function App() {
   const auth = useStore(s => s.auth);
-  const subscribeUserStatus = useStore(s => s.subscribeUserStatus);
-  const subscribePlatformConfig = useStore(s => s.subscribePlatformConfig);
 
   useEffect(() => {
-    // Mark store as hydrated
     useStore.setState({ _hydrated: true });
   }, []);
-
-  // Platform config subscription (always active, not auth-scoped)
-  useEffect(() => {
-    const unsubPlatform = subscribePlatformConfig();
-    return () => unsubPlatform?.();
-  }, [subscribePlatformConfig]);
-
-  // Auth-scoped subscriptions (wallet, transactions, user status, settled bets)
-  const unsubWalletRef = useRef(() => {});
-  const unsubUserStatusRef = useRef(() => {});
-  const unsubBetsRef = useRef(() => {});
-
-  useEffect(() => {
-    if (auth?.id) {
-      // Wallet + transactions realtime
-      (async () => {
-        unsubWalletRef.current = await subscribeToWalletAndTransactions(
-          auth.id,
-          () => useStore.getState().fetchBalances(),
-          (tx) => {
-            useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
-
-            if (tx.type === 'DEPOSIT' && tx.status === 'COMPLETED') {
-              useStore.setState({
-                systemNotification: {
-                  type: 'deposit_approved',
-                  title: 'Deposit Approved',
-                  message: `+${Number(tx.amount || 0).toLocaleString()} P has been credited to your wallet.`,
-                },
-              });
-            }
-            if (tx.type === 'DEPOSIT' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
-              useStore.setState({
-                systemNotification: {
-                  type: 'deposit_rejected',
-                  title: 'Deposit Rejected',
-                  message: `Your deposit of ${Number(tx.amount || 0).toLocaleString()} P was rejected.`,
-                },
-              });
-            }
-            if (tx.type === 'WITHDRAWAL' && tx.status === 'COMPLETED') {
-              useStore.setState({
-                systemNotification: {
-                  type: 'withdraw_approved',
-                  title: 'Withdrawal Complete',
-                  message: `${Number(tx.amount || 0).toLocaleString()} P has been withdrawn.`,
-                },
-              });
-            }
-            if (tx.type === 'WITHDRAWAL' && (tx.status === 'REJECTED' || tx.status === 'FAILED')) {
-              useStore.setState({
-                systemNotification: {
-                  type: 'withdraw_rejected',
-                  title: 'Withdrawal Rejected',
-                  message: `Your withdrawal of ${Number(tx.amount || 0).toLocaleString()} P was rejected.`,
-                },
-              });
-            }
-          },
-          () => {}
-        );
-      })();
-
-      // User status realtime
-      unsubUserStatusRef.current = subscribeUserStatus(auth.id);
-
-      // Settled bets realtime
-      (async () => {
-        unsubBetsRef.current = await subscribeToSettledBets(
-          auth.id,
-          () => useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 })),
-          () => {}
-        );
-      })();
-    }
-
-    return () => {
-      unsubWalletRef.current?.();
-      unsubUserStatusRef.current?.();
-      unsubBetsRef.current?.();
-    };
-  }, [auth?.id, subscribeUserStatus]);
 
   // Track last-seen "head" IDs to skip redundant _rtTick/_kingVersion bumps
   // when polling finds no new data — prevents cascading re-renders across the app.
@@ -231,7 +145,7 @@ function App() {
     if (typeof window !== 'undefined' && import.meta.env.DEV) {
       window.NUMBER9 = {
         clearAllData: () => {
-          clearAllData();
+          useStore.getState().clearAllData();
           alert('✅ All NUMBER9 data cleared. Reload to test with real database.');
         },
         setDemoMode: (enabled) => {

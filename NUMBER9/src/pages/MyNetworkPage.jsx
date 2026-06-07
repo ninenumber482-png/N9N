@@ -25,7 +25,7 @@ export default function MyNetworkPage() {
   }, [fetchDownlines, auth?.id])
 
   const activeCount = downlines.filter(d => d.account_status === 'ACTIVE').length
-  const pendingCount = downlines.filter(d => d.registration_status === 'PENDING').length
+  const pendingCount = downlines.filter(d => d.registration_status === 'PENDING_VERIFICATION').length
 
   return (
     <PageShell
@@ -99,7 +99,7 @@ export default function MyNetworkPage() {
                     <td className="px-3 py-2">
                       <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
                         d.registration_status === 'APPROVED' ? 'bg-emerald-400/10 text-emerald-400' :
-                        d.registration_status === 'PENDING' ? 'bg-amber-400/10 text-amber-400' :
+                        d.registration_status === 'PENDING_VERIFICATION' ? 'bg-amber-400/10 text-amber-400' :
                         'bg-red-400/10 text-red-400'
                       }`}>{d.registration_status}</span>
                     </td>

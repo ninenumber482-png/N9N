@@ -5,6 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
+  "Access-Control-Allow-Credentials": "true",
 };
 
 const json = (body: unknown, status = 200) =>
@@ -26,7 +27,14 @@ export default {
       const supabase = createClient(supabaseUrl, serviceRoleKey)
 
       // Auth check: require valid admin session token
-      const token = req.headers.get('x-session-token') || ''
+      const token = (() => {
+        const headerToken = req.headers.get('x-session-token') || '';
+        if (headerToken) return headerToken;
+        const cookieHeader = req.headers.get('cookie') || '';
+        const match = cookieHeader.match(/n9_session=([^;]+)/);
+        if (match) return match[1];
+        return '';
+      })();
       if (!token) return json({ error: 'Unauthorized' }, 401)
 
       const tokenHash = Array.from(

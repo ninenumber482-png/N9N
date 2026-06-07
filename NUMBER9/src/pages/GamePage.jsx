@@ -119,7 +119,7 @@ export default function GamePage() {
     if (kingVersion > 0) {
       refreshKingData(auth?.id).then(() => setVersion((v) => v + 1));
     }
-  }, [kingVersion]);
+  }, [kingVersion, auth?.id]);
 
   // Subscribe to realtime bet settlements via App.jsx (App.jsx watches _kingVersion)
 
@@ -861,15 +861,13 @@ function ResultReveal({ result }) {
   const [showStats, setShowStats] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   useEffect(() => {
-    /* Smooth reveal: 0→1→2→3 over ~3 seconds, then stats drop in */
-    setRevealed(0); setShowStats(false); setCelebrate(false);
     const t1 = setTimeout(() => setRevealed(1), 600);
     const t2 = setTimeout(() => setRevealed(2), 1400);
     const t3 = setTimeout(() => setRevealed(3), 2200);
     const t4 = setTimeout(() => setShowStats(true), 2800);
     const t5 = setTimeout(() => setCelebrate(true), 3200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearTimeout(t5); };
-  }, [result.sessionCode]);
+  }, []);
 
   const bigUp = result.bigSmall === "BIG";
   const oddUp = result.oddEven === "ODD";

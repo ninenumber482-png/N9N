@@ -14,8 +14,8 @@ export class SessionService {
 
   private readonly SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
   private readonly TOKEN_REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // Refresh 5 min before expiry
-  private sessionTimeoutTimer: any;
-  private inactivityTimer: any;
+  private sessionTimeoutTimer: ReturnType<typeof setTimeout> | undefined;
+  private inactivityTimer: ReturnType<typeof setTimeout> | undefined;
   private lastActivityTime = Date.now();
 
   constructor() {

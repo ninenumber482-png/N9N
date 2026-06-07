@@ -12,15 +12,22 @@ function corsOrigin(req: Request): string {
   return ALLOWED_ORIGINS.includes(o) ? o : ALLOWED_ORIGINS[0];
 }
 
-const corsHeaders = (req?: Request) => {
+const corsHeaders = (req?: Request, extra: Record<string, string> = {}) => {
   const origin = req ? corsOrigin(req) : ALLOWED_ORIGINS[0];
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Credentials": "true",
+    ...extra,
   };
 };
+
+const SESSION_DAYS = 7;
+const COOKIE_NAME = "n9_session";
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 900_000; // 15 minutes
 
 let bcryptCache: any = null;
 async function getBcrypt() {
@@ -28,6 +35,34 @@ async function getBcrypt() {
     bcryptCache = await import('npm:bcryptjs@2.4.3');
   }
   return bcryptCache.default || bcryptCache;
+}
+
+async function checkRateLimit(supabase: any, username: string, ip: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const cutoff = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+  const { count } = await supabase
+    .from('failed_logins')
+    .select('id', { count: 'exact', head: true })
+    .eq('username', username)
+    .eq('ip_address', ip)
+    .gte('attempted_at', cutoff);
+
+  if ((count || 0) >= RATE_LIMIT_MAX) {
+    const { data: last } = await supabase
+      .from('failed_logins')
+      .select('attempted_at')
+      .eq('username', username)
+      .eq('ip_address', ip)
+      .order('attempted_at', { ascending: false })
+      .limit(1)
+      .single();
+    const retryAfter = last ? Math.ceil((new Date(last.attempted_at).getTime() + RATE_LIMIT_WINDOW_MS - Date.now()) / 1000) : 900;
+    return { allowed: false, retryAfter: Math.max(retryAfter, 60) };
+  }
+  return { allowed: true };
+}
+
+function setSessionCookie(token: string, maxAgeSec: number): string {
+  return `${COOKIE_NAME}=${token}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${maxAgeSec}`;
 }
 
 Deno.serve(async (req) => {
@@ -48,22 +83,32 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
     const ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('host') || ''
+    const uname = username.trim().toLowerCase();
+
+    // ── Rate limiting ──
+    const rl = await checkRateLimit(supabase, uname, ip_address);
+    if (!rl.allowed) {
+      return new Response(JSON.stringify({ error: `Too many failed attempts. Try again in ${rl.retryAfter}s.` }), {
+        status: 429,
+        headers: corsHeaders(req, { "Retry-After": String(rl.retryAfter) }),
+      });
+    }
 
     const { data: user, error: userErr } = await supabase
       .from('users')
-      .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, bank_name, bank_account_number, bank_account_name, created_at')
-      .eq('username', username.trim().toLowerCase())
+      .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, created_at')
+      .eq('username', uname)
       .maybeSingle()
 
     if (userErr || !user) {
-      try { await supabase.from('failed_logins').insert({ username: username.trim().toLowerCase(), ip_address, reason: 'user_not_found' }) } catch {}
+      try { await supabase.from('failed_logins').insert({ username: uname, ip_address, reason: 'user_not_found' }) } catch {}
       return new Response(JSON.stringify({ error: 'Invalid username or password' }), { status: 401, headers: corsHeaders(req) });
     }
 
     const bcrypt = await getBcrypt();
     const passwordOk = await bcrypt.compare(password, user.password_hash || '')
     if (!passwordOk) {
-      try { await supabase.from('failed_logins').insert({ username: username.trim().toLowerCase(), ip_address, reason: 'wrong_password' }) } catch {}
+      try { await supabase.from('failed_logins').insert({ username: uname, ip_address, reason: 'wrong_password' }) } catch {}
       return new Response(JSON.stringify({ error: 'Invalid username or password' }), { status: 401, headers: corsHeaders(req) });
     }
 
@@ -74,12 +119,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Account is ' + user.login_status.toLowerCase() }), { status: 403, headers: corsHeaders(req) });
     }
 
+    // ── Create session ──
     const sessionToken = crypto.randomUUID().replace(/-/g, '');
-    const EXPIRY_DAYS = 30;
-    const expiresAt = new Date(Date.now() + EXPIRY_DAYS * 86400000).toISOString()
+    const maxAgeSec = SESSION_DAYS * 86400;
+    const expiresAt = new Date(Date.now() + maxAgeSec * 1000).toISOString()
     const now = new Date().toISOString()
     const browser_info = req.headers.get('user-agent') || ''
     const tokenHash = await sha256(sessionToken);
+
+    // Clear failed logins for this user
+    try { await supabase.from('failed_logins').delete().eq('username', uname).eq('ip_address', ip_address) } catch {}
 
     const { error: sessionErr } = await supabase.from('sessions').insert({
       user_id: user.id, token_hash: tokenHash, ip_address, browser_info, last_activity: now, expires_at: expiresAt,
@@ -91,26 +140,19 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Failed to create session' }), { status: 500, headers: corsHeaders(req) });
     }
 
+    const cookie = setSessionCookie(sessionToken, maxAgeSec);
     return new Response(JSON.stringify({
       success: true,
+      token: sessionToken,
       user: {
         id: user.id,
         username: user.username,
         display_name: user.display_name,
-        email: user.email,
-        phone: user.phone,
         role: user.role,
         country: user.country,
-        bank_name: user.bank_name,
-        bank_account_number: user.bank_account_number,
-        bank_account_name: user.bank_account_name,
         created_at: user.created_at,
       },
-      session: {
-        access_token: sessionToken,
-        expires_at: expiresAt,
-      },
-    }), { status: 200, headers: corsHeaders(req) });
+    }), { status: 200, headers: corsHeaders(req, { "Set-Cookie": cookie }) });
 
   } catch (error) {
     console.error("[USER-LOGIN] Exception:", error);

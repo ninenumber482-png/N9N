@@ -1,63 +1,37 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
+import { getCsConfig, setCsConfig } from '../../utils/csConfigCache'
 
 const WA_BASE = 'https://wa.me'
-const CONFIG_CACHE_KEY = 'n9_cs_config'
-const CONFIG_CACHE_TTL = 5 * 60 * 1000
-
-function getCached() {
-  try {
-    const raw = localStorage.getItem(CONFIG_CACHE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (Date.now() - parsed.ts > CONFIG_CACHE_TTL) return null
-    return parsed.data
-  } catch { return null }
-}
-
-function setCached(data) {
-  try {
-    localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }))
-  } catch { /* ignore */ }
-}
 
 export default function CsWidget() {
-  const [config, setConfig] = useState(null)
+  const [config, setConfig] = useState(getCsConfig)
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
 
-  const fetchConfig = useCallback(async () => {
-    const cached = getCached()
-    if (cached) {
-      setConfig(cached)
-      setLoading(false)
-      return
-    }
+  useEffect(() => {
+    let alive = true
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
       if (!supabaseUrl || !supabaseKey) return
-      const res = await fetch(`${supabaseUrl}/rest/v1/platform_config`, {
+      fetch(`${supabaseUrl}/rest/v1/platform_config`, {
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
         },
-      })
-      if (!res.ok) return
-      const rows = await res.json()
-      const map = {}
-      for (const r of rows) map[r.key] = r.value
-      setConfig(map)
-      setCached(map)
-    } catch {
-      // silently fail — widget just won't show
-    } finally {
-      setLoading(false)
-    }
+      }).then(res => {
+        if (!alive || !res.ok) return undefined
+        return res.json()
+      }).then(rows => {
+        if (!alive || !rows) return
+        const map = {}
+        for (const r of rows) map[r.key] = r.value
+        setConfig(map)
+        setCsConfig(map)
+      }).catch(() => {})
+    } catch { /* ignore */ }
+    return () => { alive = false }
   }, [])
 
-  useEffect(() => { fetchConfig() }, [fetchConfig])
-
-  if (loading) return null
   if (!config?.cs_active || config.cs_active !== 'true') return null
   if (!config.cs_wa_number) return null
 

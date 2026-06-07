@@ -10,10 +10,6 @@ import { environment } from 'src/environments/environment';
   imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ResponsiveHelperComponent implements OnInit {
-  public env: any = environment;
-
-  constructor() {}
-
-  ngOnInit(): void {}
+export class ResponsiveHelperComponent {
+  env = environment;
 }
