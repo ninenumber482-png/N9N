@@ -18,17 +18,30 @@ const COOKIE_NAME = "n9_session";
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 900_000; // 15 minutes
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Credentials": "true",
+const ALLOWED_ORIGINS = ["https://admin.mynumber9.uk", "https://number9-admin.pages.dev"];
+
+function corsOrigin(req: Request): string {
+  const o = req.headers.get("origin") || "";
+  return ALLOWED_ORIGINS.includes(o) ? o : ALLOWED_ORIGINS[0];
+}
+
+const corsHeaders = (req?: Request, extra: Record<string, string> = {}) => {
+  const origin = req ? corsOrigin(req) : ALLOWED_ORIGINS[0];
+  return {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Credentials": "true",
+    "Vary": "Origin",
+    ...extra,
+  };
 };
 
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders, ...extra },
+    headers: corsHeaders(undefined, extra),
   });
 
 function setSessionCookie(token: string, maxAgeSec: number): string {
@@ -40,7 +53,7 @@ console.info("NUMBER9 Auth Login Function Started");
 export default {
   fetch: async (req: Request) => {
     if (req.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return new Response(null, { status: 204, headers: corsHeaders(req) });
     }
     if (req.method !== "POST") {
       return json({ error: "Method not allowed" }, 405);

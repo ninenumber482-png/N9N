@@ -331,16 +331,17 @@ export class OverviewComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
     try {
+      const safe = <T>(p: Promise<T>, fallback: T): Promise<T> => p.catch(() => fallback);
       const [s, l, pd, pw, tr, yr, v, h, g] = await Promise.all([
-        this.admin.getDashboardStats(),
-        this.admin.getAuditLogs(5),
-        this.admin.countPending('DEPOSIT'),
-        this.admin.countPending('WITHDRAWAL'),
-        this.admin.getTodayRegistrations(),
-        this.admin.getYesterdayRegistrations(),
-        this.admin.getTodayVolume(),
-        this.admin.getPlatformHealth(),
-        this.admin.getWeeklyUserGrowth(),
+        safe(this.admin.getDashboardStats(), { totalUsers: 0, totalTransactions: 0, pendingBets: 0, pendingKyc: 0 }),
+        safe(this.admin.getAuditLogs(5), []),
+        safe(this.admin.countPending('DEPOSIT'), 0),
+        safe(this.admin.countPending('WITHDRAWAL'), 0),
+        safe(this.admin.getTodayRegistrations(), 0),
+        safe(this.admin.getYesterdayRegistrations(), 0),
+        safe(this.admin.getTodayVolume(), { deposits: 0, withdrawals: 0 }),
+        safe(this.admin.getPlatformHealth(), { activeUsers: 0, onlineNow: 0, totalBalance: { main: 0, bonus: 0 }, pendingCount: 0 }),
+        safe(this.admin.getWeeklyUserGrowth(), []),
       ]);
       this.stats = s;
       this.recentLogs = l;

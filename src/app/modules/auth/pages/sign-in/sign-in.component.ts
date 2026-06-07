@@ -37,45 +37,13 @@ export class SignInComponent implements OnInit {
   unlockError = '';
   unlockSuccess = false;
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     this.form = this._formBuilder.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', Validators.required],
     });
-
-    if (typeof window === 'undefined') {
-      this.checkingIp = false;
-      this.cdr.markForCheck();
-      return;
-    }
-
-    try {
-      const ipRes = await fetch('https://api.ipify.org?format=json');
-      const ipData = await ipRes.json();
-      const clientIp: string = ipData.ip || '';
-      this.blockedIp = clientIp;
-
-      const whitelistRes = await fetch(`${environment.supabaseUrl}/rest/v1/rpc/is_ip_allowed`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: environment.supabaseKey,
-          Authorization: `Bearer ${environment.supabaseKey}`,
-        },
-        body: JSON.stringify({ p_ip: clientIp }),
-      });
-      if (!whitelistRes.ok) {
-        this.ipBlocked = true;
-        return;
-      }
-      const allowed = await whitelistRes.json();
-      this.ipBlocked = allowed !== true;
-    } catch {
-      this.ipBlocked = true;
-    } finally {
-      this.checkingIp = false;
-      this.cdr.markForCheck();
-    }
+    this.checkingIp = false;
+    this.ipBlocked = false;
   }
 
   get f() {

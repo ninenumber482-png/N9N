@@ -31,34 +31,24 @@ export class AuthService {
   private userSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   public user$ = this.userSubject.asObservable();
 
-  private readonly TOKEN_EXPIRY = 3600000;
+  private readonly TOKEN_EXPIRY = 8 * 60 * 60 * 1000;
 
   async authenticate(credentials: Credentials): Promise<SupabaseLoginResult | null> {
-    if (!this.securityService.checkRateLimit('login_attempt', 5)) {
+    if (!credentials.username || !credentials.password) {
       return null;
     }
 
-    if (!this.securityService.isValidUsername(credentials.username)) {
-      return null;
-    }
+    const sanitizedUsername = credentials.username.toLowerCase().trim();
+    // Use the real email from database for admin users
+    const email = sanitizedUsername === 'admin' 
+      ? 'admin@mynumber9.uk' 
+      : `${sanitizedUsername}@number9.local`;
 
-    if (!credentials.password || credentials.password.length < 1) {
-      return null;
-    }
-
-    const sanitizedUsername = this.securityService.sanitizeInput(credentials.username);
-    const email = `${sanitizedUsername}@number9.local`;
-
-    const result = await this.supabaseService.login({
+    return this.supabaseService.login({
       username: sanitizedUsername,
       password: credentials.password,
       email,
     });
-
-    if (result.success) {
-      this.securityService.clearRateLimit('login_attempt');
-    }
-    return result;
   }
 
   login(user: User): void {

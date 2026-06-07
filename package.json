@@ -10,6 +10,7 @@
     "start": "ng serve --open",
     "build": "node scripts/set-env.js && ng build && cp src/assets/_redirects dist/number9systemd/browser/_redirects && cp src/assets/_headers dist/number9systemd/browser/_headers",
     "build:ci": "ng build",
+    "install:ci": "npm clean-install --legacy-peer-deps",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:e2e": "npx playwright test --ui",

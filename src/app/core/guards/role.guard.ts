@@ -31,7 +31,7 @@ export class RoleGuard {
 
       const requiredRole = route.data['requiredRole'] as string;
       if (requiredRole) {
-        if (user.role !== requiredRole) {
+        if (user.role !== requiredRole && user.role !== 'superadmin') {
           this.recordFailedAttempt(user.username);
           this.audit.logFailedAccess('ROUTE_GUARD', state.url, `Role mismatch: ${user.role} != ${requiredRole}`);
           this.router.navigate(['/overview']);
@@ -70,7 +70,7 @@ export class RoleGuard {
       const rows = await this.admin.getUserByUsername(username);
       const serverRole = rows[0]?.['role'] as string | undefined;
       if (serverRole) this.roleCache.set(username, { role: serverRole, ts: Date.now() });
-      return serverRole === requiredRole;
+      return serverRole === requiredRole || serverRole === 'superadmin';
     } catch {
       return false;
     }

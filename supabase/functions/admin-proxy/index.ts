@@ -22,17 +22,27 @@ async function sha256(msg: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://admin.mynumber9.uk",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-  "Access-Control-Allow-Credentials": "true",
-  "Access-Control-Expose-Headers": "content-range",
-};
+const ALLOWED_ORIGINS = ["https://admin.mynumber9.uk", "https://number9-admin.pages.dev"];
+
+function corsOrigin(req: Request): string {
+  const o = req.headers.get("origin") || "";
+  return ALLOWED_ORIGINS.includes(o) ? o : ALLOWED_ORIGINS[0];
+}
+
+function corsHeaders(req: Request): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": corsOrigin(req),
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Expose-Headers": "content-range",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
   // Read session token: header first (fresh from login), cookie fallback
   const token = (() => {
@@ -47,7 +57,7 @@ Deno.serve(async (req) => {
   if (!token) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -55,7 +65,7 @@ Deno.serve(async (req) => {
   if (!checkRateLimit(token)) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
       status: 429,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -65,7 +75,7 @@ Deno.serve(async (req) => {
   if (!supabaseUrl || !serviceRoleKey) {
     return new Response(
       JSON.stringify({ error: 'Server misconfiguration' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(req) } }
     )
   }
 
@@ -104,7 +114,7 @@ Deno.serve(async (req) => {
     if (!userErr && userRow) {
       if (userRow.session_expires_at && new Date(userRow.session_expires_at) < new Date()) {
         return new Response(JSON.stringify({ error: 'Session expired' }), {
-          status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
         })
       }
       sessionUserId = userRow.id
@@ -123,7 +133,7 @@ Deno.serve(async (req) => {
       const now = new Date()
       if (session.expires_at && new Date(session.expires_at) < now) {
         return new Response(JSON.stringify({ error: 'Session expired' }), {
-          status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
         })
       }
       sessionUserId = session.user_id
@@ -156,7 +166,7 @@ Deno.serve(async (req) => {
     console.error(`[ADMIN-PROXY] SESSION NOT FOUND — hash:${debugHash} rawLen:${token.length} totalUsers:${totalUsers} totalSessions:${totalSessions} recentSessions:${recentHashes.join(',')} recentUserTokens:${recentUserHashes.join(',')}`)
     return new Response(JSON.stringify({ error: 'Invalid or expired session', debug: { hash: debugHash, totalUsers, totalSessions, recentSessions: recentHashes, recentUserTokens: recentUserHashes } }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -166,7 +176,7 @@ Deno.serve(async (req) => {
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -175,7 +185,7 @@ Deno.serve(async (req) => {
   if (!method || !path) {
     return new Response(JSON.stringify({ error: 'Missing method or path' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -219,7 +229,7 @@ Deno.serve(async (req) => {
   if (!pathAllowed) {
     return new Response(JSON.stringify({ error: 'Access denied: path not allowed' }), {
       status: 403,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -239,7 +249,7 @@ Deno.serve(async (req) => {
 
   const responseHeaders: Record<string, string> = {
     'Content-Type': proxyRes.headers.get('Content-Type') || 'application/json',
-    ...corsHeaders,
+    ...corsHeaders(req),
   }
   const contentRange = proxyRes.headers.get('content-range')
   if (contentRange) responseHeaders['content-range'] = contentRange

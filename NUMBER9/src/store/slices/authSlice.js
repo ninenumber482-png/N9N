@@ -16,20 +16,36 @@ export const authSlice = (set, get) => ({
     if (!uname || !pwd) return { ok: false, error: "Enter username and password." }
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}` },
-          credentials: "include",
-          body: JSON.stringify({ username: uname, password: pwd }),
-        }
-      )
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      let res
+      try {
+        res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-login`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}` },
+            credentials: "include",
+            body: JSON.stringify({ username: uname, password: pwd }),
+            signal: controller.signal,
+          }
+        )
+      } finally {
+        clearTimeout(timeout)
+      }
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         if (body.pending) {
           return { ok: false, error: body.error || "Account not approved yet.", pending: true, displayName: body.display_name }
+        }
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("Retry-After")
+          const msg = retryAfter ? `Terlalu banyak percobaan. Coba lagi dalam ${retryAfter} detik.` : "Terlalu banyak percobaan. Coba lagi nanti."
+          return { ok: false, error: msg, rateLimited: true }
+        }
+        if (res.status >= 500) {
+          return { ok: false, error: "Layanan sedang tidak tersedia. Coba beberapa saat lagi." }
         }
         return { ok: false, error: body.error || "Login failed." }
       }
@@ -74,6 +90,12 @@ export const authSlice = (set, get) => ({
       return { ok: true }
     } catch (e) {
       _warn('login failed', e)
+      if (e?.name === 'AbortError') {
+        return { ok: false, error: "Server tidak merespon (timeout 15s). Coba lagi." }
+      }
+      if (e instanceof TypeError) {
+        return { ok: false, error: "Tidak dapat terhubung ke server. Periksa koneksi internet." }
+      }
       return { ok: false, error: "Connection error. Please try again." }
     }
   },

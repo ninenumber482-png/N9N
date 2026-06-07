@@ -24,9 +24,9 @@ export class AuthGuard {
         return false;
       }
 
-      // Check token age (24 hour max)
+      // Check token age (8 hour max — must match AuthService.TOKEN_EXPIRY)
       const tokenAge = Date.now() - user.timestamp;
-      const MAX_TOKEN_AGE = 24 * 60 * 60 * 1000;
+      const MAX_TOKEN_AGE = 8 * 60 * 60 * 1000;
       if (tokenAge > MAX_TOKEN_AGE) {
         this.authService.logout();
         this.router.navigate(['/auth/sign-in']);

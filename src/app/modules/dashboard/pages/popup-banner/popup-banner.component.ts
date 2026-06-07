@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service';
-import { AuthService } from 'src/app/core/services/auth.service';
 import { RouterModule } from '@angular/router';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -175,7 +174,6 @@ interface BannerData {
 })
 export class PopupBannerComponent implements OnInit {
   private admin = inject(AdminService);
-  private auth = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
   private confirmation = inject(ConfirmationService);
 
@@ -255,13 +253,7 @@ export class PopupBannerComponent implements OnInit {
     this.cdr.markForCheck();
 
     try {
-      const user = this.auth.getCurrentUser();
-      if (!user?.username) throw new Error('Not authenticated');
-      await this.admin.rpc('admin_toggle_popup_banner', {
-        p_admin_id: user.username,
-        p_banner_id: banner.id,
-        p_active: !banner.active,
-      });
+      await this.admin.updatePopupBannerRow(banner.id, { active: !banner.active });
       await this.load();
     } catch (e) {
       this.error = e instanceof AdminRpcError ? e.message : 'Gagal toggle status.';
@@ -305,12 +297,7 @@ export class PopupBannerComponent implements OnInit {
     this.cdr.markForCheck();
 
     try {
-      const user = this.auth.getCurrentUser();
-      if (!user?.username) throw new Error('Not authenticated');
-      await this.admin.rpc('admin_delete_popup_banner', {
-        p_admin_id: user.username,
-        p_banner_id: id,
-      });
+      await this.admin.deletePopupBannerRow(id);
       this.success = 'Banner berhasil dihapus.';
       await this.load();
     } catch (e) {
