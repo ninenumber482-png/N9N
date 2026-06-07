@@ -16,7 +16,8 @@
     "test:e2e": "npx playwright test --ui",
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*{.ts,.html,.css,.json}\" tsconfig.json angular.json .eslintrc.json",
-    "deploy": "npm run build && npx wrangler pages deploy dist/number9systemd/browser --project-name=number9-admin --branch=main --commit-dirty=true"
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "private": true,
   "dependencies": {
@@ -70,6 +71,7 @@
     "prettier-plugin-tailwindcss": "0.7.2",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.3.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "wrangler": "^4.98.0"
   }
 }

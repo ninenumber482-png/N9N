@@ -88,3 +88,8 @@ Thumbs.db
 /NUMBER9/tests.js
 /NUMBER9/tests.mjs
 /NUMBER9/vite.config.user.js
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
