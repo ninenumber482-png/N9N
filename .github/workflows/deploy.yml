@@ -57,9 +57,17 @@ jobs:
         working-directory: ./NUMBER9
         run: npm run build
 
-      # ── Deploy ──
-      - name: Deploy admin-proxy Edge Function
-        run: supabase functions deploy admin-proxy
+      # ── Deploy Edge Functions ──
+      - name: Deploy all Edge Functions
+        run: |
+          supabase functions deploy auth-login
+          supabase functions deploy auth-logout
+          supabase functions deploy auth-validate
+          supabase functions deploy user-login
+          supabase functions deploy user-register
+          supabase functions deploy admin-proxy
+          supabase functions deploy upload-proof
+          supabase functions deploy audit-log
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
