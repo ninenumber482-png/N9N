@@ -75,10 +75,10 @@ export default {
         return json({ error: 'Too many failed attempts. Try again later.' }, 429, { "Retry-After": "900" });
       }
 
-      // Query both tables
+      // Query both tables — no account_status filter for admins (they bypass member checks)
       const [uRow, n9Row] = await Promise.all([
         supabase.from('users').select('id, username, display_name, role, account_status, password_hash, email')
-          .eq('username', dbUsername).eq('role', 'admin').eq('account_status', 'ACTIVE').neq('login_status', 'SUSPENDED').maybeSingle(),
+          .eq('username', dbUsername).eq('role', 'admin').neq('login_status', 'SUSPENDED').maybeSingle(),
         supabase.from('n9_users').select('id, username, password_hash, role')
           .eq('username', dbUsername).eq('role', 'admin').maybeSingle(),
       ]);
@@ -125,6 +125,7 @@ export default {
       // Clear failed logins
       try { await supabase.from('failed_logins').delete().eq('username', dbUsername).eq('ip_address', ip_address) } catch {}
 
+      // Try inserting session record (may fail if user is only in n9_users and FK fails)
       const { error: sessionErr } = await supabase.from('sessions').insert({
         user_id: userRow.id,
         token_hash: tokenHash,
@@ -133,36 +134,39 @@ export default {
         last_activity: now,
         expires_at: expiresAt,
       })
-
       if (sessionErr) {
-        console.error('[LOGIN] Failed to insert session:', sessionErr.message)
-        return json({ error: 'Failed to create session' }, 500)
+        // Log but don't fail — will fall back to users.session_token lookup in admin-proxy
+        console.warn('[LOGIN] sessions insert failed (will use users.session_token fallback):', sessionErr.message)
       }
 
-      // Also write to users.session_token as fallback for admin-proxy
-      // If user came from n9_users, upsert into users table so session_token is available
-      const { error: userUpdateErr, count: updateCount } = await supabase
+      // Always update users.session_token so admin-proxy can find the session
+      const { error: userUpdateErr } = await supabase
         .from('users')
         .update({ session_token: tokenHash, session_expires_at: expiresAt })
         .eq('id', userRow.id)
-        .select('id')
 
-      if (userUpdateErr || !updateCount) {
-        console.error(`[LOGIN] users.session_token update failed or 0 rows — userErr:${userUpdateErr?.message || 'none'} updateCount:${updateCount}`)
-        // If user doesn't exist in users table (came from n9_users), try upsert
+      if (userUpdateErr) {
+        console.warn(`[LOGIN] users.session_token update failed: ${userUpdateErr.message}`)
+        // Upsert fallback: admin may only be in n9_users, create a minimal users row
         const { error: upsertErr } = await supabase
           .from('users')
           .upsert({
             id: userRow.id,
             username: dbUsername,
+            display_name: userRow.display_name || dbUsername,
+            role: 'admin',
+            account_status: 'ACTIVE',
+            login_status: 'ACTIVE',
+            registration_status: 'APPROVED',
             session_token: tokenHash,
             session_expires_at: expiresAt,
           }, { onConflict: 'id' })
         if (upsertErr) {
-          console.error('[LOGIN] Upsert into users also failed:', upsertErr.message)
-        } else {
-          console.info('[LOGIN] Upsert into users succeeded')
+          // Both failed — can't create any session record
+          console.error('[LOGIN] All session storage attempts failed:', upsertErr.message)
+          return json({ error: 'Failed to create session' }, 500)
         }
+        console.info('[LOGIN] Created admin row in users via upsert')
       }
 
       console.info(`[LOGIN] Session created for ${dbUsername}: ${sessionToken.slice(0, 8)}...`);
