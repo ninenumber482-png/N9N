@@ -90,9 +90,13 @@ export default {
       if (uData?.password_hash) hashes.add(uData.password_hash);
       if (n9Data?.password_hash) hashes.add(n9Data.password_hash);
 
+      console.info(`[LOGIN-DEBUG] user=${dbUsername} uData=${!!uData} n9Data=${!!n9Data} hashes=${hashes.size} pwdLen=${password?.length}`);
+
       let matchedHash: string | null = null;
       for (const h of hashes) {
-        if (bcrypt.compareSync(password, h)) {
+        const ok = bcrypt.compareSync(password, h);
+        console.info(`[LOGIN-DEBUG] bcrypt compare: hashPrefix=${h.slice(0,10)} result=${ok}`);
+        if (ok) {
           matchedHash = h;
           break;
         }
