@@ -21,7 +21,7 @@ if (supabaseUrl && supabaseKey) {
           if (auth.token) headers['x-user-token'] = auth.token;
         }
       } catch {}
-      return originalFetch(url, { ...options, headers, credentials: 'include', signal }).finally(() => clearTimeout(timer))
+      return originalFetch(url, { ...options, headers, signal }).finally(() => clearTimeout(timer))
     }
 
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {

@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 SHOTS_DIR="/tmp/n9-screenshots"
 mkdir -p "$SHOTS_DIR"
 
@@ -66,7 +66,7 @@ echo "  → $SHOTS_DIR/angular-signin.png"
 echo ""
 echo "=== Starting React dev server ==="
 cd "$REPO_ROOT/NUMBER9"
-VITE_PORT=5175 VITE_APP_MODE=user vite --mode user > /tmp/n9-react.log 2>&1 &
+VITE_PORT=5175 VITE_APP_MODE=user npx vite --mode user > /tmp/n9-react.log 2>&1 &
 REACT_PID=$!
 
 # Vite may skip ports if busy — parse actual port from log

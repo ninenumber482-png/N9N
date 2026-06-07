@@ -7,9 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 **NUMBER9 Platform** — A dual-app betting/gaming system with admin dashboard:
-- **Angular App** (Admin + 3D King Engine): `/src` — Admin dashboard, user approval, settlement engine
-- **React App** (User Betting): `/NUMBER9` — User registration, betting, wallet, history
-- **Shared Backend**: Supabase PostgreSQL + RPC functions
+- **Angular App** (Admin + 3D King Engine): `/src` — Angular 22, zoneless, Tailwind 4, PrimeNG
+- **React App** (User Betting): `/NUMBER9` — React 19, Vite 8, Zustand, Tailwind 4
+- **Shared Backend**: Supabase PostgreSQL + SECURITY DEFINER RPCs + `pg_cron` settlement engine
+- **EC2 Python Bot**: `bot_monitor.py` — backup settlement + Telegram monitoring
 
 Both apps share one Supabase project: `dqsmpdetiqsqfnidekik` (env vars in `.env.user` and Angular `src/environments/`).
 
@@ -24,6 +25,7 @@ npm run build             # Production build → dist/number9systemd/browser/
 npm run watch             # Build + watch mode
 npm run test              # Run unit tests (Jasmine/Karma)
 npm run test:e2e          # E2E tests with Playwright (--ui for visual)
+npm run lint              # ESLint check
 npm run format            # Prettier + Tailwind class ordering
 ```
 
@@ -46,13 +48,23 @@ supabase db push --linked  # If Supabase CLI linked
 # - 20260602020000_deposit_withdrawal_rpcs.sql (place_bet, approve_deposit, approve_withdrawal)
 ```
 
+### CI Pipeline
+```bash
+bash scripts/ci.sh   # regression SQL → build Angular → build React → deploy Edge Functions → deploy Cloudflare Pages
+```
+
+### Commits
+French with emojis. Format before committing: `npm run format` (Prettier + Tailwind class ordering).
+
 ### Deployment
 ```bash
 npm run build                    # Angular → dist/number9systemd/browser/
-cd NUMBER9 && npm run build      # React → dist/
+cd NUMBER9 && npm run build      # React → NUMBER9/dist/
+cd NUMBER9 && npm run deploy     # React build + wrangler pages deploy
 
 # Angular → https://admin.mynumber9.uk (Cloudflare Pages)
 # React   → https://app.mynumber9.uk  (Cloudflare Pages)
+# Gateway → _worker.js (Cloudflare Pages Worker: cookie auth, rate limit, Turnstile, IP whitelist)
 ```
 
 ---
@@ -88,12 +100,18 @@ NUMBER9 PLATFORM (Monorepo)
 │  │  │  ├─ GamePage.jsx         # Main betting UI + ArenaStage result display
 │  │  │  ├─ HistoryPage.jsx      # Transaction history + P&L (only SETTLED bets count)
 │  │  │  ├─ DashboardPage.jsx    # Wallet, turnover, stats
-│  │  │  ├─ DepositPage.jsx      # submit_transaction RPC
-│  │  │  └─ WithdrawPage.jsx     # submit_transaction RPC
+│  │  │  ├─ WalletPage.jsx       # Deposit/Withdrawal tabs
+│  │  │  ├─ ProfilePage.jsx      # KYC, password change
+│  │  │  ├─ ReferralPage.jsx / MyNetworkPage.jsx  # Referral system
+│  │  │  ├─ SupportPage.jsx      # Support tickets
+│  │  │  ├─ TradingPage.jsx      # Trading history
+│  │  │  ├─ LandingPage.jsx / LoginPage.jsx / RegisterPage.jsx  # Auth flow
 │  │  ├─ store/
 │  │  │  ├─ king.js              # 3D King engine state, session calc, result display
 │  │  │  ├─ wallet.js            # Wallet/transaction functions
-│  │  │  └─ useStore.js          # Zustand auth + balance state
+│  │  │  ├─ useStore.js          # Zustand root store (composes all slices)
+│  │  │  │  └─ slices/              # authSlice, userSlice, balanceSlice, configSlice
+│  │  ├─ utils/supabase.js       # Supabase client (15s timeout, x-user-token injection)
 │  │  └─ i18n/                   # en.js + id.js translations
 │  └─ dist/                      # Build output
 │
@@ -105,14 +123,25 @@ NUMBER9 PLATFORM (Monorepo)
    │  ├─ transactions (type: DEPOSIT/WITHDRAWAL, status, amount, proof_url)
    │  ├─ king_results (session_code PK, d1-d3, total, big_small, odd_even)
    │  ├─ king_planned (session_code PK, d1-d3 — engine-generated + admin-overrideable)
+   │  ├─ support_tickets (user_id, subject, message, status)
    │  └─ audit_log, user_audit_log, security_alerts, failed_login_attempts, platform_config, popup_banners, ip_whitelist
    │
-   └─ RPC Functions (SECURITY DEFINER — bypass RLS, callable by anon key)
-      ├─ settle_session(code, d1, d2, d3)   — Atomic: publish draw, settle bets, credit winners
-      ├─ place_bet(session_code, selections[], stake, username)
-      ├─ approve_deposit(txn_id, amount)    — Admin approve, credit balance
-      ├─ approve_withdrawal(txn_id)         — Admin approve, mark for transfer
-      └─ submit_transaction(type, amount, method, proof_url)
+   ├─ RPC Functions (SECURITY DEFINER — bypass RLS, callable by anon key)
+   │  ├─ settle_session(code, d1, d2, d3)   — Atomic: publish draw, settle bets, credit winners
+   │  ├─ place_bet(session_code, selections[], stake, username)
+   │  ├─ approve_deposit(txn_id, amount)    — Admin approve, credit balance
+   │  ├─ approve_withdrawal(txn_id)         — Admin approve, mark for transfer
+   │  └─ submit_transaction(type, amount, method, proof_url)
+   │
+   ├─ pg_cron — PRIMARY settlement engine (calls settle_session every 5 min automatically)
+   │  Backup: bot_monitor.py on EC2 (Python/Flask + Telegram bot) runs same logic
+   │
+   └─ Edge Functions (supabase/functions/)
+      auth-login, auth-logout, auth-validate   — Admin cookie-based auth (7-day session)
+      user-login, user-register                — User JWT auth flow
+      upload-proof, upload-file                — Storage uploads
+      generate-referral                        — Referral code generation
+      admin-proxy                              — Deployed in CI; routes admin API calls
 ```
 
 ### Angular Admin Page Routing
@@ -136,7 +165,9 @@ Two representations — they must not be confused:
 
 The `3dking.component.ts` `fmtCode()` generates the raw UTC code. `displayCode()` converts to the N9K-WIB display form. The `sessionDisplay()` in `bets.component.ts` applies the same conversion. **The DB always stores the raw UTC digits without the N9K- prefix.**
 
-Session timing: `SESSION_MS = 300_000` (5 min), `LOCK_MS = 60_000` (betting closes 1 min before draw). These constants exist in both Angular (`3dking.component.ts`) and React (`king.js`) and **must stay identical**.
+Session timing: `SESSION_MS = 300_000` (5 min), `LOCK_MS = 60_000` (betting closes 1 min before draw). These constants exist in both Angular (`3dking.component.ts:6`) and React (`king.js:69`) and **must stay identical**.
+
+Session lifecycle state machine: **NEXT → OPEN → LOCKED → RESULTING → SETTLED**. State transitions are driven by the countdown timer in both apps. If they drift, results settle at the wrong time.
 
 ---
 
@@ -145,7 +176,7 @@ Session timing: `SESSION_MS = 300_000` (5 min), `LOCK_MS = 60_000` (betting clos
 All dashboard page components share these conventions — follow them when adding pages:
 
 1. **Inline templates** — all pages use `template: \`...\`` inside the `@Component` decorator. There are no separate `.html` files in `pages/`.
-2. **`ChangeDetectionStrategy.OnPush`** — mandatory on every component. Always call `this.cdr.markForCheck()` after any async operation or timer callback.
+2. **Zoneless + OnPush** — Angular uses `provideZonelessChangeDetection()`. Use `ChangeDetectionStrategy.OnPush` on every component. **Always** call `this.cdr.markForCheck()` after any async operation, timer callback, or subscription update — without this the view will not update.
 3. **`inject()`** — use Angular's `inject()` function instead of constructor injection.
 4. **PrimeNG** for interactive controls: `p-select`, `p-tag`, `p-paginator`, `p-dialog`, `p-confirmdialog`, `p-datepicker`, `p-inputNumber`. All destructive actions must use `p-confirmdialog`.
 5. **`WibDatePipe`** (`| wibDate: 'short'`) for all date display. Do not use the Angular `date` pipe directly for timestamps (wrong timezone).
@@ -167,9 +198,8 @@ All dashboard page components share these conventions — follow them when addin
 - Approve withdrawal → `approve_withdrawal` RPC debits balance, marks for bank transfer
 
 ### Realtime Architecture
-- `RealtimeService` holds Supabase channel subscriptions and exposes BehaviorSubjects (`transactions$`, `users$`, `bets$`, `kyc$`, `wallets$`)
-- `DashboardComponent` (`ngOnInit`) starts 4 global subscriptions that persist across page navigation
-- Individual pages subscribe to the same subjects for silent background refresh
+- Angular: `RealtimeService` holds Supabase channel subscriptions and exposes BehaviorSubjects (`transactions$`, `users$`, `bets$`, `kyc$`, `wallets$`). `DashboardComponent` (`ngOnInit`) starts 4 global subscriptions that persist across page navigation. Individual pages subscribe to the same subjects for silent background refresh.
+- React: `GamePage.jsx` subscribes to Supabase realtime for live session updates. If realtime fails, it falls back to a 4-second polling interval automatically.
 
 ---
 
@@ -187,7 +217,8 @@ All dashboard page components share these conventions — follow them when addin
 ### Supabase
 - Project ID: `dqsmpdetiqsqfnidekik`
 - RLS is off; auth enforced by SECURITY DEFINER RPC functions only
-- Admin credentials: bcrypt hash stored in `users` table; verified in `auth-login` Edge Function
+- Admin credentials: bcrypt hash stored in `users` table; verified in `auth-login` Edge Function; session stored in `n9_session` cookie (7 days)
+- `_worker.js` at root: Cloudflare Pages Worker gateway (cookie auth, rate limit, Turnstile CAPTCHA, IP whitelist) — deployed alongside Angular to `admin.mynumber9.uk`
 
 ---
 
@@ -236,6 +267,8 @@ All dashboard page components share these conventions — follow them when addin
 | `NUMBER9/src/store/king.js` | React betting engine: session boundary calc, bet state, result display |
 | `NUMBER9/src/pages/GamePage.jsx` | Main betting UI + ArenaStage result animation |
 | `supabase/migrations/20260601010000_king_engine.sql` | Core settlement logic |
+| `bot_monitor.py` | EC2 Python bot: backup settlement + Telegram monitoring |
+| `_worker.js` | Cloudflare Pages Worker gateway (admin app auth layer) |
 
 ---
 

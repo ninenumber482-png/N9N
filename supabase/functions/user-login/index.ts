@@ -5,7 +5,7 @@ async function sha256(msg: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "https://mynumber9.uk", "https://number9-app.pages.dev", "https://number9-admin.pages.dev"];
+const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "https://mynumber9.uk", "https://number9-app.pages.dev", "https://number9-admin.pages.dev", "https://master.number9-app.pages.dev", "https://master.number9-admin.pages.dev"];
 
 function corsOrigin(req: Request): string {
   const o = req.headers.get("origin") || "";
