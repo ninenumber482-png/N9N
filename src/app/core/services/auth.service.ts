@@ -33,6 +33,10 @@ export class AuthService {
 
   private readonly TOKEN_EXPIRY = 8 * 60 * 60 * 1000;
 
+  isTokenExpired(timestamp: number): boolean {
+    return this.securityService.isTokenExpired(timestamp, this.TOKEN_EXPIRY);
+  }
+
   async authenticate(credentials: Credentials): Promise<SupabaseLoginResult | null> {
     if (!credentials.username || !credentials.password) {
       return null;
@@ -78,7 +82,7 @@ export class AuthService {
       return false;
     }
 
-    if (user.timestamp && this.securityService.isTokenExpired(user.timestamp, this.TOKEN_EXPIRY)) {
+    if (user.timestamp && this.isTokenExpired(user.timestamp)) {
       this.logout();
       return false;
     }
