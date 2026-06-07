@@ -71,61 +71,80 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-  // Validate session by token_hash (compare hashed token)
+  // Validate session — try SHA256(token) first (new format), then raw token (legacy format)
   const tokenHash = await sha256(token);
   const debugHash = tokenHash.slice(0, 8);
 
   let sessionUserId: string | null = null;
   let sessionId: string | null = null;
 
-  // 1) Try users.session_token first
-  const { data: userRow, error: userErr } = await supabase
-    .from('users')
-    .select('id, session_expires_at')
-    .eq('session_token', tokenHash)
-    .maybeSingle()
+  // Helper: lookup in users table by session_token value
+  async function lookupUser(value: string) {
+    return supabase
+      .from('users')
+      .select('id, session_expires_at')
+      .eq('session_token', value)
+      .maybeSingle()
+  }
 
-  if (!userErr && userRow) {
-    if (userRow.session_expires_at && new Date(userRow.session_expires_at) < new Date()) {
-      return new Response(JSON.stringify({ error: 'Session expired', debug: { hash: debugHash, source: 'user' } }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
-    }
-    sessionUserId = userRow.id;
-    sessionId = 'users-table';
-  } else {
-    // 2) Fallback: try sessions table
-    const { data: session, error: sessionErr } = await supabase
+  // Helper: lookup in sessions table by token_hash value
+  async function lookupSession(value: string) {
+    return supabase
       .from('sessions')
       .select('id, user_id, logged_out_at, last_activity, expires_at')
-      .eq('token_hash', tokenHash)
+      .eq('token_hash', value)
       .maybeSingle()
+  }
 
+  // Try all four combinations: (hash|raw) x (users|sessions)
+  const candidates = [tokenHash, token]
+  for (const candidate of candidates) {
+    // 1) users.session_token
+    const { data: userRow, error: userErr } = await lookupUser(candidate)
+    if (!userErr && userRow) {
+      if (userRow.session_expires_at && new Date(userRow.session_expires_at) < new Date()) {
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        })
+      }
+      sessionUserId = userRow.id
+      sessionId = 'users-table'
+      // Upgrade raw token to hash if needed
+      if (candidate === token && token !== tokenHash) {
+        const expiresAt = userRow.session_expires_at || new Date(Date.now() + 7 * 86400_000).toISOString()
+        supabase.from('users').update({ session_token: tokenHash }).eq('id', userRow.id).then(() => {})
+      }
+      break
+    }
+
+    // 2) sessions.token_hash
+    const { data: session, error: sessionErr } = await lookupSession(candidate)
     if (!sessionErr && session && !session.logged_out_at) {
       const now = new Date()
       if (session.expires_at && new Date(session.expires_at) < now) {
-        return new Response(JSON.stringify({ error: 'Session expired', debug: { hash: debugHash, source: 'session' } }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders },
         })
       }
-      sessionUserId = session.user_id;
-      sessionId = session.id;
-      await supabase
-        .from('sessions')
-        .update({ last_activity: now.toISOString() })
-        .eq('id', session.id)
-    } else {
-      // Both failed — debug output
-      const { count: totalSessions } = await supabase.from('sessions').select('id', { count: 'exact', head: true })
-      const { count: totalUsers } = await supabase.from('users').select('id', { count: 'exact', head: true })
-      console.error(`[ADMIN-PROXY] BOTH LOOKUPS FAILED — hash:${debugHash} totalUsers:${totalUsers} totalSessions:${totalSessions} userErr:${userErr?.message || 'none'} sessionErr:${sessionErr?.message || 'none'}`)
-      return new Response(JSON.stringify({ error: 'Invalid or expired session', debug: { hash: debugHash, totalUsers, totalSessions, userErr: userErr?.message, sessionErr: sessionErr?.message } }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      sessionUserId = session.user_id
+      sessionId = session.id
+      // Upgrade raw token to hash if needed
+      if (candidate === token && token !== tokenHash) {
+        supabase.from('sessions').update({ token_hash: tokenHash }).eq('id', session.id).then(() => {})
+      }
+      await supabase.from('sessions').update({ last_activity: now.toISOString() }).eq('id', session.id)
+      break
     }
+  }
+
+  if (!sessionUserId) {
+    const { count: totalSessions } = await supabase.from('sessions').select('id', { count: 'exact', head: true })
+    const { count: totalUsers } = await supabase.from('users').select('id', { count: 'exact', head: true })
+    console.error(`[ADMIN-PROXY] SESSION NOT FOUND — hash:${debugHash} rawLen:${token.length} totalUsers:${totalUsers} totalSessions:${totalSessions}`)
+    return new Response(JSON.stringify({ error: 'Invalid or expired session', debug: { hash: debugHash, totalUsers, totalSessions } }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    })
   }
 
   let payload
