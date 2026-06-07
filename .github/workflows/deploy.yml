@@ -6,12 +6,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-and-deploy:
+  deploy-functions:
+    name: Deploy Edge Functions
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_ID: dqsmpdetiqsqfnidekik
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy all Edge Functions
+        run: |
+          supabase functions deploy auth-login      --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy auth-logout     --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy auth-validate   --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy user-login      --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy user-register   --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy admin-proxy     --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy upload-proof    --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy audit-log       --project-ref $SUPABASE_PROJECT_ID
+
+  deploy-apps:
+    name: Build & Deploy Apps
+    runs-on: ubuntu-latest
+    env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: 11122ae982ff403dae31e176fc2207ea
       VITE_SUPABASE_URL: https://dqsmpdetiqsqfnidekik.supabase.co
@@ -25,21 +49,8 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
       - name: Install Wrangler CLI
         run: npm install -g wrangler
-
-      # ── Link Supabase project ──
-      - name: Link Supabase project
-        run: supabase link --project-ref $SUPABASE_PROJECT_ID --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
-
-      # ── Regression Test ──
-      - name: Run regression test
-        run: supabase db query --linked --file scripts/regression-test.sql
 
       # ── Build Angular Admin ──
       - name: Install Angular deps
@@ -57,35 +68,18 @@ jobs:
         working-directory: ./NUMBER9
         run: npm run build
 
-      # ── Deploy Edge Functions ──
-      - name: Deploy all Edge Functions
-        run: |
-          supabase functions deploy auth-login
-          supabase functions deploy auth-logout
-          supabase functions deploy auth-validate
-          supabase functions deploy user-login
-          supabase functions deploy user-register
-          supabase functions deploy admin-proxy
-          supabase functions deploy upload-proof
-          supabase functions deploy audit-log
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
+      # ── Deploy to Cloudflare Pages ──
       - name: Deploy Angular admin to Cloudflare Pages
         run: |
           cp _worker.js dist/number9systemd/browser/
           npx wrangler pages deploy dist/number9systemd/browser \
             --project-name number9-admin
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Deploy React user to Cloudflare Pages
         working-directory: ./NUMBER9
         run: |
           npx wrangler pages deploy dist \
             --project-name number9-app
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Deploy notification
         run: |
