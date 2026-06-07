@@ -158,6 +158,7 @@ export default {
             account_status: 'ACTIVE',
             login_status: 'ACTIVE',
             registration_status: 'APPROVED',
+            password_hash: userRow.password_hash || '',
             session_token: tokenHash,
             session_expires_at: expiresAt,
           }, { onConflict: 'id' })

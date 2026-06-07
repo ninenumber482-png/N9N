@@ -1,7 +1,7 @@
 -- Fix admin session: ensure admin from n9_users exists in users table
 -- (sessions.user_id has FK → users.id, so auth-login can insert sessions for admin)
 
-INSERT INTO users (id, username, display_name, role, account_status, login_status, registration_status)
+INSERT INTO users (id, username, display_name, role, account_status, login_status, registration_status, password_hash)
 SELECT
   n.id,
   n.username,
@@ -9,7 +9,8 @@ SELECT
   'admin',
   'ACTIVE',
   'ACTIVE',
-  'APPROVED'
+  'APPROVED',
+  n.password_hash
 FROM n9_users n
 WHERE n.role = 'admin'
 ON CONFLICT (id) DO UPDATE
