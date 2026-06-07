@@ -125,7 +125,30 @@ export default {
       // Clear failed logins
       try { await supabase.from('failed_logins').delete().eq('username', dbUsername).eq('ip_address', ip_address) } catch {}
 
-      // Try inserting session record (may fail if user is only in n9_users and FK fails)
+      // Step 1: Ensure user exists in users table (upsert handles both cases)
+      // This is critical when admin only exists in n9_users — without this,
+      // sessions.insert() fails on FK constraint and users.update() silently
+      // affects 0 rows (no error), so the token is never stored anywhere.
+      const { error: upsertErr } = await supabase
+        .from('users')
+        .upsert({
+          id: userRow.id,
+          username: dbUsername,
+          display_name: userRow.display_name || userRow.full_name || dbUsername,
+          role: userRow.role || 'admin',
+          account_status: 'ACTIVE',
+          login_status: 'ACTIVE',
+          registration_status: 'APPROVED',
+          password_hash: userRow.password_hash || '',
+          session_token: tokenHash,
+          session_expires_at: expiresAt,
+        }, { onConflict: 'id' })
+      if (upsertErr) {
+        console.error('[LOGIN] users upsert failed:', upsertErr.message)
+        return json({ error: 'Failed to create session' }, 500)
+      }
+
+      // Step 2: Insert session record (FK now satisfied since user exists in users)
       const { error: sessionErr } = await supabase.from('sessions').insert({
         user_id: userRow.id,
         token_hash: tokenHash,
@@ -135,39 +158,7 @@ export default {
         expires_at: expiresAt,
       })
       if (sessionErr) {
-        // Log but don't fail — will fall back to users.session_token lookup in admin-proxy
-        console.warn('[LOGIN] sessions insert failed (will use users.session_token fallback):', sessionErr.message)
-      }
-
-      // Always update users.session_token so admin-proxy can find the session
-      const { error: userUpdateErr } = await supabase
-        .from('users')
-        .update({ session_token: tokenHash, session_expires_at: expiresAt })
-        .eq('id', userRow.id)
-
-      if (userUpdateErr) {
-        console.warn(`[LOGIN] users.session_token update failed: ${userUpdateErr.message}`)
-        // Upsert fallback: admin may only be in n9_users, create a minimal users row
-        const { error: upsertErr } = await supabase
-          .from('users')
-          .upsert({
-            id: userRow.id,
-            username: dbUsername,
-            display_name: userRow.display_name || dbUsername,
-            role: 'admin',
-            account_status: 'ACTIVE',
-            login_status: 'ACTIVE',
-            registration_status: 'APPROVED',
-            password_hash: userRow.password_hash || '',
-            session_token: tokenHash,
-            session_expires_at: expiresAt,
-          }, { onConflict: 'id' })
-        if (upsertErr) {
-          // Both failed — can't create any session record
-          console.error('[LOGIN] All session storage attempts failed:', upsertErr.message)
-          return json({ error: 'Failed to create session' }, 500)
-        }
-        console.info('[LOGIN] Created admin row in users via upsert')
+        console.warn('[LOGIN] sessions insert failed:', sessionErr.message)
       }
 
       console.info(`[LOGIN] Session created for ${dbUsername}: ${sessionToken.slice(0, 8)}...`);
