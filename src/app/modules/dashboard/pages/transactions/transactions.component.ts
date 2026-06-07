@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,13 +8,17 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
-import { InputTextModule } from 'primeng/inputtext';
 
 interface TransactionItem {
   id: string;
@@ -43,50 +46,26 @@ interface TransactionItem {
   imports: [
     CommonModule,
     FormsModule,
-    AngularSvgIconModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    FilterBarComponent,
+    SeverityMapPipe,
     WibDatePipe,
     SelectModule,
     DatePickerModule,
     TagModule,
     DialogModule,
     ConfirmDialogModule,
-    InputTextModule,
   ],
   providers: [ConfirmationService],
   template: `
     <div data-page="transactions" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/currency-dollar.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Transactions</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">Verifikasi dan kelola seluruh transaksi platform</p>
-        </div>
-          </div>
-        </div><button
-          (click)="load()"
-          [disabled]="loading"
-          class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          <svg class="h-3.5 w-3.5" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-      </div>
+      <app-page-header icon="currency-dollar" title="Transactions" subtitle="Verifikasi dan kelola seluruh transaksi platform">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
-      <div class="flex flex-wrap gap-2 items-center">
-        <input
-          pInputText
-          [(ngModel)]="search"
-          (ngModelChange)="applyFilter()"
-          placeholder="Cari ref, username…"
-          class="!w-48 !text-xs !py-1.5 !px-2.5" />
-
+      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari ref, username…">
         <p-select
           [(ngModel)]="typeFilter"
           (ngModelChange)="applyFilter()"
@@ -122,17 +101,9 @@ interface TransactionItem {
           dateFormat="dd/mm/yy"
           class="w-36"
           styleClass="!text-xs !py-1.5" />
-      </div>
+      </app-filter-bar>
 
-      @if (error) {
-        <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
-          <p class="font-medium text-foreground">Gagal memuat transaksi</p>
-          <p class="mt-0.5">{{ error }}</p>
-          <button (click)="load()" class="mt-2 bg-card border-border rounded border px-2.5 py-1 text-xs font-medium">
-            Coba Lagi
-          </button>
-        </div>
-      }
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
       <div class="bg-card border-border rounded-lg page-accent-card">
         <div class="overflow-x-auto">
@@ -177,7 +148,7 @@ interface TransactionItem {
                   </td>
                   <td class="px-3 py-2.5 text-[10px] text-muted-foreground">{{ tx.method || tx.bank_name || '-' }}</td>
                   <td class="px-3 py-2.5">
-                    <p-tag [value]="tx.status" [severity]="statusSeverity(tx.status)" />
+                    <p-tag [value]="tx.status" [severity]="tx.status | severityMap" />
                   </td>
                   <td class="text-muted-foreground px-3 py-2.5 whitespace-nowrap text-[10px]">
                     {{ tx.created_at | wibDate: 'short' }}
@@ -599,10 +570,5 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   typeSeverity(t: string): 'info' | 'warn' | 'contrast' | 'secondary' {
     const m: Record<string, 'info' | 'warn' | 'contrast' | 'secondary'> = { DEPOSIT: 'info', WITHDRAWAL: 'warn', BET: 'contrast' };
     return m[t] || 'secondary';
-  }
-
-  statusSeverity(s: string): 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-    const m: Record<string, 'success' | 'warn' | 'danger' | 'secondary' | 'contrast'> = { COMPLETED: 'success', PENDING: 'warn', FAILED: 'danger' };
-    return m[s] || 'secondary';
   }
 }

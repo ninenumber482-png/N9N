@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +13,11 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
+import { FilterHelper } from 'src/app/shared/utils/filter.helper';
 
 interface ReferralRecord {
   id: string;
@@ -31,20 +35,13 @@ interface ReferralRecord {
   selector: 'app-referrals',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, WibDatePipe, SelectModule, TagModule, ConfirmDialogModule, InputTextModule, PaginatorModule],
+    WibDatePipe, SelectModule, TagModule, ConfirmDialogModule, InputTextModule, PaginatorModule,
+    PageHeaderComponent, LoadingErrorComponent, FilterBarComponent],
   providers: [ConfirmationService],
   template: `
     <div data-page="referrals" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/gift.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Referral Management</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">Generate and manage referral codes</p>
-        </div>
-          </div>
-        </div><button
+      <app-page-header icon="gift" title="Referral Management" subtitle="Generate and manage referral codes">
+        <button
           (click)="generate()"
           [disabled]="generating"
           class="bg-foreground text-background disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors">
@@ -57,15 +54,9 @@ interface ReferralRecord {
             + Generate New Code
           }
         </button>
-      </div>
+      </app-page-header>
 
-      <div class="flex flex-wrap gap-2">
-        <input
-          pInputText
-          [(ngModel)]="search"
-          (ngModelChange)="applyFilter()"
-          placeholder="Search code…"
-          class="!w-48 !text-xs !py-1.5 !px-2.5" />
+      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Search code…">
         <p-select
           [(ngModel)]="statusFilter"
           (ngModelChange)="applyFilter()"
@@ -75,21 +66,9 @@ interface ReferralRecord {
           placeholder="All Status"
           class="w-36"
           styleClass="!text-xs !w-full" />
-      </div>
+      </app-filter-bar>
 
-      @if (error) {
-        <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
-          <p class="font-medium text-foreground">Failed to load referrals</p>
-          <p class="mt-0.5">{{ error }}</p>
-          <button (click)="load()" class="mt-2 bg-card border-border rounded border px-2.5 py-1 text-xs font-medium">
-            Retry
-          </button>
-        </div>
-      }
-
-      @if (loading) {
-        <div class="text-muted-foreground py-12 text-center text-xs">Loading referrals...</div>
-      }
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
@@ -318,19 +297,16 @@ export class ReferralsComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? this.pageSize)) + 1;
-    this.pageSize = event.rows ?? this.pageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
     this.cdr.markForCheck();
   }
 
   applyFilter() {
     this.currentPage = 1;
-    let result = this.referrals;
-    if (this.search) {
-      const q = this.search.toLowerCase();
-      result = result.filter((r) => r.code?.toLowerCase().includes(q));
-    }
-    if (this.statusFilter) result = result.filter((r) => r.status === this.statusFilter);
+    let result = FilterHelper.applySearch(this.referrals, this.search, ['code']);
+    if (this.statusFilter) result = FilterHelper.applyStatus(result, 'status', this.statusFilter);
     this.filtered = result;
   }
 

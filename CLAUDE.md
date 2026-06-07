@@ -142,6 +142,11 @@ NUMBER9 PLATFORM (Monorepo)
       upload-proof, upload-file                — Storage uploads
       generate-referral                        — Referral code generation
       admin-proxy                              — Deployed in CI; routes admin API calls
+      admin-popup-image                        — Popup banner image management
+      audit-log                                — Audit trail queries
+      init-admin, cleanup-users                — One-off admin utilities (not in normal flow)
+      migrate-stats, fix-rpc                   — Migration helpers (run once, idempotent)
+      node-api, test-login                     — Dev/debug utilities; not production-critical
 ```
 
 ### Angular Admin Page Routing
@@ -150,7 +155,6 @@ NUMBER9 PLATFORM (Monorepo)
 - **`/wallet`, `/deposits`, `/withdrawals`** — all three routes load `WalletAdminComponent`, which auto-selects the correct tab from `ActivatedRoute`. Do not create separate components for deposit/withdrawal pages.
 - **`/member-balance`** — redirects to `/wallets` (legacy alias).
 - **`/system`** and **`/role-management`** — protected by `RoleGuard` (`admin` and `superadmin` roles respectively).
-- `deposits.component.ts` exists in the codebase but **is not used by any route** — it is dead code; do not reference it.
 
 The bottom **Prev/Next navigation** in `dashboard.component.ts` (`PAGE_ORDER` array) must stay in sync with `src/app/core/constants/menu.ts`. Every routable page should appear in both; omitting a page from `PAGE_ORDER` breaks its pagination links.
 

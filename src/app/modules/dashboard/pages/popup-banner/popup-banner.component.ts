@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 
 interface BannerData {
   id: string;
@@ -20,18 +20,14 @@ interface BannerData {
 @Component({
   selector: 'app-popup-banner',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, RouterModule, WibDatePipe, ConfirmDialogModule],
+  imports: [PageHeaderComponent, CommonModule, FormsModule,
+    RouterModule, WibDatePipe, ConfirmDialogModule],
   providers: [ConfirmationService],
   template: `
     <div data-page="popup-banner" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-        <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/bell.svg" svgClass="h-4 w-4"></svg-icon></div>
-        <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Popup Banner</h1>
-      </div>
+      <app-page-header icon="bell" title="Popup Banner">
         <span class="text-[11px] text-muted-foreground">{{ banners.length }} banner</span>
-      </div>
+      </app-page-header>
 
       <div class="bg-card border border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #FBBF24;">
         <div class="space-y-6 mb-6">

@@ -1,9 +1,9 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 
 interface WhitelistEntry {
   id: string;
@@ -15,16 +15,12 @@ interface WhitelistEntry {
 @Component({
   selector: 'app-ip-whitelist',
   standalone: true,
-  imports: [CommonModule, FormsModule, AngularSvgIconModule, WibDatePipe],
+  imports: [CommonModule, FormsModule, WibDatePipe, PageHeaderComponent],
   template: `
     <div data-page="ip-whitelist" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-        <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/shield-check.svg" svgClass="h-4 w-4"></svg-icon></div>
-        <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">IP Whitelist Gateway</h1>
-      </div>
+      <app-page-header icon="shield-check" title="IP Whitelist Gateway">
         <span class="text-[11px] text-muted-foreground">{{ entries.length }} IP terdaftar</span>
-      </div>
+      </app-page-header>
 
       <div class="bg-card border border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #94A3B8;">
         <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 mb-4">

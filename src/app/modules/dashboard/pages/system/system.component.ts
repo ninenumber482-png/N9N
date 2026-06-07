@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +5,9 @@ import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { InputTextModule } from 'primeng/inputtext';
 import { environment } from 'src/environments/environment';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
 
 interface ConfigEntry {
   key: string;
@@ -17,46 +19,17 @@ interface ConfigEntry {
   selector: 'app-system',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, WibDatePipe, InputTextModule],
+    WibDatePipe, InputTextModule,
+    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent],
   template: `
     <div data-page="system" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/cog-6-tooth.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">System Control</h1>
-            <p class="text-muted-foreground mt-0.5 text-xs">Platform configuration and operational controls</p>
-          </div>
-        </div>
-        <button
-          (click)="load()"
-          [disabled]="loading"
-          class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          <svg class="h-3.5 w-3.5" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-      </div>
+      <app-page-header icon="cog-6-tooth" title="System Control" subtitle="Platform configuration and operational controls">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
-      @if (loading) {
-        <div class="bg-card border border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #737373;">
-          <div class="space-y-3">
-            @for (_ of [1, 2, 3, 4, 5]; track _) {
-              <div class="h-10 rounded-lg bg-muted/20"></div>
-            }
-          </div>
-        </div>
-      } @else if (error) {
-        <div class="bg-card border border-border rounded-lg p-5 text-center">
-          <p class="text-sm text-muted-foreground">{{ error }}</p>
-          <button
-            (click)="load()"
-            class="mt-3 px-4 py-1.5 rounded text-xs text-foreground bg-muted hover:bg-muted/60 transition-colors">
-            Retry
-          </button>
-        </div>
-      } @else {
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
         <!-- Marketplace + Maintenance Controls -->
         <div class="bg-card border border-border rounded-lg">
           <div class="border-b border-border px-4 py-3">
@@ -305,8 +278,10 @@ export class SystemComponent implements OnInit, OnDestroy {
   addForm = { open: false, key: '', value: '' };
 
   serverData: { cpu: number; ram: number } | null = null;
-  serverStatus: 'loading' | 'online' | 'offline' = 'loading';
+  serverStatus: 'loading' | 'online' | 'offline' | 'error' = 'loading';
   private serverPollTimer!: ReturnType<typeof setInterval>;
+  private consecutiveErrors = 0;
+  private maxRetries = 3;
 
   ngOnInit() {
     this.load();
@@ -315,19 +290,52 @@ export class SystemComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    clearInterval(this.serverPollTimer);
+    if (this.serverPollTimer) {
+      clearInterval(this.serverPollTimer);
+    }
   }
 
   private async pollServer() {
     try {
-      const res = await fetch(environment.serverMonitorUrl);
-      if (!res.ok) throw new Error('upstream');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const res = await fetch(environment.serverMonitorUrl, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+
       const data = await res.json();
-      this.serverData = data;
-      this.serverStatus = 'online';
-    } catch {
-      this.serverStatus = 'offline';
-      this.serverData = null;
+
+      if (typeof data.cpu === 'number' && typeof data.ram === 'number') {
+        this.serverData = {
+          cpu: Math.max(0, Math.min(100, data.cpu)),
+          ram: Math.max(0, Math.min(100, data.ram))
+        };
+        this.serverStatus = 'online';
+        this.consecutiveErrors = 0;
+      } else {
+        throw new Error('Invalid server response format');
+      }
+    } catch (error) {
+      console.warn('Server monitor poll failed:', error);
+      this.consecutiveErrors++;
+
+      if (this.consecutiveErrors >= this.maxRetries) {
+        this.serverStatus = 'offline';
+        this.serverData = null;
+      } else if (this.serverStatus === 'loading') {
+        this.serverStatus = 'error';
+      }
     }
     this.cdr.markForCheck();
   }

@@ -22,7 +22,7 @@ async function sha256(msg: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const ALLOWED_ORIGINS = ["https://admin.mynumber9.uk", "https://number9-admin.pages.dev"];
+const ALLOWED_ORIGINS = ["https://admin.mynumber9.uk", "https://number9-admin.pages.dev", "https://master.number9-admin.pages.dev"];
 
 function corsOrigin(req: Request): string {
   const o = req.headers.get("origin") || "";
@@ -33,7 +33,7 @@ function corsHeaders(req: Request): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": corsOrigin(req),
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token, prefer",
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Expose-Headers": "content-range",
     "Vary": "Origin",
@@ -148,23 +148,8 @@ Deno.serve(async (req) => {
   }
 
   if (!sessionUserId) {
-    const { count: totalSessions } = await supabase.from('sessions').select('id', { count: 'exact', head: true })
-    const { count: totalUsers } = await supabase.from('users').select('id', { count: 'exact', head: true })
-    // Fetch last 5 session hashes to compare (diagnostic)
-    const { data: recentSessions } = await supabase.from('sessions')
-      .select('token_hash, created_at')
-      .order('created_at', { ascending: false })
-      .limit(5)
-    const recentHashes = (recentSessions || []).map((s: any) => s.token_hash ? s.token_hash.slice(0, 8) : 'null')
-    // Check if session_token exists in users
-    const { data: recentUsers } = await supabase.from('users')
-      .select('session_token')
-      .not('session_token', 'is', null)
-      .order('id', { ascending: false })
-      .limit(3)
-    const recentUserHashes = (recentUsers || []).map((u: any) => u.session_token ? u.session_token.slice(0, 8) : 'null')
-    console.error(`[ADMIN-PROXY] SESSION NOT FOUND — hash:${debugHash} rawLen:${token.length} totalUsers:${totalUsers} totalSessions:${totalSessions} recentSessions:${recentHashes.join(',')} recentUserTokens:${recentUserHashes.join(',')}`)
-    return new Response(JSON.stringify({ error: 'Invalid or expired session', debug: { hash: debugHash, totalUsers, totalSessions, recentSessions: recentHashes, recentUserTokens: recentUserHashes } }), {
+    console.error(`[ADMIN-PROXY] SESSION NOT FOUND — hash:${debugHash} rawLen:${token.length}`)
+    return new Response(JSON.stringify({ error: 'Invalid or expired session' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })

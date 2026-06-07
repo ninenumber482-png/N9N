@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +9,11 @@ import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { PaginatorModule } from 'primeng/paginator';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 interface BetData {
   id: string;
@@ -30,24 +34,12 @@ interface BetData {
   selector: 'app-bets',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, WibDatePipe, SelectModule, DatePickerModule, TagModule, PaginatorModule],
+    WibDatePipe, SelectModule, DatePickerModule, TagModule, PaginatorModule,
+    PageHeaderComponent, LoadingErrorComponent, FilterBarComponent, SeverityMapPipe],
   template: `
     <div data-page="bets" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/cursor-click.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Bets</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">View all bets across sessions</p>
-        </div>
-          </div>
-        </div><div class="flex flex-wrap gap-2 items-center">
-          <input
-            [(ngModel)]="search"
-            (ngModelChange)="applyFilter()"
-            placeholder="Cari user, session, selection…"
-            class="bg-card border-border text-foreground rounded-lg border px-2.5 py-1.5 text-xs outline-none w-44" />
+      <app-page-header icon="cursor-click" title="Bets" subtitle="View all bets across sessions">
+        <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari user, session, selection…">
           <p-select
             [(ngModel)]="statusFilter"
             (ngModelChange)="applyFilter()"
@@ -71,82 +63,86 @@ interface BetData {
             placeholder="Sampai"
             class="w-32"
             inputStyleClass="!text-xs !py-1.5 !px-2.5" />
-        </div>
-      </div>
+        </app-filter-bar>
+      </app-page-header>
 
-      <div class="bg-card border-border rounded-lg page-accent-card">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
-            <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Bet Code</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Session</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Selection</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Stake</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Potential Payout</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Actual Payout</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Result</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (b of displayBets; track b.id) {
-                <tr class="border-border hover:bg-accent/30 border-b text-xs transition-colors">
-                  <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono">
-                    {{ b.bet_code.slice(0, 12) }}
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <p class="font-semibold text-foreground">{{ b.user?.username || b.user_id?.slice(0, 10) }}</p>
-                    <p class="text-muted-foreground text-[10px]">{{ b.user?.display_name }}</p>
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap">
-                    {{ sessionDisplay(b.session_code) }}
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-lg font-black text-foreground">
-                    {{ b.selection }}
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-bold text-foreground">
-                    {{ b.stake | number }} P
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
-                    {{ b.potential_payout ? (b.potential_payout | number) + ' P' : '-' }}
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-foreground font-semibold">
-                    {{ b.actual_payout ? (b.actual_payout | number) + ' P' : '-' }}
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <p-tag [value]="b.status" [severity]="betStatusSeverity(b.status)" />
-                  </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    @if (b.result) {
-                      <p-tag [value]="b.result" [severity]="b.result === 'WIN' ? 'success' : 'danger'" />
-                    } @else {
-                      <span class="text-muted-foreground">-</span>
-                    }
-                  </td>
-                  <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">
-                    {{ b.created_at | wibDate: 'short' }}
-                  </td>
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
+        <div class="bg-card border-border rounded-lg page-accent-card">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+              <thead>
+                <tr
+                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Bet Code</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Session</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Selection</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Stake</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Potential Payout</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Actual Payout</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Result</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Date</th>
                 </tr>
-              } @empty {
-                <tr>
-                  <td colspan="10" class="text-muted-foreground px-4 py-12 text-center">{{ emptyMessage }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (b of displayBets; track b.id) {
+                  <tr class="border-border hover:bg-accent/30 border-b text-xs transition-colors">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono">
+                      {{ b.bet_code.slice(0, 12) }}
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                      <p class="font-semibold text-foreground">{{ b.user?.username || b.user_id?.slice(0, 10) }}</p>
+                      <p class="text-muted-foreground text-[10px]">{{ b.user?.display_name }}</p>
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap">
+                      {{ sessionDisplay(b.session_code) }}
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-lg font-black text-foreground">
+                      {{ b.selection }}
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-bold text-foreground">
+                      {{ b.stake | number }} P
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                      {{ b.potential_payout ? (b.potential_payout | number) + ' P' : '-' }}
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-foreground font-semibold">
+                      {{ b.actual_payout ? (b.actual_payout | number) + ' P' : '-' }}
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                      <p-tag [value]="b.status" [severity]="b.status | severityMap" />
+                    </td>
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                      @if (b.result) {
+                        <p-tag [value]="b.result" [severity]="b.result === 'WIN' ? 'success' : 'danger'" />
+                      } @else {
+                        <span class="text-muted-foreground">-</span>
+                      }
+                    </td>
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">
+                      {{ b.created_at | wibDate: 'short' }}
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="10" class="text-muted-foreground px-4 py-12 text-center">{{ emptyMessage }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p-paginator
+            (onPageChange)="onPageChange($event)"
+            [first]="(currentPage - 1) * pageSize"
+            [rows]="pageSize"
+            [totalRecords]="filtered.length"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="" />
         </div>
-        <p-paginator
-          (onPageChange)="onPageChange($event)"
-          [first]="(currentPage - 1) * pageSize"
-          [rows]="pageSize"
-          [totalRecords]="filtered.length"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="" />
-      </div>
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -261,13 +257,10 @@ export class BetsComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? this.pageSize)) + 1;
-    this.pageSize = event.rows ?? this.pageSize;
-  }
-
-  betStatusSeverity(s: string) {
-    const m: Record<string, string> = { PENDING: 'warn', SETTLED: 'success', CANCELLED: 'secondary' };
-    return (m[s] || 'secondary') as any;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
+    this.cdr.markForCheck();
   }
 
   sessionDisplay(code: string): string {

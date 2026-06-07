@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,24 +5,16 @@ import { Subject } from 'rxjs';
 import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-member-balance',
   standalone: true,
-  imports: [CommonModule, FormsModule, AngularSvgIconModule],
+  imports: [CommonModule, FormsModule, PageHeaderComponent],
   template: `
     <div data-page="member-balance" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/currency-dollar.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold tracking-tight text-foreground">Tambah / Kurangi Saldo</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">Adjust saldo member</p>
-        </div>
-          </div>
-        </div>
-      </div><div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #84CC16;">
+      <app-page-header icon="currency-dollar" title="Tambah / Kurangi Saldo" subtitle="Adjust saldo member" />
+      <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #84CC16;">
         <div class="flex flex-wrap gap-2 mb-4">
           <input
             [(ngModel)]="searchUsername"

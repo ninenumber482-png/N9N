@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +13,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
+import { FilterHelper } from 'src/app/shared/utils/filter.helper';
 
 interface KycDocument {
   id: string;
@@ -30,27 +35,13 @@ interface KycDocument {
   selector: 'app-kyc',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, WibDatePipe, SelectModule, TagModule, ConfirmDialogModule, PaginatorModule, InputTextModule],
+    WibDatePipe, SelectModule, TagModule, ConfirmDialogModule, PaginatorModule, InputTextModule,
+    PageHeaderComponent, LoadingErrorComponent, FilterBarComponent, SeverityMapPipe],
   providers: [ConfirmationService],
   template: `
     <div data-page="kyc" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/identification.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">KYC Documents</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">Review identity documents</p>
-        </div>
-          </div>
-        </div>
-        <div class="flex flex-wrap gap-2 items-center">
-          <input
-            pInputText
-            [(ngModel)]="search"
-            (ngModelChange)="applyFilter()"
-            placeholder="Cari username…"
-            class="!w-44 !text-xs !py-1.5 !px-2.5" />
+      <app-page-header icon="identification" title="KYC Documents" subtitle="Review identity documents">
+        <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari username…">
           <p-select
             [(ngModel)]="statusFilter"
             (ngModelChange)="applyFilter()"
@@ -60,22 +51,10 @@ interface KycDocument {
             placeholder="Semua"
             class="w-36"
             styleClass="!text-xs !w-full" />
-        </div>
-      </div>
+        </app-filter-bar>
+      </app-page-header>
 
-      @if (error) {
-        <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
-          <p class="font-medium text-foreground">Gagal memuat dokumen KYC</p>
-          <p class="mt-0.5">{{ error }}</p>
-          <button (click)="load()" class="mt-2 bg-card border-border rounded border px-2.5 py-1 text-xs font-medium">
-            Coba Lagi
-          </button>
-        </div>
-      }
-
-      @if (loading) {
-        <div class="text-muted-foreground py-12 text-center text-xs">Memuat dokumen KYC...</div>
-      }
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
@@ -106,7 +85,7 @@ interface KycDocument {
                     {{ k.document_type || 'ID' }}
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <p-tag [value]="k.status" [severity]="kycStatusSeverity(k.status)" />
+                    <p-tag [value]="k.status" [severity]="k.status | severityMap" />
                     @if (k.rejection_reason) {
                       <p class="text-[9px] text-muted-foreground mt-0.5">{{ k.rejection_reason }}</p>
                     }
@@ -297,21 +276,15 @@ export class KycComponent implements OnInit, OnDestroy {
   applyFilter() {
     this.currentPage = 1;
     let result = this.documents;
-    if (this.statusFilter) result = result.filter((d) => d.status === this.statusFilter);
-    if (this.search) {
-      const q = this.search.toLowerCase();
-      result = result.filter(
-        (d) =>
-          d.user_username?.toLowerCase().includes(q) ||
-          d.user_display_name?.toLowerCase().includes(q),
-      );
-    }
+    result = FilterHelper.applyStatus(result, 'status', this.statusFilter);
+    result = FilterHelper.applySearch(result, this.search, ['user_username', 'user_display_name']);
     this.filtered = result;
   }
 
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? 20)) + 1;
-    this.pageSize = event.rows ?? 20;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
     this.cdr.markForCheck();
   }
 
@@ -331,11 +304,6 @@ export class KycComponent implements OnInit, OnDestroy {
     }
     this.loadingUrls.delete(id);
     this.cdr.markForCheck();
-  }
-
-  kycStatusSeverity(s: string) {
-    const m: Record<string, string> = { APPROVED: 'success', PENDING: 'warn', REJECTED: 'danger' };
-    return (m[s] || 'secondary') as 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | null | undefined;
   }
 
   confirmApprove(k: KycDocument) {

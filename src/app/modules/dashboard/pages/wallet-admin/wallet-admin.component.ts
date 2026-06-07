@@ -7,7 +7,6 @@ import { AdminService } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
@@ -16,6 +15,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
+import { StatCardComponent } from 'src/app/shared/components/stat-card/stat-card.component';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 type TabId = 'deposits' | 'withdrawals' | 'turnover';
 
@@ -83,9 +88,13 @@ interface PageEvent {
   selector: 'app-wallet-admin',
   standalone: true,
   imports: [
+    PageHeaderComponent,
+    RefreshButtonComponent,
+    FilterBarComponent,
+    StatCardComponent,
+    SeverityMapPipe,
     CommonModule,
     FormsModule,
-    AngularSvgIconModule,
     WibDatePipe,
     SelectModule,
     TagModule,
@@ -97,15 +106,7 @@ interface PageEvent {
   providers: [ConfirmationService],
   template: `
     <div data-page="wallet-admin" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/cog.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Wallet Management</h1>
-            <p class="text-muted-foreground mt-0.5 text-xs">Kelola deposit, penarikan, dan turnover pengguna</p>
-          </div>
-        </div>
-      </div>
+      <app-page-header icon="cog" title="Wallet Management" subtitle="Kelola deposit, penarikan, dan turnover pengguna" />
 
       <div class="flex gap-1 rounded-lg border border-border bg-card p-1">
         @for (tb of tabs; track tb.id) {
@@ -133,30 +134,8 @@ interface PageEvent {
     </div>
 
     <ng-template #depositTab>
-      <div class="flex flex-wrap gap-2">
-        <button
-          (click)="loadDeposits()"
-          class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors">
-          <svg
-            class="h-3.5 w-3.5 inline mr-1"
-            [class.animate-spin]="depLoading"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-        <input
-          pInputText
-          [(ngModel)]="depSearch"
-          (ngModelChange)="applyDepFilter()"
-          placeholder="Cari username, nominal…"
-          class="!w-48 !text-xs !py-1.5 !px-2.5" />
+      <app-filter-bar [search]="depSearch" (searchChange)="depSearch=$event; applyDepFilter()" placeholder="Cari username, nominal…">
+        <app-refresh-button [loading]="depLoading" (clicked)="loadDeposits()" />
         <p-select
           [(ngModel)]="depStatusFilter"
           (ngModelChange)="applyDepFilter()"
@@ -166,7 +145,7 @@ interface PageEvent {
           placeholder="Semua Status"
           class="w-36"
           styleClass="!text-xs !w-full" />
-      </div>
+      </app-filter-bar>
 
       @if (depError) {
         <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
@@ -213,7 +192,7 @@ interface PageEvent {
                   </td>
                   <td class="px-3 py-3 font-bold text-foreground">+{{ tx.amount | number: '1.0-0' }} P</td>
                   <td class="px-3 py-3 text-[10px] text-muted-foreground">{{ tx.method || '-' }}</td>
-                  <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="txStatusSeverity(tx.status)" /></td>
+                  <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="tx.status | severityMap" /></td>
                   <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[10px]">
                     {{ tx.created_at | wibDate: 'short' }}
                   </td>
@@ -279,7 +258,7 @@ interface PageEvent {
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Status</span
-                ><p-tag [value]="depDetail.status" [severity]="txStatusSeverity(depDetail.status)" />
+                ><p-tag [value]="depDetail.status" [severity]="depDetail.status | severityMap" />
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Tanggal</span
@@ -300,30 +279,8 @@ interface PageEvent {
     </ng-template>
 
     <ng-template #withdrawTab>
-      <div class="flex flex-wrap gap-2">
-        <button
-          (click)="loadWithdrawals()"
-          class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors">
-          <svg
-            class="h-3.5 w-3.5 inline mr-1"
-            [class.animate-spin]="wdLoading"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-        <input
-          pInputText
-          [(ngModel)]="wdSearch"
-          (ngModelChange)="applyWdFilter()"
-          placeholder="Cari username, nominal…"
-          class="!w-48 !text-xs !py-1.5 !px-2.5" />
+      <app-filter-bar [search]="wdSearch" (searchChange)="wdSearch=$event; applyWdFilter()" placeholder="Cari username, nominal…">
+        <app-refresh-button [loading]="wdLoading" (clicked)="loadWithdrawals()" />
         <p-select
           [(ngModel)]="wdStatusFilter"
           (ngModelChange)="applyWdFilter()"
@@ -333,7 +290,7 @@ interface PageEvent {
           placeholder="Semua Status"
           class="w-36"
           styleClass="!text-xs !w-full" />
-      </div>
+      </app-filter-bar>
 
       @if (wdError) {
         <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
@@ -383,7 +340,7 @@ interface PageEvent {
                     {{ tx.bank_name || '-' }}
                     {{ tx.bank_account_number ? '· ' + tx.bank_account_number.slice(-4) : '' }}
                   </td>
-                  <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="txStatusSeverity(tx.status)" /></td>
+                  <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="tx.status | severityMap" /></td>
                   <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[10px]">
                     {{ tx.created_at | wibDate: 'short' }}
                   </td>
@@ -463,7 +420,7 @@ interface PageEvent {
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Status</span
-                ><p-tag [value]="wdDetail.status" [severity]="txStatusSeverity(wdDetail.status)" />
+                ><p-tag [value]="wdDetail.status" [severity]="wdDetail.status | severityMap" />
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Tanggal</span
@@ -483,38 +440,13 @@ interface PageEvent {
 
     <ng-template #turnoverTab>
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div class="bg-card border-border rounded-lg border p-4">
-          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Total Turnover</p>
-          <p class="text-foreground text-2xl font-black mt-1">{{ toTotal | number: '1.0-0' }}</p>
-        </div>
-        <div class="bg-card border-border rounded-lg border p-4">
-          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Net Deposit</p>
-          <p class="text-foreground text-2xl font-black mt-1">{{ toNetDeposit | number: '1.0-0' }}</p>
-        </div>
-        <div class="bg-card border-border rounded-lg border p-4">
-          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Platform PnL</p>
-          <p [class]="'text-2xl font-black mt-1 ' + (toPlatformPnl >= 0 ? 'text-foreground' : 'text-muted-foreground')">
-            {{ toPlatformPnl | number: '1.0-0' }}
-          </p>
-        </div>
-        <div class="bg-card border-border rounded-lg border p-4">
-          <p class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Avg Win Rate</p>
-          <p class="text-foreground text-2xl font-black mt-1">{{ toWinRate }}%</p>
-        </div>
+        <app-stat-card label="Total Turnover" [value]="toTotal | number: '1.0-0'" />
+        <app-stat-card label="Net Deposit" [value]="toNetDeposit | number: '1.0-0'" />
+        <app-stat-card label="Platform PnL" [value]="toPlatformPnl | number: '1.0-0'" />
+        <app-stat-card label="Avg Win Rate" [value]="toWinRate + '%'" />
       </div>
 
-      <button
-        (click)="loadTurnover()"
-        class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors">
-        <svg class="h-3.5 w-3.5 inline mr-1" [class.animate-spin]="toLoading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Refresh
-      </button>
+      <app-refresh-button [loading]="toLoading" (clicked)="loadTurnover()" />
 
       <div class="bg-card border-border rounded-lg border overflow-hidden">
         <div class="overflow-x-auto">
@@ -690,8 +622,9 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     this.depDisplay = f.slice(0, this.depPageSize);
   }
   depPageChange(event: PageEvent) {
-    this.depPage = Math.floor((event.first ?? 0) / (event.rows ?? this.depPageSize)) + 1;
-    this.depPageSize = event.rows ?? this.depPageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.depPageSize);
+    this.depPage = page;
+    this.depPageSize = pageSize;
     this.depDisplay = this.depFiltered.slice((this.depPage - 1) * this.depPageSize, this.depPage * this.depPageSize);
     this.cdr.markForCheck();
   }
@@ -761,8 +694,9 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     this.wdDisplay = f.slice(0, this.wdPageSize);
   }
   wdPageChange(event: PageEvent) {
-    this.wdPage = Math.floor((event.first ?? 0) / (event.rows ?? this.wdPageSize)) + 1;
-    this.wdPageSize = event.rows ?? this.wdPageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.wdPageSize);
+    this.wdPage = page;
+    this.wdPageSize = pageSize;
     this.wdDisplay = this.wdFiltered.slice((this.wdPage - 1) * this.wdPageSize, this.wdPage * this.wdPageSize);
     this.cdr.markForCheck();
   }
@@ -853,14 +787,10 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     this.toDisplay = this.toFiltered.slice(0, this.toPageSize);
   }
   toPageChange(event: PageEvent) {
-    this.toPage = Math.floor((event.first ?? 0) / (event.rows ?? this.toPageSize)) + 1;
-    this.toPageSize = event.rows ?? this.toPageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.toPageSize);
+    this.toPage = page;
+    this.toPageSize = pageSize;
     this.toDisplay = this.toFiltered.slice((this.toPage - 1) * this.toPageSize, this.toPage * this.toPageSize);
     this.cdr.markForCheck();
-  }
-
-  txStatusSeverity(s: string) {
-    const m: Record<string, string> = { COMPLETED: 'success', PENDING: 'warn', FAILED: 'danger' };
-    return (m[s] || 'secondary') as any;
   }
 }

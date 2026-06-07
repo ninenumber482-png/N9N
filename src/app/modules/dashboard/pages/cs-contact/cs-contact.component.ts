@@ -1,37 +1,23 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 
 @Component({
   selector: 'app-cs-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule, AngularSvgIconModule],
+  imports: [PageHeaderComponent, LoadingErrorComponent, CommonModule, FormsModule],
   template: `
     <div data-page="cs-contact" class="space-y-6">
-      <div>
-        <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/user-circle.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold tracking-tight text-foreground">Customer Service Contact</h1>
-        <p class="text-muted-foreground mt-0.5 text-xs">
-          Manage the WhatsApp customer service widget displayed on the platform
-        </p>
-      </div>
-        </div>
-      </div>@if (loading) {
-        <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #A78BFA;">
-          <div class="animate-pulse space-y-4">
-            <div class="h-8 rounded-lg bg-zinc-700/20 w-48"></div>
-            <div class="h-10 rounded-lg bg-zinc-700/20 w-full"></div>
-            <div class="h-10 rounded-lg bg-zinc-700/20 w-full"></div>
-            <div class="h-10 rounded-lg bg-zinc-700/20 w-full"></div>
-          </div>
-        </div>
-      } @else {
+      <app-page-header icon="user-circle" title="Customer Service Contact" subtitle="Manage the WhatsApp customer service widget displayed on the platform" />
+
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
         <div class="grid gap-6 lg:grid-cols-2">
           <!-- Settings Form -->
           <div class="bg-card border-border rounded-lg p-5">
@@ -206,6 +192,7 @@ export class CsContactComponent implements OnInit {
     active: false,
   };
   loading = true;
+  error: string | null = null;
   saving = false;
 
   ngOnInit() {
@@ -218,6 +205,7 @@ export class CsContactComponent implements OnInit {
 
   async load() {
     this.loading = true;
+    this.error = null;
     try {
       const configs = await this.admin.getConfigs();
       const map: Record<string, string> = {};
@@ -228,7 +216,8 @@ export class CsContactComponent implements OnInit {
       this.form.avatar_url = map['cs_avatar_url'] || '';
       this.form.active = map['cs_active'] === 'true';
     } catch (e: unknown) {
-      this.notification.error('Load failed', e instanceof Error ? e.message : 'Could not load CS config.');
+      this.error = e instanceof Error ? e.message : 'Could not load CS config.';
+      this.notification.error('Load failed', this.error);
     }
     this.loading = false;
     this.cdr.markForCheck();

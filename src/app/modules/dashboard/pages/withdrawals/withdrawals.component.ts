@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +13,12 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PaginatorModule } from 'primeng/paginator';
-import { InputTextModule } from 'primeng/inputtext';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 interface WithdrawTx {
   id: string;
@@ -39,43 +43,21 @@ interface PageEvent {
   selector: 'app-withdrawals',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, WibDatePipe, SelectModule, TagModule, DialogModule, ConfirmDialogModule, PaginatorModule, InputTextModule],
+    WibDatePipe, SelectModule, TagModule, DialogModule, ConfirmDialogModule, PaginatorModule,
+    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, FilterBarComponent, SeverityMapPipe],
   providers: [ConfirmationService],
   template: `
     <div data-page="withdrawals" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/arrow-long-right.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Withdrawals</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">Proses permintaan penarikan dana pengguna</p>
-        </div>
-          </div>
-        </div><button (click)="load()" class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors">
-          <svg class="h-3.5 w-3.5 inline mr-1" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Refresh
-        </button>
-      </div>
+      <app-page-header icon="arrow-long-right" title="Withdrawals" subtitle="Proses permintaan penarikan dana pengguna">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
-      <div class="flex flex-wrap gap-2">
-        <input pInputText [(ngModel)]="search" (ngModelChange)="applyFilter()" placeholder="Cari username, nominal…"
-          class="!w-48 !text-xs !py-1.5 !px-2.5" />
+      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari username, nominal…">
         <p-select [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()" [options]="statusOptions" optionLabel="label" optionValue="value"
           placeholder="Semua Status" class="w-36" styleClass="!text-xs !w-full" />
-      </div>
+      </app-filter-bar>
 
-      @if (error) {
-        <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
-          <p class="font-medium text-foreground">Gagal memuat withdrawal</p>
-          <p class="mt-0.5">{{ error }}</p>
-          <button (click)="load()" class="mt-2 bg-card border-border rounded border px-2.5 py-1 text-xs font-medium">Coba Lagi</button>
-        </div>
-      }
-
-      @if (loading) {
-        <div class="text-muted-foreground py-12 text-center text-xs">Memuat withdrawal...</div>
-      }
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
@@ -108,7 +90,7 @@ interface PageEvent {
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[10px] text-muted-foreground">{{ tx.withdrawal_fee ? (tx.withdrawal_fee | number:'1.0-0') + ' P' : '-' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <p-tag [value]="tx.status" [severity]="txStatusSeverity(tx.status)" />
+                    <p-tag [value]="tx.status" [severity]="tx.status | severityMap" />
                   </td>
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap text-[10px]">{{ tx.created_at | wibDate:'short' }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
@@ -145,7 +127,7 @@ interface PageEvent {
                 <p class="text-xs"><span class="text-muted-foreground">ID: </span><span class="font-mono text-[10px] text-foreground">{{ selectedTx.id }}</span></p>
                 <p class="text-xs"><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-muted-foreground">{{ selectedTx.amount | number:'1.2-2' }} P</span></p>
                 <p class="text-xs"><span class="text-muted-foreground">Fee: </span><span class="text-muted-foreground">{{ selectedTx.withdrawal_fee | number:'1.2-2' }} P</span></p>
-                <p class="text-xs"><span class="text-muted-foreground">Status: </span><p-tag [value]="selectedTx.status" [severity]="txStatusSeverity(selectedTx.status)" /></p>
+                <p class="text-xs"><span class="text-muted-foreground">Status: </span><p-tag [value]="selectedTx.status" [severity]="selectedTx.status | severityMap" /></p>
                 <p class="text-xs"><span class="text-muted-foreground">Bank: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_name }}</span></p>
                 <p class="text-xs"><span class="text-muted-foreground">No. Rek: </span><span class="font-mono font-semibold text-foreground">{{ selectedTx.bank_account_number }}</span></p>
                 <p class="text-xs"><span class="text-muted-foreground">Nama: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_account_name }}</span></p>
@@ -322,10 +304,10 @@ export class WithdrawalsComponent implements OnInit, OnDestroy {
     }
   }
 
-  onPageChange(event: PageEvent) { this.currentPage = Math.floor(event.first / event.rows) + 1; this.pageSize = event.rows; }
-
-  txStatusSeverity(s: string) {
-    const m: Record<string, string> = { COMPLETED: 'success', PENDING: 'warn', FAILED: 'danger' };
-    return m[s] || 'secondary';
+  onPageChange(event: PageEvent) {
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
+    this.cdr.markForCheck();
   }
 }

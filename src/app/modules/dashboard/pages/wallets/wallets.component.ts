@@ -6,7 +6,6 @@ import { AdminService, AdminRpcError } from 'src/app/core/services/admin.service
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
@@ -16,6 +15,13 @@ import { ConfirmationService } from 'primeng/api';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
+import { FilterHelper } from 'src/app/shared/utils/filter.helper';
 
 interface WalletRecord {
   user_id: string;
@@ -43,9 +49,13 @@ interface PlatformAccountRecord {
   selector: 'app-wallets',
   standalone: true,
   imports: [
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    FilterBarComponent,
+    SeverityMapPipe,
     CommonModule,
     FormsModule,
-    AngularSvgIconModule,
     WibDatePipe,
     SelectModule,
     TagModule,
@@ -58,28 +68,9 @@ interface PlatformAccountRecord {
   providers: [ConfirmationService],
   template: `
     <div data-page="wallets" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/folder.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Wallets</h1>
-            <p class="text-muted-foreground mt-0.5 text-xs">Kelola saldo pengguna & rekening platform</p>
-          </div>
-        </div>
-        <button
-          (click)="load()"
-          [disabled]="loading"
-          class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          <svg class="h-3.5 w-3.5" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-      </div>
+      <app-page-header icon="folder" title="Wallets" subtitle="Kelola saldo pengguna & rekening platform">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
       <div class="flex gap-1 border-b border-border">
         <button
@@ -105,24 +96,9 @@ interface PlatformAccountRecord {
       </div>
 
       @if (tab === 'wallets') {
-        <div class="flex flex-wrap gap-2">
-          <input
-            pInputText
-            [(ngModel)]="walletSearch"
-            (ngModelChange)="filterWallets()"
-            placeholder="Cari username…"
-            class="!w-48 !text-xs !py-1.5 !px-2.5" />
-        </div>
+        <app-filter-bar [search]="walletSearch" (searchChange)="walletSearch=$event; filterWallets()" placeholder="Cari username…" />
 
-        @if (error) {
-          <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
-            <p class="font-medium text-foreground">Gagal memuat wallet</p>
-            <p class="mt-0.5">{{ error }}</p>
-            <button (click)="load()" class="mt-2 bg-card border-border rounded border px-2.5 py-1 text-xs font-medium">
-              Coba Lagi
-            </button>
-          </div>
-        }
+        <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
         <div class="bg-card border-border rounded-lg page-accent-card">
           <div class="overflow-x-auto">
@@ -345,7 +321,7 @@ interface PlatformAccountRecord {
                     <td class="px-3 py-2.5 text-muted-foreground">{{ a.account_holder }}</td>
                     <td class="px-3 py-2.5 font-mono text-foreground">{{ a.account_number }}</td>
                     <td class="px-3 py-2.5">
-                      <p-tag [value]="a.type" [severity]="accountTypeSeverity(a.type)" />
+                      <p-tag [value]="a.type" [severity]="a.type | severityMap" />
                     </td>
                     <td class="px-3 py-2.5">
                       <p-tag [value]="a.status" [severity]="a.status === 'ACTIVE' ? 'success' : 'secondary'" />
@@ -599,12 +575,10 @@ export class WalletsComponent implements OnInit, OnDestroy {
   filterWallets() {
     this.currentPage = 1;
     const list = this.wallets.filter((w) => w.user?.role !== 'admin' && w.user?.role !== 'superadmin');
-    const q = this.walletSearch.toLowerCase();
-    this.filteredWallets = q
-      ? list.filter(
-          (w) => w.user?.username?.toLowerCase().includes(q) || w.user?.display_name?.toLowerCase().includes(q),
-        )
-      : list;
+    this.filteredWallets = FilterHelper.applySearch(list, this.walletSearch, [
+      (w) => w.user?.username,
+      (w) => w.user?.display_name,
+    ]);
   }
 
   openAdjust(w: WalletRecord) {
@@ -747,14 +721,10 @@ export class WalletsComponent implements OnInit, OnDestroy {
     });
   }
 
-  accountTypeSeverity(t: string) {
-    const m: Record<string, string> = { BANK: 'info', EWALLET: 'warn', QRIS: 'contrast' };
-    return (m[t] || 'secondary') as any;
-  }
-
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? this.pageSize)) + 1;
-    this.pageSize = event.rows ?? this.pageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
     this.cdr.markForCheck();
   }
 

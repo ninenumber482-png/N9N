@@ -6,6 +6,11 @@ import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { TagModule } from 'primeng/tag';
 import { PaginatorModule } from 'primeng/paginator';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 interface GameSession {
   session_code: string;
@@ -27,48 +32,16 @@ interface BetData {
 @Component({
   selector: 'app-gaming',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe, TagModule, PaginatorModule],
+  imports: [PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, SeverityMapPipe, CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe, TagModule, PaginatorModule],
   template: `
     <div data-page="gaming" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/view-grid.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Gaming Operations</h1>
-            <p class="text-muted-foreground mt-0.5 text-xs">Platform gaming activity overview</p>
-          </div>
-        </div>
-        <button
-          (click)="load()"
-          [disabled]="loading"
-          class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          <svg class="h-3.5 w-3.5" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-      </div>
+      <app-page-header icon="view-grid" title="Gaming Operations" subtitle="Platform gaming activity overview">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
-      @if (loading) {
-        <div class="bg-card border-border animate-pulse rounded-lg border p-5">
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            @for (_ of [1, 2, 3, 4]; track _) {
-              <div class="h-24 rounded-lg bg-accent/30"></div>
-            }
-          </div>
-        </div>
-      } @else if (error) {
-        <div class="bg-card border-border rounded-lg border p-5">
-          <div class="flex flex-col items-center gap-3 py-6">
-            <p class="text-muted-foreground text-sm font-medium">{{ error }}</p>
-            <button
-              (click)="load()"
-              class="bg-card border-border text-foreground rounded-lg border px-3 py-1.5 text-xs font-medium">
-              Retry
-            </button>
-          </div>
-        </div>
-      } @else {
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <a
             routerLink="/3dking"
@@ -148,7 +121,7 @@ interface BetData {
                     {{ s.session_code }}
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <p-tag [value]="s.status" [severity]="sessionTagSeverity(s.status)" />
+                    <p-tag [value]="s.status" [severity]="s.status | severityMap" />
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">{{ s.bet_count }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
@@ -225,13 +198,9 @@ export class GamingComponent implements OnInit {
   }
 
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? this.pageSize)) + 1;
-    this.pageSize = event.rows ?? this.pageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
     this.cdr.markForCheck();
-  }
-
-  sessionTagSeverity(s: string) {
-    const m: Record<string, string> = { OPEN: 'success', LOCKED: 'warn', SETTLED: 'secondary' };
-    return (m[s] || 'secondary') as any;
   }
 }

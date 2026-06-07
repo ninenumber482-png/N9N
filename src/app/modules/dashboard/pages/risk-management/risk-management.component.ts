@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +5,11 @@ import { AdminService } from 'src/app/core/services/admin.service';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { PaginatorModule } from 'primeng/paginator';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { StatCardComponent } from 'src/app/shared/components/stat-card/stat-card.component';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 interface WalletData {
   user_id?: string;
@@ -40,19 +44,12 @@ interface RiskProfile {
   selector: 'app-risk-management',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, SelectModule, TagModule, PaginatorModule],
+    SelectModule, TagModule, PaginatorModule,
+    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, StatCardComponent],
   template: `
     <div data-page="risk-management" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/exclamation-triangle.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Risk Management</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">User risk scoring and anomaly detection</p>
-        </div>
-          </div>
-        </div><div class="flex gap-2">
+      <app-page-header icon="exclamation-triangle" title="Risk Management" subtitle="User risk scoring and anomaly detection">
+        <div class="flex gap-2">
           <p-select
             [(ngModel)]="filter"
             [options]="filterOptions"
@@ -60,60 +57,17 @@ interface RiskProfile {
             optionValue="value"
             class="w-36"
             styleClass="!text-xs !w-full" />
-          <button
-            (click)="load()"
-            class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors"
-            [disabled]="loading">
-            <svg
-              class="h-3.5 w-3.5 inline mr-1"
-              [class.animate-spin]="loading"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh
-          </button>
+          <app-refresh-button [loading]="loading" (clicked)="load()" />
         </div>
-      </div>
+      </app-page-header>
 
-      @if (loading) {
-        <div class="bg-card border-border animate-pulse rounded-lg border p-5">
-          <div class="space-y-3">
-            @for (_ of [1, 2, 3, 4, 5]; track _) {
-              <div class="h-10 rounded-lg bg-accent/30"></div>
-            }
-          </div>
-        </div>
-      } @else if (error) {
-        <div class="bg-card border-border rounded-lg border p-5">
-          <div class="flex flex-col items-center gap-3 py-6">
-            <p class="text-muted-foreground text-sm font-medium">{{ error }}</p>
-            <button
-              (click)="load()"
-              class="bg-card border-border text-foreground rounded-lg border px-3 py-1.5 text-xs font-medium">
-              Retry
-            </button>
-          </div>
-        </div>
-      } @else {
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
         <div class="grid gap-4 sm:grid-cols-3">
-          <div class="bg-card border-border rounded-lg border p-4">
-            <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">High Risk Users</p>
-            <p class="mt-2 text-2xl font-black text-foreground">{{ highRiskCount }}</p>
-          </div>
-          <div class="bg-card border-border rounded-lg border p-4">
-            <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Medium Risk Users</p>
-            <p class="mt-2 text-2xl font-black text-foreground">{{ mediumRiskCount }}</p>
-          </div>
-          <div class="bg-card border-border rounded-lg border p-4">
-            <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Total Monitored</p>
-            <p class="mt-2 text-2xl font-black text-foreground">{{ riskProfiles.length }}</p>
-          </div>
+          <app-stat-card label="High Risk Users" [value]="highRiskCount" />
+          <app-stat-card label="Medium Risk Users" [value]="mediumRiskCount" />
+          <app-stat-card label="Total Monitored" [value]="riskProfiles.length" />
         </div>
 
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
@@ -285,8 +239,9 @@ export class RiskManagementComponent implements OnInit {
   }
 
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? this.pageSize)) + 1;
-    this.pageSize = event.rows ?? this.pageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
     this.cdr.markForCheck();
   }
 }

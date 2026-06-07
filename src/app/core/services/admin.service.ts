@@ -41,6 +41,13 @@ export class AdminService {
   /** In-memory cache with TTL (5s) and user context to prevent data leakage */
   private cache = new Map<string, { data: unknown; ts: number }>();
   private readonly CACHE_TTL = 5000;
+  private logoutInProgress = false;
+
+  // Only READ operations may be cached — mutating RPCs must always execute
+  private readonly CACHEABLE_RPCS = new Set([
+    'count_kyc_by_status', 'get_platform_stats',
+    'get_kyc_documents_admin_list', 'get_kyc_documents_by_user', 'get_kyc_document_url',
+  ]);
 
   private getCacheKey(baseKey: string): string {
     // Include user ID in cache key to prevent cross-user data leakage
@@ -61,6 +68,17 @@ export class AdminService {
     });
   }
 
+  private handle401(): never {
+    if (!this.logoutInProgress) {
+      this.logoutInProgress = true;
+      this.auth.logout();
+      this.router.navigate(['/auth/sign-in'], {
+        queryParams: { reason: 'session-expired', message: 'Your session has expired. Please log in again.' },
+      });
+    }
+    throw new AdminRpcError('Session expired', 'FORBIDDEN');
+  }
+
   private async proxy<T>(method: string, path: string, body?: unknown, prefer?: string): Promise<T> {
     const user = this.auth.getCurrentUser();
     const headers: Record<string, string> = {
@@ -71,29 +89,37 @@ export class AdminService {
     if (user?.token) headers['x-session-token'] = user.token;
     if (prefer) headers['Prefer'] = prefer;
 
-    const res = await fetch(this.proxyUrl, {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify({ method, path, body, prefer }),
-    });
-    if (!res.ok) {
-      if (res.status === 401) {
-        this.auth.logout();
-        this.router.navigate(['/auth/sign-in'], {
-          queryParams: { reason: 'token-expired', message: 'Session expired. Please log in again.' },
-        });
-        throw new AdminRpcError('Session expired', 'UNKNOWN');
-      }
-      const text = await res.text();
-      throw AdminRpcError.fromMessage(text.length < 200 ? text : `${res.status}`);
-    }
-    const text = await res.text();
-    if (!text) return undefined as unknown as T;
     try {
-      return JSON.parse(text);
-    } catch {
-      return text as unknown as T;
+      const res = await fetch(this.proxyUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ method, path, body, prefer }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        if (res.status === 401) return this.handle401();
+        if (res.status === 403) throw new AdminRpcError('Access denied. Insufficient permissions.', 'FORBIDDEN', errorText);
+        if (res.status >= 500) throw new AdminRpcError('Server error. Please try again later.', 'UNKNOWN', `${res.status}: ${errorText}`);
+        throw AdminRpcError.fromMessage(errorText.length < 200 ? errorText : `HTTP ${res.status}`);
+      }
+
+      const text = await res.text();
+      if (!text) return undefined as unknown as T;
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text as unknown as T;
+      }
+    } catch (error) {
+      if (error instanceof AdminRpcError) throw error;
+      console.error('Admin proxy error:', error);
+      throw new AdminRpcError(
+        'Network error. Please check your connection and try again.',
+        'UNKNOWN',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -107,11 +133,11 @@ export class AdminService {
   async getPaginated<T>(table: string, query = '', page = 1, pageSize = 20): Promise<{ data: T[]; total: number }> {
     const start = (page - 1) * pageSize;
     const sep = table.includes('?') ? '&' : '?';
-    const path = query
+    const basePath = query
       ? `/${table}${sep}${query}${query.includes('limit=') ? '' : `&limit=${pageSize}`}`
       : `/${table}?limit=${pageSize}`;
-    const proxyPath = `${path.startsWith('/') ? '' : '/'}${path}`;
-    let total = 0;
+    const path = `${basePath.startsWith('/') ? '' : '/'}${basePath}&offset=${start}`;
+
     const user = this.auth.getCurrentUser();
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
@@ -123,19 +149,16 @@ export class AdminService {
         Prefer: 'count=exact',
       },
       credentials: 'include',
-      body: JSON.stringify({ method: 'GET', path: `${proxyPath}&offset=${start}`, prefer: 'count=exact' }),
+      body: JSON.stringify({ method: 'GET', path, prefer: 'count=exact' }),
     });
+
     if (!res.ok) {
-      if (res.status === 401) {
-        this.auth.logout();
-        this.router.navigate(['/auth/sign-in'], {
-          queryParams: { reason: 'token-expired', message: 'Session expired. Please log in again.' },
-        });
-        throw new AdminRpcError('Session expired', 'UNKNOWN');
-      }
+      if (res.status === 401) return this.handle401();
       const text = await res.text();
       throw AdminRpcError.fromMessage(text.length < 200 ? text : `${res.status}`);
     }
+
+    let total = 0;
     const range = res.headers.get('content-range');
     if (range) {
       const match = range.match(/\/(\d+)$/);
@@ -149,10 +172,9 @@ export class AdminService {
   async count(table: string, query = ''): Promise<number> {
     const path = `/${table}?${query}&select=count`;
     const cacheKey = `COUNT:${path}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
-      return Promise.resolve(cached.data as number);
-    }
+    const hit = this.cache.get(this.getCacheKey(cacheKey));
+    if (hit && Date.now() - hit.ts < this.CACHE_TTL) return hit.data as number;
+
     const user = this.auth.getCurrentUser();
     const res = await fetch(this.proxyUrl, {
       method: 'POST',
@@ -165,18 +187,14 @@ export class AdminService {
       credentials: 'include',
       body: JSON.stringify({ method: 'GET', path, prefer: 'count=exact' }),
     });
+
     if (!res.ok) {
-      if (res.status === 401) {
-        this.auth.logout();
-        this.router.navigate(['/auth/sign-in'], {
-          queryParams: { reason: 'token-expired', message: 'Session expired. Please log in again.' },
-        });
-        return 0;
-      }
+      if (res.status === 401) return this.handle401();
       return 0;
     }
+
     const val = Number(res.headers.get('content-range')?.split('/')[1] || 0);
-    this.cache.set(cacheKey, { data: val, ts: Date.now() });
+    this.cache.set(this.getCacheKey(cacheKey), { data: val, ts: Date.now() });
     return val;
   }
 
@@ -206,14 +224,11 @@ export class AdminService {
   }
 
   async rpc(name: string, params: Record<string, unknown> = {}): Promise<any> {
-    const cacheKey = `RPC:${name}:${JSON.stringify(params)}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < this.CACHE_TTL) {
-      return Promise.resolve(cached.data);
+    if (!this.CACHEABLE_RPCS.has(name)) {
+      return this.proxy<any>('POST', `/rpc/${name}`, params);
     }
-    const data = await this.proxy<any>('POST', `/rpc/${name}`, params);
-    this.cache.set(cacheKey, { data, ts: Date.now() });
-    return data;
+    const cacheKey = `RPC:${name}:${JSON.stringify(params)}`;
+    return this.cached(cacheKey, () => this.proxy<any>('POST', `/rpc/${name}`, params));
   }
 
   // ── USERS ──

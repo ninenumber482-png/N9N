@@ -1,4 +1,3 @@
-import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +5,10 @@ import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { TagModule } from 'primeng/tag';
 import { PaginatorModule } from 'primeng/paginator';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 interface SessionData {
   id: string;
@@ -23,60 +26,17 @@ interface SessionData {
   selector: 'app-session-monitor',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    AngularSvgIconModule, WibDatePipe, TagModule, PaginatorModule],
+    WibDatePipe, TagModule, PaginatorModule,
+    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent],
   template: `
     <div data-page="session-monitor" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/eye.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">Session Monitor</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">Active user sessions and login activity</p>
-        </div>
-          </div>
-        </div><div class="flex gap-2">
-          <button
-            (click)="load()"
-            class="bg-card border-border text-muted-foreground hover:text-foreground rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors"
-            [disabled]="loading">
-            <svg
-              class="h-3.5 w-3.5 inline mr-1"
-              [class.animate-spin]="loading"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh
-          </button>
-        </div>
-      </div>
+      <app-page-header icon="eye" title="Session Monitor" subtitle="Active user sessions and login activity">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
-      @if (loading) {
-        <div class="bg-card border-border animate-pulse rounded-lg border p-5">
-          <div class="space-y-3">
-            @for (_ of [1, 2, 3, 4, 5]; track _) {
-              <div class="h-10 rounded-lg bg-accent/30"></div>
-            }
-          </div>
-        </div>
-      } @else if (error) {
-        <div class="bg-card border-border rounded-lg border p-5">
-          <div class="flex flex-col items-center gap-3 py-6">
-            <p class="text-muted-foreground text-sm font-medium">{{ error }}</p>
-            <button
-              (click)="load()"
-              class="bg-card border-border text-foreground rounded-lg border px-3 py-1.5 text-xs font-medium">
-              Retry
-            </button>
-          </div>
-        </div>
-      } @else {
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
           <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
             <thead>
@@ -190,8 +150,10 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: { first?: number; rows?: number }) {
-    this.currentPage = Math.floor((event.first ?? 0) / (event.rows ?? this.pageSize)) + 1;
-    this.pageSize = event.rows ?? this.pageSize;
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
+    this.currentPage = page;
+    this.pageSize = pageSize;
+    this.cdr.markForCheck();
   }
 
   isExpired(expiresAt: string) {

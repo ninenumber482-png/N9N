@@ -4,277 +4,245 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
+import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe],
+  imports: [CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe, PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent],
   template: `
     <div data-page="overview" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-          <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/chart-pie.svg" svgClass="h-4 w-4"></svg-icon></div>
-          <div>
-            <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">System Overview</h1>
-          <p class="text-muted-foreground mt-0.5 text-xs">
-            Console · {{ lastUpdated ? (lastUpdated | wibDate: 'short') : 'Loading...' }}
-          </p>
-        </div>
-          </div>
-        </div><button
-          (click)="load()"
-          [disabled]="loading"
-          class="bg-card border-border hover:bg-accent rounded-lg border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 disabled:opacity-50">
-          <svg class="h-3.5 w-3.5" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-      </div>
+      <app-page-header icon="chart-pie" title="System Overview" [subtitle]="'Console · ' + (lastUpdated ? (lastUpdated | wibDate: 'short') : 'Loading...')">
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
+      </app-page-header>
 
-      @if (loading && !stats.totalUsers) {
-        <div class="bg-card border-border animate-pulse rounded-lg border">
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-            @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
-              <div class="h-16 border-border border-r border-b bg-zinc-800/10 last:border-r-0"></div>
-            }
-          </div>
-        </div>
-      } @else if (error) {
-        <div class="bg-card border-border rounded-lg border">
-          <div class="flex flex-col items-center gap-3 py-8">
-            <p class="text-red-400 text-xs font-medium">{{ error }}</p>
-            <button (click)="load()" class="bg-primary/10 text-primary rounded px-3 py-1.5 text-xs font-medium">
-              Retry
-            </button>
-          </div>
-        </div>
-      } @else {
-        <!-- ─── KEY METRICS BAR ─── -->
-        <div class="bg-card border-border rounded-lg page-accent-card">
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-            <a
-              routerLink="/users"
-              class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-              <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Registered Users</p>
-              <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(stats.totalUsers) }}</p>
-              <p class="text-[10px] text-muted-foreground/70 mt-0.5">
-                <span [class]="regGrowth >= 0 ? 'text-foreground' : 'text-muted-foreground'"
-                  >{{ regGrowth >= 0 ? '+' : '' }}{{ formatNum(regGrowth) }}</span
-                >
-                today — {{ formatNum(todayRegs) }} new
-              </p>
-            </a>
-            <a
-              routerLink="/users"
-              class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-              <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Active / Online</p>
-              <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(health.activeUsers) }}</p>
-              <p class="text-[10px] text-muted-foreground/70 mt-0.5">{{ health.onlineNow }} online now</p>
-            </a>
-            <a
-              routerLink="/transactions"
-              class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-              <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Today Volume</p>
-              <p class="mt-1 text-lg font-bold text-foreground">
-                {{ formatMoney(volume.deposits + volume.withdrawals) }}
-              </p>
-              <p class="text-[10px] text-muted-foreground/70 mt-0.5">
-                Deposit {{ formatMoney(volume.deposits) }} · WD {{ formatMoney(volume.withdrawals) }}
-              </p>
-            </a>
-            <a
-              routerLink="/wallet"
-              class="border-border group border-r border-b lg:border-b-0 sm:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-              <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Wallet Total</p>
-              <p class="mt-1 text-lg font-bold text-foreground">
-                {{ formatMoney(health.totalBalance.main + health.totalBalance.bonus) }}
-              </p>
-              <p class="text-[10px] text-muted-foreground/70 mt-0.5">
-                Main {{ formatMoney(health.totalBalance.main) }} · Bonus {{ formatMoney(health.totalBalance.bonus) }}
-              </p>
-            </a>
-            <a
-              routerLink="/bets"
-              class="border-border group border-r border-b sm:border-b-0 lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-              <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Pending Bets</p>
-              <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(stats.pendingBets) }}</p>
-              <p class="text-[10px] text-muted-foreground/70 mt-0.5">
-                {{ stats.pendingBets > 0 ? 'Needs settlement' : 'All settled' }}
-              </p>
-            </a>
-            <a routerLink="/kyc" class="border-border group p-3.5 hover:bg-accent/30 transition-colors">
-              <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Pending KYC</p>
-              <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(health.pendingCount) }}</p>
-              <p class="text-[10px] text-muted-foreground/70 mt-0.5">
-                {{ health.pendingCount > 0 ? 'Needs review' : 'All verified' }}
-              </p>
-            </a>
-          </div>
-        </div>
+      <app-loading-error [loading]="loading && !stats.totalUsers" [error]="error" (retry)="load()" />
 
-        <!-- ─── CONSOLE ROW ─── -->
-        <div class="grid gap-5 lg:grid-cols-3">
-          <!-- 7-Day Growth -->
-          <div class="bg-card border-border rounded-lg border">
-            <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
-              <h3 class="text-xs font-semibold text-foreground">User Growth (7d)</h3>
-              <span class="text-[10px] text-muted-foreground">{{ formatNum(weekTotal) }} total</span>
-            </div>
-            <div class="p-4">
-              @if (growthData.length === 7) {
-                <div class="flex items-end gap-1 h-20">
-                  @for (d of growthData; track d.date) {
-                    @let pct = maxGrowth > 0 ? d.count / maxGrowth : 0;
-                    <div class="flex-1 flex flex-col items-center gap-1 justify-end h-full">
-                      <div
-                        class="w-full rounded-sm"
-                        [class]="d.count > 0 ? 'bg-foreground/80' : 'bg-border'"
-                        [style.height.%]="Math.max(pct * 100, d.count > 0 ? 30 : 4)"></div>
-                      <span class="text-[8px] text-muted-foreground/50">{{ d.date.slice(5) }}</span>
-                    </div>
-                  }
-                </div>
-                <div class="text-[10px] text-muted-foreground/60 mt-3 text-center">
-                  {{ Math.round(weekTotal / 7) }}/day avg
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Volume Breakdown -->
-          <div class="bg-card border-border rounded-lg border">
-            <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
-              <h3 class="text-xs font-semibold text-foreground">Volume Today</h3>
-              <span class="text-[10px] text-muted-foreground"
-                >{{ formatMoney(volume.deposits + volume.withdrawals) }} total</span
-              >
-            </div>
-            <div class="p-4 space-y-3">
-              <div>
-                <div class="flex justify-between text-xs mb-1">
-                  <span class="text-muted-foreground">Deposits</span>
-                  <span class="text-foreground font-medium">{{ formatMoney(volume.deposits) }}</span>
-                </div>
-                <div class="h-1.5 bg-border rounded-full overflow-hidden">
-                  @let depPct = totalVol > 0 ? (volume.deposits / totalVol) * 100 : 0;
-                  <div class="h-full bg-foreground/60 rounded-full" [style.width.%]="depPct"></div>
-                </div>
-              </div>
-              <div>
-                <div class="flex justify-between text-xs mb-1">
-                  <span class="text-muted-foreground">Withdrawals</span>
-                  <span class="text-foreground font-medium">{{ formatMoney(volume.withdrawals) }}</span>
-                </div>
-                <div class="h-1.5 bg-border rounded-full overflow-hidden">
-                  @let wdPct = totalVol > 0 ? (volume.withdrawals / totalVol) * 100 : 0;
-                  <div class="h-full bg-foreground/30 rounded-full" [style.width.%]="wdPct"></div>
-                </div>
-              </div>
-              <div class="border-border flex justify-between border-t pt-2.5 text-xs">
-                <span class="text-muted-foreground">Net Flow</span>
-                @let net = volume.deposits - volume.withdrawals;
-                <span class="font-medium" [class]="net >= 0 ? 'text-foreground' : 'text-muted-foreground'"
-                  >{{ net >= 0 ? '+' : '' }}{{ formatMoney(net) }}</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <!-- Pending Queue -->
-          <div class="bg-card border-border rounded-lg border">
-            <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
-              <h3 class="text-xs font-semibold text-foreground">Pending Queue</h3>
-              <span class="text-[10px] text-muted-foreground"
-                >{{ pendingDeposits + pendingWithdrawals + health.pendingCount + stats.pendingBets }} items</span
-              >
-            </div>
-            <div class="divide-border divide-y text-xs">
+      @if (!loading || stats.totalUsers) {
+        @if (!error) {
+          <!-- ─── KEY METRICS BAR ─── -->
+          <div class="bg-card border-border rounded-lg page-accent-card">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
               <a
-                routerLink="/deposits"
-                class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
-                <span class="text-muted-foreground">Deposit Approvals</span>
-                <span class="text-foreground font-medium">{{ pendingDeposits }}</span>
+                routerLink="/users"
+                class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Registered Users</p>
+                <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(stats.totalUsers) }}</p>
+                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                  <span [class]="regGrowth >= 0 ? 'text-foreground' : 'text-muted-foreground'"
+                    >{{ regGrowth >= 0 ? '+' : '' }}{{ formatNum(regGrowth) }}</span
+                  >
+                  today — {{ formatNum(todayRegs) }} new
+                </p>
               </a>
               <a
-                routerLink="/withdrawals"
-                class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
-                <span class="text-muted-foreground">Withdrawal Approvals</span>
-                <span class="text-foreground font-medium">{{ pendingWithdrawals }}</span>
+                routerLink="/users"
+                class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Active / Online</p>
+                <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(health.activeUsers) }}</p>
+                <p class="text-[10px] text-muted-foreground/70 mt-0.5">{{ health.onlineNow }} online now</p>
               </a>
               <a
-                routerLink="/kyc"
-                class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
-                <span class="text-muted-foreground">KYC Reviews</span>
-                <span class="text-foreground font-medium">{{ health.pendingCount }}</span>
+                routerLink="/transactions"
+                class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Today Volume</p>
+                <p class="mt-1 text-lg font-bold text-foreground">
+                  {{ formatMoney(volume.deposits + volume.withdrawals) }}
+                </p>
+                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                  Deposit {{ formatMoney(volume.deposits) }} · WD {{ formatMoney(volume.withdrawals) }}
+                </p>
+              </a>
+              <a
+                routerLink="/wallet"
+                class="border-border group border-r border-b lg:border-b-0 sm:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Wallet Total</p>
+                <p class="mt-1 text-lg font-bold text-foreground">
+                  {{ formatMoney(health.totalBalance.main + health.totalBalance.bonus) }}
+                </p>
+                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                  Main {{ formatMoney(health.totalBalance.main) }} · Bonus {{ formatMoney(health.totalBalance.bonus) }}
+                </p>
               </a>
               <a
                 routerLink="/bets"
-                class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
-                <span class="text-muted-foreground">Unsettled Bets</span>
-                <span class="text-foreground font-medium">{{ stats.pendingBets }}</span>
+                class="border-border group border-r border-b sm:border-b-0 lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Pending Bets</p>
+                <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(stats.pendingBets) }}</p>
+                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                  {{ stats.pendingBets > 0 ? 'Needs settlement' : 'All settled' }}
+                </p>
+              </a>
+              <a routerLink="/kyc" class="border-border group p-3.5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Pending KYC</p>
+                <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(health.pendingCount) }}</p>
+                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                  {{ health.pendingCount > 0 ? 'Needs review' : 'All verified' }}
+                </p>
               </a>
             </div>
           </div>
-        </div>
 
-        <!-- ─── BOTTOM ROW ─── -->
-        <div class="grid gap-5 lg:grid-cols-2">
-          <!-- Recent Activity -->
-          <div class="bg-card border-border rounded-lg border">
-            <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
-              <h3 class="text-xs font-semibold text-foreground">Recent Activity</h3>
-              <a routerLink="/audit" class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                >View all →</a
-              >
-            </div>
-            <div class="divide-border divide-y">
-              @for (log of recentLogs; track log.id) {
-                <div class="flex items-start gap-2.5 px-4 py-2.5">
-                  <div class="bg-accent/50 mt-0.5 rounded p-1">
-                    <svg-icon
-                      src="assets/icons/heroicons/outline/cursor-click.svg"
-                      svgClass="h-2.5 w-2.5 text-muted-foreground"></svg-icon>
+          <!-- ─── CONSOLE ROW ─── -->
+          <div class="grid gap-5 lg:grid-cols-3">
+            <!-- 7-Day Growth -->
+            <div class="bg-card border-border rounded-lg border">
+              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+                <h3 class="text-xs font-semibold text-foreground">User Growth (7d)</h3>
+                <span class="text-[10px] text-muted-foreground">{{ formatNum(weekTotal) }} total</span>
+              </div>
+              <div class="p-4">
+                @if (growthData.length === 7) {
+                  <div class="flex items-end gap-1 h-20">
+                    @for (d of growthData; track d.date) {
+                      @let pct = maxGrowth > 0 ? d.count / maxGrowth : 0;
+                      <div class="flex-1 flex flex-col items-center gap-1 justify-end h-full">
+                        <div
+                          class="w-full rounded-sm"
+                          [class]="d.count > 0 ? 'bg-foreground/80' : 'bg-border'"
+                          [style.height.%]="Math.max(pct * 100, d.count > 0 ? 30 : 4)"></div>
+                        <span class="text-[8px] text-muted-foreground/50">{{ d.date.slice(5) }}</span>
+                      </div>
+                    }
                   </div>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-xs text-foreground">{{ log.action }}</p>
-                    <div class="flex gap-2 text-[10px] text-muted-foreground/60 mt-0.5">
-                      <span>{{ log.resource_type }}</span>
-                      @if (log.resource_id) {
-                        <span>· {{ log.resource_id.slice(0, 8) }}</span>
-                      }
-                      <span>· {{ log.created_at | wibDate: 'short' }}</span>
-                    </div>
+                  <div class="text-[10px] text-muted-foreground/60 mt-3 text-center">
+                    {{ Math.round(weekTotal / 7) }}/day avg
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Volume Breakdown -->
+            <div class="bg-card border-border rounded-lg border">
+              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+                <h3 class="text-xs font-semibold text-foreground">Volume Today</h3>
+                <span class="text-[10px] text-muted-foreground"
+                  >{{ formatMoney(volume.deposits + volume.withdrawals) }} total</span
+                >
+              </div>
+              <div class="p-4 space-y-3">
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-muted-foreground">Deposits</span>
+                    <span class="text-foreground font-medium">{{ formatMoney(volume.deposits) }}</span>
+                  </div>
+                  <div class="h-1.5 bg-border rounded-full overflow-hidden">
+                    @let depPct = totalVol > 0 ? (volume.deposits / totalVol) * 100 : 0;
+                    <div class="h-full bg-foreground/60 rounded-full" [style.width.%]="depPct"></div>
                   </div>
                 </div>
-              } @empty {
-                <p class="text-muted-foreground text-xs text-center py-6">No recent activity</p>
-              }
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-muted-foreground">Withdrawals</span>
+                    <span class="text-foreground font-medium">{{ formatMoney(volume.withdrawals) }}</span>
+                  </div>
+                  <div class="h-1.5 bg-border rounded-full overflow-hidden">
+                    @let wdPct = totalVol > 0 ? (volume.withdrawals / totalVol) * 100 : 0;
+                    <div class="h-full bg-foreground/30 rounded-full" [style.width.%]="wdPct"></div>
+                  </div>
+                </div>
+                <div class="border-border flex justify-between border-t pt-2.5 text-xs">
+                  <span class="text-muted-foreground">Net Flow</span>
+                  @let net = volume.deposits - volume.withdrawals;
+                  <span class="font-medium" [class]="net >= 0 ? 'text-foreground' : 'text-muted-foreground'"
+                    >{{ net >= 0 ? '+' : '' }}{{ formatMoney(net) }}</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Queue -->
+            <div class="bg-card border-border rounded-lg border">
+              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+                <h3 class="text-xs font-semibold text-foreground">Pending Queue</h3>
+                <span class="text-[10px] text-muted-foreground"
+                  >{{ pendingDeposits + pendingWithdrawals + health.pendingCount + stats.pendingBets }} items</span
+                >
+              </div>
+              <div class="divide-border divide-y text-xs">
+                <a
+                  routerLink="/deposits"
+                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  <span class="text-muted-foreground">Deposit Approvals</span>
+                  <span class="text-foreground font-medium">{{ pendingDeposits }}</span>
+                </a>
+                <a
+                  routerLink="/withdrawals"
+                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  <span class="text-muted-foreground">Withdrawal Approvals</span>
+                  <span class="text-foreground font-medium">{{ pendingWithdrawals }}</span>
+                </a>
+                <a
+                  routerLink="/kyc"
+                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  <span class="text-muted-foreground">KYC Reviews</span>
+                  <span class="text-foreground font-medium">{{ health.pendingCount }}</span>
+                </a>
+                <a
+                  routerLink="/bets"
+                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  <span class="text-muted-foreground">Unsettled Bets</span>
+                  <span class="text-foreground font-medium">{{ stats.pendingBets }}</span>
+                </a>
+              </div>
             </div>
           </div>
 
-          <!-- Quick Actions -->
-          <div class="bg-card border-border rounded-lg border">
-            <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
-              <h3 class="text-xs font-semibold text-foreground">Quick Actions</h3>
+          <!-- ─── BOTTOM ROW ─── -->
+          <div class="grid gap-5 lg:grid-cols-2">
+            <!-- Recent Activity -->
+            <div class="bg-card border-border rounded-lg border">
+              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+                <h3 class="text-xs font-semibold text-foreground">Recent Activity</h3>
+                <a routerLink="/audit" class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  >View all →</a
+                >
+              </div>
+              <div class="divide-border divide-y">
+                @for (log of recentLogs; track log.id) {
+                  <div class="flex items-start gap-2.5 px-4 py-2.5">
+                    <div class="bg-accent/50 mt-0.5 rounded p-1">
+                      <svg-icon
+                        src="assets/icons/heroicons/outline/cursor-click.svg"
+                        svgClass="h-2.5 w-2.5 text-muted-foreground"></svg-icon>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-xs text-foreground">{{ log.action }}</p>
+                      <div class="flex gap-2 text-[10px] text-muted-foreground/60 mt-0.5">
+                        <span>{{ log.resource_type }}</span>
+                        @if (log.resource_id) {
+                          <span>· {{ log.resource_id.slice(0, 8) }}</span>
+                        }
+                        <span>· {{ log.created_at | wibDate: 'short' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="text-muted-foreground text-xs text-center py-6">No recent activity</p>
+                }
+              </div>
             </div>
-            <div class="grid grid-cols-4 gap-px bg-border">
-              @for (action of quickActions; track action.label) {
-                <a
-                  [routerLink]="action.route"
-                  class="bg-card flex flex-col items-center gap-1.5 px-2 py-3.5 hover:bg-accent/30 transition-colors">
-                  <svg-icon [src]="action.icon" svgClass="h-4 w-4 text-muted-foreground"></svg-icon>
-                  <span class="text-[10px] text-muted-foreground font-medium">{{ action.label }}</span>
-                </a>
-              }
+
+            <!-- Quick Actions -->
+            <div class="bg-card border-border rounded-lg border">
+              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+                <h3 class="text-xs font-semibold text-foreground">Quick Actions</h3>
+              </div>
+              <div class="grid grid-cols-4 gap-px bg-border">
+                @for (action of quickActions; track action.label) {
+                  <a
+                    [routerLink]="action.route"
+                    class="bg-card flex flex-col items-center gap-1.5 px-2 py-3.5 hover:bg-accent/30 transition-colors">
+                    <svg-icon [src]="action.icon" svgClass="h-4 w-4 text-muted-foreground"></svg-icon>
+                    <span class="text-[10px] text-muted-foreground font-medium">{{ action.label }}</span>
+                  </a>
+                }
+              </div>
             </div>
           </div>
-        </div>
+        }
       }
     </div>
   `,

@@ -7,12 +7,14 @@ import { SupabaseService, SupabaseLoginResult } from 'src/app/core/services/supa
 export interface User {
   id?: string;
   username: string;
+  displayName?: string;
   isAuthenticated: boolean;
   timestamp?: number;
   role?: string;
   unlimited?: boolean;
   email?: string;
   token?: string;
+  sessionId?: string;
 }
 
 export interface Credentials {
@@ -31,7 +33,8 @@ export class AuthService {
   private userSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   public user$ = this.userSubject.asObservable();
 
-  private readonly TOKEN_EXPIRY = 8 * 60 * 60 * 1000;
+  // 7 days — must match admin-proxy session expiry (7 * 86400s)
+  private readonly TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000;
 
   isTokenExpired(timestamp: number): boolean {
     return this.securityService.isTokenExpired(timestamp, this.TOKEN_EXPIRY);
