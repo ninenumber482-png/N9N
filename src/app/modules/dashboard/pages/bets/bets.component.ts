@@ -96,7 +96,7 @@ interface BetData {
               @for (b of displayBets; track b.id) {
                 <tr class="border-border hover:bg-accent/30 border-b text-xs transition-colors">
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono">
-                    {{ b.bet_code?.slice(0, 12) }}
+                    {{ b.bet_code.slice(0, 12) }}
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                     <p class="font-semibold text-foreground">{{ b.user?.username || b.user_id?.slice(0, 10) }}</p>

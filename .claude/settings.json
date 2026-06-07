@@ -56,5 +56,8 @@
       "Bash(awk '/network: {/,/}/' id.js)",
       "Bash(awk '/^  common: {/,/^  },/' id.js)"
     ]
+  },
+  "worktree": {
+    "bgIsolation": "none"
   }
 }

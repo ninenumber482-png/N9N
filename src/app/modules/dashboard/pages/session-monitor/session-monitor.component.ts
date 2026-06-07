@@ -96,7 +96,7 @@ interface SessionData {
               @for (s of displaySessions; track s.id) {
                 <tr class="border-border hover:bg-accent/30 border-b">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">
-                    {{ s.user_id?.slice(0, 8) }}
+                    {{ s.user_id.slice(0, 8) }}
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono text-muted-foreground max-sm:hidden">
                     {{ s.ip_address || '-' }}

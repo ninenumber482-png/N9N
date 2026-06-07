@@ -118,7 +118,7 @@ interface WalletData {
                 <tr class="border-border hover:bg-accent/30 border-b">
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                     <p class="font-semibold text-foreground text-xs">
-                      {{ w.user?.username || w.user_id?.slice(0, 8) }}
+                      {{ w.user?.username || w.user_id.slice(0, 8) }}
                     </p>
                     <p class="text-[10px] text-muted-foreground">{{ w.user?.display_name }}</p>
                   </td>
