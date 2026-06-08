@@ -18,7 +18,7 @@ if (supabaseUrl && supabaseKey) {
         const authRaw = localStorage.getItem('n9_auth');
         if (authRaw) {
           const auth = JSON.parse(authRaw);
-          if (auth.token) headers['x-user-token'] = auth.token;
+          if (auth.token) headers['x-session-token'] = auth.token;
         }
       } catch {}
       return originalFetch(url, { ...options, headers, signal }).finally(() => clearTimeout(timer))
@@ -27,7 +27,7 @@ if (supabaseUrl && supabaseKey) {
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {
       global: { fetch: customFetch },
       realtime: {
-        enabled: false
+        enabled: true
       }
     })
   } catch (e) {

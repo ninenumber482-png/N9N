@@ -3,7 +3,7 @@
  * and device fingerprint on the user's session.
  *
  * Runs every 30 seconds while the tab is active.
- * Uses the existing x-user-token for auth (RLS bypass via anon key).
+ * Uses the existing x-session-token for auth (RLS bypass via anon key).
  */
 import { supabase } from '../utils/supabase';
 import { getFingerprint } from '../utils/fingerprint';

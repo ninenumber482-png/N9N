@@ -1,12 +1,12 @@
 // upload-proof — authenticated proof-image upload for the NUMBER9 user app.
 //
-// The user app authenticates via a custom `x-user-token` header (users.session_token),
+// The user app authenticates via a custom `x-session-token` header (users.session_token),
 // NOT Supabase Auth, so a Storage RLS policy cannot see the user identity and cannot
 // enforce per-user folders. This function verifies the token server-side and uploads
 // with the service role (bypassing RLS) into the caller's own folder: proofs/<userId>/...
 //
 // Called from the client via supabase.functions.invoke('upload-proof', { body: { ... } }).
-// The client's custom fetch injects x-user-token automatically.
+// The client's custom fetch injects x-session-token automatically. (Also accepts x-user-token for backward compat)
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";

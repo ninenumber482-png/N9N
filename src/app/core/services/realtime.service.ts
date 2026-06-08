@@ -94,26 +94,43 @@ export class RealtimeService implements OnDestroy {
   private channelRefs: Map<string, number> = new Map();
   private pollSubs: Map<string, Subscription> = new Map();
   private wsEnabled = false;
+  private wsRetryTimer: any;
 
   constructor() {
     this.tryEnableWebSocket();
+    this.scheduleWSRetry();
   }
 
   /** Attempt WebSocket connection, fallback to polling if it fails */
   private tryEnableWebSocket() {
     try {
-      const channel = this.supabase.channel('health-check');
+      const channel = this.supabase.channel('health-check', { config: { broadcast: { ack: false } } });
       channel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           this.wsEnabled = true;
           this.supabase.removeChannel(channel);
+          clearTimeout(this.wsRetryTimer);
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           this.wsEnabled = false;
         }
       });
+      setTimeout(() => {
+        if (!this.wsEnabled) {
+          this.supabase.removeChannel(channel);
+        }
+      }, 5000);
     } catch (e) {
       this.wsEnabled = false;
     }
+  }
+
+  /** Retry WebSocket connection every 30 seconds if disabled */
+  private scheduleWSRetry() {
+    this.wsRetryTimer = setInterval(() => {
+      if (!this.wsEnabled) {
+        this.tryEnableWebSocket();
+      }
+    }, this.WS_RETRY_MS);
   }
 
   /** Subscribe dengan reference counting — aman dipanggil dari multiple components */
@@ -548,6 +565,7 @@ export class RealtimeService implements OnDestroy {
   }
 
   ngOnDestroy() {
+    clearInterval(this.wsRetryTimer);
     this.unsubscribeAll();
   }
 }
