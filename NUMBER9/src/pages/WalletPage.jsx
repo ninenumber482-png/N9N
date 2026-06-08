@@ -57,12 +57,12 @@ export default function WalletPage() {
     if (auth?.id) {
       console.log('[WalletPage] Fetching balances for user:', auth?.id);
       fetchBalances().then(() => {
-        console.log('[WalletPage] Balance fetch complete. availableBalance:', availableBalance);
+        console.log('[WalletPage] Balance fetch complete');
       });
     } else {
       console.log('[WalletPage] No auth.id available');
     }
-  }, [auth?.id, fetchBalances, availableBalance]);
+  }, [auth?.id, fetchBalances]);
 
   return (
     <PageShell
