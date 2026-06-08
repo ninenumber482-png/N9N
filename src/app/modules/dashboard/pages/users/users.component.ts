@@ -445,7 +445,7 @@ interface BetRow {
                         <div class="bg-accent/20 rounded-lg p-4 space-y-2">
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Total Bets</span>
-                            <span class="text-foreground font-medium">{{ modalData.bets.length }}</span>
+                            <span class="text-foreground font-medium">{{ modalData.bets.length }} <span class="text-[10px] text-muted-foreground">({{ modalBetsWinCount() + modalBetsLossCount() }} settled)</span></span>
                           </div>
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Wins / Losses</span>
@@ -454,20 +454,20 @@ interface BetRow {
                             >
                           </div>
                           <div class="flex justify-between">
-                            <span class="text-muted-foreground text-sm">Total Stake</span>
+                            <span class="text-muted-foreground text-sm">Stake (settled)</span>
                             <span class="text-foreground font-mono font-medium">{{
                               modalBetsTotalStake() | number: '1.2-2'
                             }}</span>
                           </div>
                           <div class="flex justify-between">
-                            <span class="text-muted-foreground text-sm">Total Payout</span>
+                            <span class="text-muted-foreground text-sm">Payout (settled)</span>
                             <span class="text-foreground font-mono font-medium">{{
                               modalBetsTotalPayout() | number: '1.2-2'
                             }}</span>
                           </div>
                           <div class="flex justify-between pt-1 border-t border-border">
-                            <span class="text-muted-foreground text-sm font-semibold">Net P&L</span>
-                            <span class="font-bold font-mono text-foreground">{{
+                            <span class="text-muted-foreground text-sm font-semibold">Net P&L (settled)</span>
+                            <span class="font-bold font-mono" [class.text-emerald-400]="modalBetsPnL() >= 0" [class.text-red-400]="modalBetsPnL() < 0">{{
                               modalBetsPnL() | number: '1.2-2'
                             }}</span>
                           </div>
@@ -978,12 +978,16 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  private modalSettledBets(): BetRow[] {
+    return (this.modalData.bets ?? []).filter((b) => b.status === 'SETTLED');
+  }
+
   modalBetsTotalStake(): number {
-    return (this.modalData.bets ?? []).reduce((s, b) => s + Number(b.stake || 0), 0);
+    return this.modalSettledBets().reduce((s, b) => s + Number(b.stake || 0), 0);
   }
 
   modalBetsTotalPayout(): number {
-    return (this.modalData.bets ?? []).reduce((s, b) => s + Number(b.actual_payout || 0), 0);
+    return this.modalSettledBets().reduce((s, b) => s + Number(b.actual_payout || 0), 0);
   }
 
   modalBetsPnL(): number {

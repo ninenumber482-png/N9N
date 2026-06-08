@@ -285,6 +285,7 @@ export const id = {
     locked_required: 'Terkunci · {amount} P diperlukan',
     request: 'Ajukan Penarikan',
     enter_valid: 'Masukkan jumlah valid',
+    below_minimum: 'Minimal penarikan {min} P',
     insufficient: 'Saldo tidak mencukupi',
     add_bank: 'Tambahkan detail bank di profil',
     withdraw_failed: 'Penarikan gagal',

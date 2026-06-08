@@ -4,7 +4,7 @@ import { useStore } from "../store/useStore";
 import {
   requestDeposit, fetchPlatformAccounts,
   fetchUserTransactions, getDepositLockRemaining,
-  requestWithdraw, fetchUserBank, fetchTurnoverSummary,
+  requestWithdraw, fetchTurnoverSummary, updateUserBank,
 } from "../store/wallet";
 import { supabase } from "../utils/supabase";
 import { Icon } from "../components/icons";
@@ -22,6 +22,7 @@ import { DEPOSIT_PRESETS, WITHDRAWAL_METHODS, WITHDRAW_PRESETS, DEPOSIT_LOCK_MS 
 import { useI18n } from '../i18n';
 import { wibDate } from '../utils/wib';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { formatNumber } from '../utils/format';
 
 const TABS = [
   { k: 'deposit', l: 'wallet.tabs_deposit', I: Icon.ArrowDown },
@@ -29,7 +30,7 @@ const TABS = [
   { k: 'turnover', l: 'wallet.tabs_turnover', I: Icon.Turnover },
 ];
 
-const fmt = (n) => Number(n || 0).toLocaleString();
+const fmt = (n) => formatNumber(n);
 
 export default function WalletPage() {
   const auth = useStore((s) => s.auth);
@@ -349,6 +350,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
 
 /* ===== WITHDRAW TAB ===== */
 function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
+  const fetchProfile = useStore((s) => s.fetchProfile);
   const [method, setMethod] = useState("BANK_TRANSFER");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -361,10 +363,18 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
 
   useEffect(() => {
     if (!auth?.id) return;
-    const p1 = fetchUserBank(auth.id).then(r => { if (aliveRef.current) setBank(r); }).catch(() => {});
+    const p1 = fetchProfile().then(prof => {
+      if (aliveRef.current && prof && !prof.error) {
+        setBank({
+          bankName: prof.bankName || '',
+          bankAccountNumber: prof.bankAccountNumber || '',
+          bankAccountName: prof.bankAccountName || '',
+        });
+      }
+    }).catch(() => {});
     const p2 = fetchTurnoverSummary(auth.id).then(r => { if (aliveRef.current) setTurnoverData(r); }).catch(() => {});
     Promise.allSettled([p1, p2]).finally(() => { if (aliveRef.current) setDataLoading(false); });
-  }, [auth?.id, _rtTick, aliveRef]);
+  }, [auth?.id, _rtTick, aliveRef, fetchProfile]);
 
   const bankName = bank.bankName;
   const bankAccNum = bank.bankAccountNumber;
@@ -383,6 +393,8 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
   const submit = async () => {
     const amt = Number(amount);
     if (!amt || amt <= 0) return setToast({ type: "err", text: t('withdraw.enter_valid') });
+    const minAmt = sel?.min ?? 0;
+    if (amt < minAmt) return setToast({ type: "err", text: t('withdraw.below_minimum', { min: fmt(minAmt) }) });
     if (amt > balanceMain) return setToast({ type: "err", text: t('withdraw.insufficient') });
     if (showBank && !hasFinalBank) return setToast({ type: "err", text: t('withdraw.add_bank') });
     if (hasActiveTurnover) return setToast({ type: "err", text: t('withdraw.turnover_required', { amount: fmt(remainingTurnover) }) });
@@ -394,6 +406,12 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
       );
       setLoading(false);
       if (!r?.ok) return setToast({ type: "err", text: r?.error || t('withdraw.withdraw_failed') });
+      if (useEdit && showBank && finalBankName && finalBankAccNum && finalBankAccName) {
+        updateUserBank(auth.id, finalBankName, finalBankAccNum, finalBankAccName)
+          .then(() => setBank({ bankName: finalBankName, bankAccountNumber: finalBankAccNum, bankAccountName: finalBankAccName }))
+          .catch(() => {});
+        setIsEditingBank(false);
+      }
       setToast({ type: "ok", text: t('withdraw.submitted') });
       setAmount("");
     } catch (err) {
@@ -404,15 +422,21 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
 
   return (
     <div className="space-y-6">
-      {hasActiveTurnover && (
-        <div className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-4">
-          <p className="text-xs font-bold text-yellow-400">{t('withdraw.turnover_title')}</p>
-          <p className="mt-1 text-sm text-yellow-300">{t('withdraw.turnover_remaining', { amount: fmt(remainingTurnover) })}</p>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#1f2128]">
-            <div className="h-full bg-yellow-400" style={{ width: `${turnoverData.required > 0 ? Math.min(100, Math.round(((turnoverData.achieved) / turnoverData.required) * 100)) : 0}%` }} />
-          </div>
+      <div className={`rounded-xl border p-4 ${hasActiveTurnover ? 'border-yellow-400/30 bg-yellow-400/10' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
+        <div className="flex items-center justify-between">
+          <p className={`text-xs font-bold ${hasActiveTurnover ? 'text-yellow-400' : 'text-emerald-400'}`}>{t('withdraw.turnover_title')}</p>
+          <span className={`text-[10px] font-bold ${hasActiveTurnover ? 'text-yellow-300' : 'text-emerald-400'}`}>
+            {fmt(turnoverData.achieved)} / {fmt(turnoverData.required)} P
+          </span>
         </div>
-      )}
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#1f2128]">
+          <div className={`h-full transition-all duration-700 ${hasActiveTurnover ? 'bg-yellow-400' : 'bg-emerald-400'}`}
+            style={{ width: `${turnoverData.required > 0 ? Math.min(100, Math.round((turnoverData.achieved / turnoverData.required) * 100)) : 100}%` }} />
+        </div>
+        <p className={`mt-1.5 text-xs ${hasActiveTurnover ? 'text-yellow-300' : 'text-emerald-400'}`}>
+          {hasActiveTurnover ? t('withdraw.turnover_remaining', { amount: fmt(remainingTurnover) }) : '✓ ' + t('turnover.unlocked')}
+        </p>
+      </div>
 
       <section className="rounded-xl border border-[#1f2128] bg-[#0c0e14]">
         <div className="border-b border-[#1f2128] px-4 py-3">

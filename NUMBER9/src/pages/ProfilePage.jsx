@@ -6,8 +6,9 @@ import { useI18n } from '../i18n';
 import { wibDate } from '../utils/wib';
 import { fetchTurnoverSummary } from '../store/wallet';
 import PageShell from '../components/ui/PageShell';
+import { formatNumber } from '../utils/format';
 
-const fmt = (n) => Number(n || 0).toLocaleString();
+const fmt = (n) => formatNumber(n);
 
 export default function ProfilePage() {
   const auth         = useStore((s) => s.auth);
@@ -123,8 +124,9 @@ export default function ProfilePage() {
 
         {turnover && (
           <Section icon={Icon.Turnover} title={t('turnover.title')}>
-            <Row l={t('wallet.total_turnover')} v={fmt(turnover.achieved + turnover.remaining) + ' P'} />
-            <Row l={t('turnover.achieved')} v={fmt(turnover.achieved) + ' P'} />
+            <Row l={t('turnover.deposit')} v={fmt(turnover.totalDeposited) + ' P'} />
+            <Row l={t('turnover.required')} v={fmt(turnover.required) + ' P'} />
+            <Row l={t('turnover.done')} v={fmt(turnover.achieved) + ' P'} />
             {turnover.remaining > 0 && (
               <Row l={t('turnover.remaining')} v={fmt(turnover.remaining) + ' P'} />
             )}

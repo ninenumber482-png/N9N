@@ -285,6 +285,7 @@ export const en = {
     locked_required: 'Locked · {amount} P required',
     request: 'Request Withdraw',
     enter_valid: 'Enter valid amount',
+    below_minimum: 'Minimum withdrawal is {min} P',
     insufficient: 'Insufficient balance',
     add_bank: 'Add bank details in profile',
     withdraw_failed: 'Withdraw failed',

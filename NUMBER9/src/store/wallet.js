@@ -1,6 +1,8 @@
+/* eslint-disable no-empty */
 import { supabase } from "../utils/supabase";
 import { apiSelect, apiSelectAll, apiRpc, apiInvoke } from "../utils/api";
 import { DEPOSIT_LOCK_MS } from "../constants";
+import { formatNumber } from "../utils/format";
 
 const _warn = (msg, e) => { if (import.meta.env.DEV) console.warn('[wallet]', msg, e); };
 
@@ -187,7 +189,7 @@ export async function requestWithdraw(params) {
     // Check turnover eligibility before allowing withdrawal
     const eligibility = await checkWithdrawEligibility(params.userUuid);
     if (!eligibility.isUnlocked) {
-      return { ok: false, error: `Withdraw locked. Turnover remaining: ${eligibility.remaining.toLocaleString()} P.` };
+      return { ok: false, error: `Withdraw locked. Turnover remaining: ${formatNumber(eligibility.remaining)} P.` };
     }
 
     // Check balance
@@ -216,6 +218,19 @@ export async function requestWithdraw(params) {
 }
 
 /* ── Supabase-based data fetchers ────────────────────────────────────────── */
+
+export async function updateUserBank(userId, bankName, bankAccountNumber, bankAccountName) {
+  try {
+    await apiRpc('update_user_bank', {
+      p_user_id: userId,
+      p_bank_name: bankName || null,
+      p_bank_account_number: bankAccountNumber || null,
+      p_bank_account_name: bankAccountName || null,
+    });
+  } catch (e) {
+    _warn('updateUserBank failed', e);
+  }
+}
 
 export async function fetchUserBank(userId) {
   try {
