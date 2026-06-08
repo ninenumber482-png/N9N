@@ -7,23 +7,44 @@ const _warn = (msg, e) => { if (import.meta.env.DEV) console.warn('[wallet]', ms
 /* ---------- platform accounts ---------- */
 export async function fetchPlatformAccounts() {
   try {
+    if (!supabase) {
+      _warn('fetchPlatformAccounts: supabase client not initialized');
+      return [];
+    }
     const { data, error } = await supabase
       .from('platform_accounts')
       .select('*')
       .eq('status', 'ACTIVE')
       .order('created_at');
-    if (!error && data?.length > 0) {
-      return data.map(a => ({
-        id: a.id,
-        type: a.type === 'BANK' ? 'BANK_TRANSFER' : a.type === 'EWALLET' ? 'E_WALLET' : a.type,
-        label: a.provider_name,
-        name: a.account_holder,
-        number: a.account_number,
-        note: a.instructions || '',
-      }));
+
+    if (error) {
+      _warn('fetchPlatformAccounts query error', error);
+      return [];
     }
+
+    if (!data) {
+      _warn('fetchPlatformAccounts: no data returned');
+      return [];
+    }
+
+    if (data.length === 0) {
+      if (import.meta.env.DEV) console.log('[wallet] No ACTIVE platform accounts found');
+      return [];
+    }
+
+    const transformed = data.map(a => ({
+      id: a.id,
+      type: a.type === 'BANK' ? 'BANK_TRANSFER' : a.type === 'EWALLET' ? 'E_WALLET' : a.type,
+      label: a.provider_name,
+      name: a.account_holder,
+      number: a.account_number,
+      note: a.instructions || '',
+    }));
+
+    if (import.meta.env.DEV) console.log('[wallet] Fetched platform accounts:', transformed.length, transformed);
+    return transformed;
   } catch (e) {
-    _warn('fetchPlatformAccounts failed', e);
+    _warn('fetchPlatformAccounts exception', e);
   }
   return [];
 }

@@ -111,7 +111,25 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
 
   useEffect(() => {
     let alive = true;
-    fetchPlatformAccounts().then((r) => { if (alive && Array.isArray(r)) setAccounts(r); }).catch(() => {}).finally(() => { if (alive) setAccountsLoading(false); });
+    setAccountsLoading(true);
+    fetchPlatformAccounts()
+      .then((r) => {
+        if (!alive) return;
+        if (Array.isArray(r)) {
+          if (import.meta.env.DEV) console.log('[DepositTab] Loaded accounts:', r);
+          setAccounts(r);
+        } else {
+          console.warn('[DepositTab] fetchPlatformAccounts returned non-array:', r);
+          setAccounts([]);
+        }
+      })
+      .catch((e) => {
+        if (alive) {
+          console.error('[DepositTab] fetchPlatformAccounts error:', e);
+          setAccounts([]);
+        }
+      })
+      .finally(() => { if (alive) setAccountsLoading(false); });
     return () => { alive = false; };
   }, [_accountsVersion]);
 
