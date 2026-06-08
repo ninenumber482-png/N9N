@@ -16,7 +16,7 @@
 
 
 import { supabase } from '../utils/supabase';
-import { apiRpc } from '../utils/api';
+import { apiRpc, apiInvoke } from '../utils/api';
 import { useStore } from './useStore';
 
 /* ---- Supabase backend (100% LIVE) ---- */
@@ -267,7 +267,8 @@ export async function placeBid({ sessionCode, selections, stake, userId = _userI
         potential_payout: payoutFor(selection, stake),
       }));
 
-      await apiRpc("place_bet", {
+      // Use Edge Function wrapper instead of direct RPC to avoid CORS issues
+      await apiInvoke("place-bet-wrapper", {
         p_user_id: userId,
         p_session_code: sessionCode,
         p_selections,
