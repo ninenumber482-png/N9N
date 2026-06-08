@@ -96,10 +96,11 @@ function App() {
     useStore.setState({ _hydrated: true });
   }, []);
 
-  // Track last-seen timestamps to detect new transactions
+  // Track last-seen timestamps to detect new transactions/accounts
   // (more reliable than ID comparison for detecting new rows added)
   const lastTxCheckRef = useRef(null);
   const lastBetCheckRef = useRef(null);
+  const lastAccountCheckRef = useRef(null);
 
   // Polling + Realtime hybrid — refresh every 10s, also subscribe to changes
   usePolling(async () => {
@@ -119,21 +120,33 @@ function App() {
       // Refresh bets via king.js cache
       await refreshKingData(auth.id);
 
+      // Check platform accounts (global, no auth needed)
+      const { data: accounts } = await supabase
+        .from('platform_accounts')
+        .select('id, created_at')
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
       // Detect NEW data: if the latest timestamp changed, bump the counter
       const latestTxTime = txs?.[0]?.created_at;
       const latestBetTime = listBids()?.[0]?.created_at;
+      const latestAccountTime = accounts?.[0]?.created_at;
 
       const newTxSeen = !!latestTxTime && latestTxTime !== lastTxCheckRef.current;
       const newBetSeen = !!latestBetTime && latestBetTime !== lastBetCheckRef.current;
+      const newAccountSeen = !!latestAccountTime && latestAccountTime !== lastAccountCheckRef.current;
 
       if (newTxSeen) lastTxCheckRef.current = latestTxTime;
       if (newBetSeen) lastBetCheckRef.current = latestBetTime;
+      if (newAccountSeen) lastAccountCheckRef.current = latestAccountTime;
 
       // Batch into a single setState to avoid cascading re-renders
-      if (newTxSeen || newBetSeen) {
+      if (newTxSeen || newBetSeen || newAccountSeen) {
         useStore.setState(s => ({
           _rtTick: newTxSeen ? (s._rtTick || 0) + 1 : s._rtTick,
           _kingVersion: newBetSeen ? (s._kingVersion || 0) + 1 : s._kingVersion,
+          _accountsVersion: newAccountSeen ? (s._accountsVersion || 0) + 1 : s._accountsVersion,
         }));
       }
     } catch (e) {
@@ -142,34 +155,48 @@ function App() {
     }
   }, 10000, [auth?.id]);
 
-  // Realtime subscriptions for transactions & bets (WebSocket is now enabled)
+  // Realtime subscriptions for transactions, bets, and platform accounts (WebSocket is now enabled)
   useEffect(() => {
-    if (!auth?.id || !supabase) return;
+    if (!supabase) return;
     const subs = [];
 
-    // Subscribe to user's transactions
-    const txChannel = supabase
-      .channel(`transactions:user_id=eq.${auth.id}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${auth.id}` },
-        () => {
-          useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
-        }
-      )
-      .subscribe();
-    subs.push(txChannel);
+    // Subscribe to user's transactions (if logged in)
+    if (auth?.id) {
+      const txChannel = supabase
+        .channel(`transactions:user_id=eq.${auth.id}`)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${auth.id}` },
+          () => {
+            useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
+          }
+        )
+        .subscribe();
+      subs.push(txChannel);
 
-    // Subscribe to user's bets
-    const betChannel = supabase
-      .channel(`bets:user_id=eq.${auth.id}`)
+      // Subscribe to user's bets
+      const betChannel = supabase
+        .channel(`bets:user_id=eq.${auth.id}`)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'bets', filter: `user_id=eq.${auth.id}` },
+          () => {
+            useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+          }
+        )
+        .subscribe();
+      subs.push(betChannel);
+    }
+
+    // Subscribe to platform accounts (global, affects all users)
+    const accountsChannel = supabase
+      .channel('platform_accounts:status=eq.ACTIVE')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'bets', filter: `user_id=eq.${auth.id}` },
+        { event: '*', schema: 'public', table: 'platform_accounts', filter: 'status=eq.ACTIVE' },
         () => {
-          useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+          useStore.setState(s => ({ _accountsVersion: (s._accountsVersion || 0) + 1 }));
         }
       )
       .subscribe();
-    subs.push(betChannel);
+    subs.push(accountsChannel);
 
     return () => {
       subs.forEach(ch => supabase.removeChannel(ch));

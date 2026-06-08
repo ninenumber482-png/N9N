@@ -39,6 +39,7 @@ export default function WalletPage() {
   const setLastDepositAt = useStore((s) => s.setLastDepositAt);
 
   const _rtTick = useStore((s) => s._rtTick);
+  const _accountsVersion = useStore((s) => s._accountsVersion);
   const navigate = useNavigate();
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
@@ -78,7 +79,7 @@ export default function WalletPage() {
         })}
       </div>
 
-      {tab === 'deposit' && <DepositTab auth={auth} balanceMain={balanceMain} lastDepositAt={lastDepositAt} setLastDepositAt={setLastDepositAt} nowTick={nowTick} _rtTick={_rtTick} aliveRef={aliveRef} t={t} setToast={setToast} />}
+      {tab === 'deposit' && <DepositTab auth={auth} balanceMain={balanceMain} lastDepositAt={lastDepositAt} setLastDepositAt={setLastDepositAt} nowTick={nowTick} _rtTick={_rtTick} _accountsVersion={_accountsVersion} aliveRef={aliveRef} t={t} setToast={setToast} />}
       {tab === 'withdraw' && <WithdrawTab auth={auth} balanceMain={balanceMain} _rtTick={_rtTick} aliveRef={aliveRef} t={t} setToast={setToast} />}
       {tab === 'turnover' && <TurnoverTab auth={auth} _rtTick={_rtTick} aliveRef={aliveRef} t={t} setToast={setToast} />}
 
@@ -88,7 +89,7 @@ export default function WalletPage() {
 }
 
 /* ===== DEPOSIT TAB ===== */
-function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, aliveRef, t, setToast }) {
+function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _accountsVersion, aliveRef, t, setToast }) {
   const [selected, setSelected] = useState(null);
   const [amount, setAmount] = useState("");
   const [proof, setProof] = useState("");
@@ -112,7 +113,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, a
     let alive = true;
     fetchPlatformAccounts().then((r) => { if (alive && Array.isArray(r)) setAccounts(r); }).catch(() => {}).finally(() => { if (alive) setAccountsLoading(false); });
     return () => { alive = false; };
-  }, []);
+  }, [_accountsVersion]);
 
   const activeLockTx = useMemo(() => {
     if (!auth) return null;
