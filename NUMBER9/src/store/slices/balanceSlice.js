@@ -65,21 +65,24 @@ export const balanceSlice = (set, get) => ({
     const auth = get().auth
     const url = import.meta.env.VITE_SUPABASE_URL
     const key = import.meta.env.VITE_SUPABASE_KEY
-    console.log('[balanceSlice] fetchBalances called. auth.id:', auth?.id);
+    console.log('[balanceSlice] fetchBalances called. auth.id:', auth?.id, 'url:', url, 'key:', key ? 'YES' : 'NO');
     if (auth?.id && url && key) {
       try {
         // Use Edge Function wrapper instead of direct REST API to avoid CORS issues
-        const response = await fetch(
-          `${url}/functions/v1/get-user-wallet?user_id=${auth.id}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${key}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        const data = await response.json();
+        const fetchUrl = `${url}/functions/v1/get-user-wallet?user_id=${auth.id}`;
+        console.log('[balanceSlice] Fetching from:', fetchUrl);
+        const response = await fetch(fetchUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('[balanceSlice] Response status:', response.status, 'ok:', response.ok);
+        const data = await response.json().catch(e => {
+          console.log('[balanceSlice] JSON parse failed:', e.message);
+          return null;
+        });
         console.log('[balanceSlice] Query result:', { data, status: response.status });
 
         if (response.ok && Array.isArray(data) && data.length > 0) {
@@ -96,12 +99,16 @@ export const balanceSlice = (set, get) => ({
           })
           return
         } else {
-          console.log('[balanceSlice] Invalid response:', data);
+          console.log('[balanceSlice] Invalid response. response.ok:', response.ok, 'isArray:', Array.isArray(data), 'length:', data?.length);
         }
       } catch (e) {
+        console.log('[balanceSlice] Fetch error:', e.message, e.stack);
         _warn('fetchBalances failed', e)
       }
+    } else {
+      console.log('[balanceSlice] Missing auth.id or env vars. auth.id:', auth?.id, 'url:', url, 'key:', key);
     }
+    console.log('[balanceSlice] Setting balance to 0 (fallback)');
     if (auth?.id) {
       set({ totalBalance: 0, availableBalance: 0, lockedBalance: 0, referralBonus: 0 })
     } else {
