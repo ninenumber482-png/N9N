@@ -96,38 +96,40 @@ function App() {
     useStore.setState({ _hydrated: true });
   }, []);
 
-  // Track last-seen "head" IDs to skip redundant _rtTick/_kingVersion bumps
-  // when polling finds no new data — prevents cascading re-renders across the app.
-  const lastSeenTxIdRef = useRef(null);
-  const lastSeenBetIdRef = useRef(null);
+  // Track last-seen timestamps to detect new transactions
+  // (more reliable than ID comparison for detecting new rows added)
+  const lastTxCheckRef = useRef(null);
+  const lastBetCheckRef = useRef(null);
 
-  // Polling fallback — refresh wallet & transactions every 15s
-  // (WebSocket realtime is disabled due to Cloudflare error 1101)
+  // Polling + Realtime hybrid — refresh every 10s, also subscribe to changes
   usePolling(async () => {
     if (!auth?.id || !supabase) return;
     try {
       // Refresh balances (main = Portfolio, reserved = pending WD, buying power = main - reserved)
       await useStore.getState().fetchBalances();
-      // Refresh transactions (minimal columns, fewer rows)
+
+      // Refresh transactions (check all recent ones, not just 5)
       const { data: txs } = await supabase
         .from('transactions')
         .select('id, type, status, amount, created_at')
         .eq('user_id', auth.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(50);  // Check more rows to catch batch inserts
 
       // Refresh bets via king.js cache
       await refreshKingData(auth.id);
-      const latestBetId = listBids()?.[0]?.id || null;
 
-      // Only bump counters if the head of either stream has actually changed
-      const latestTxId = txs?.[0]?.id || null;
-      const newTxSeen = !!latestTxId && latestTxId !== lastSeenTxIdRef.current;
-      const newBetSeen = !!latestBetId && latestBetId !== lastSeenBetIdRef.current;
-      if (newTxSeen) lastSeenTxIdRef.current = latestTxId;
-      if (newBetSeen) lastSeenBetIdRef.current = latestBetId;
+      // Detect NEW data: if the latest timestamp changed, bump the counter
+      const latestTxTime = txs?.[0]?.created_at;
+      const latestBetTime = listBids()?.[0]?.created_at;
 
-      // Batch into a single setState to avoid two re-renders
+      const newTxSeen = !!latestTxTime && latestTxTime !== lastTxCheckRef.current;
+      const newBetSeen = !!latestBetTime && latestBetTime !== lastBetCheckRef.current;
+
+      if (newTxSeen) lastTxCheckRef.current = latestTxTime;
+      if (newBetSeen) lastBetCheckRef.current = latestBetTime;
+
+      // Batch into a single setState to avoid cascading re-renders
       if (newTxSeen || newBetSeen) {
         useStore.setState(s => ({
           _rtTick: newTxSeen ? (s._rtTick || 0) + 1 : s._rtTick,
@@ -138,7 +140,41 @@ function App() {
       // Polling error — silent in production, log in dev
       if (import.meta.env.DEV) console.warn('[Polling]', e);
     }
-  }, 15000, [auth?.id]);
+  }, 10000, [auth?.id]);
+
+  // Realtime subscriptions for transactions & bets (WebSocket is now enabled)
+  useEffect(() => {
+    if (!auth?.id || !supabase) return;
+    const subs = [];
+
+    // Subscribe to user's transactions
+    const txChannel = supabase
+      .channel(`transactions:user_id=eq.${auth.id}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${auth.id}` },
+        () => {
+          useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
+        }
+      )
+      .subscribe();
+    subs.push(txChannel);
+
+    // Subscribe to user's bets
+    const betChannel = supabase
+      .channel(`bets:user_id=eq.${auth.id}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'bets', filter: `user_id=eq.${auth.id}` },
+        () => {
+          useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+        }
+      )
+      .subscribe();
+    subs.push(betChannel);
+
+    return () => {
+      subs.forEach(ch => supabase.removeChannel(ch));
+    };
+  }, [auth?.id]);
 
   useEffect(() => {
     // Dev tools only in development mode
