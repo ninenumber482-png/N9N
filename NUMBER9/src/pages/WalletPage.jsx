@@ -34,6 +34,7 @@ const fmt = (n) => Number(n || 0).toLocaleString();
 export default function WalletPage() {
   const auth = useStore((s) => s.auth);
   const availableBalance = useStore((s) => s.availableBalance);
+  const fetchBalances = useStore((s) => s.fetchBalances);
 
   const lastDepositAt = useStore((s) => s.lastDepositAt);
   const setLastDepositAt = useStore((s) => s.setLastDepositAt);
@@ -51,6 +52,17 @@ export default function WalletPage() {
   const balanceMain = availableBalance ?? 0;
 
   useEffect(() => { if (!auth?.username) navigate("/login"); }, [auth, navigate]);
+
+  useEffect(() => {
+    if (auth?.id) {
+      console.log('[WalletPage] Fetching balances for user:', auth?.id);
+      fetchBalances().then(() => {
+        console.log('[WalletPage] Balance fetch complete. availableBalance:', availableBalance);
+      });
+    } else {
+      console.log('[WalletPage] No auth.id available');
+    }
+  }, [auth?.id, fetchBalances, availableBalance]);
 
   return (
     <PageShell

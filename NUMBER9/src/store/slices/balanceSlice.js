@@ -65,17 +65,28 @@ export const balanceSlice = (set, get) => ({
     const auth = get().auth
     const url = import.meta.env.VITE_SUPABASE_URL
     const key = import.meta.env.VITE_SUPABASE_KEY
+    console.log('[balanceSlice] fetchBalances called. auth.id:', auth?.id);
     if (auth?.id && url && key) {
       try {
-        if (!supabase) return
-        const { data, error } = await supabase
-          .from("wallet")
-          .select("balance_main,balance_bonus")
-          .eq("user_id", auth.id)
-          .single()
-        if (!error && data) {
-          const main = Number(data.balance_main ?? 0)
-          const bonus = Number(data.balance_bonus ?? 0)
+        // Use Edge Function wrapper instead of direct REST API to avoid CORS issues
+        const response = await fetch(
+          `${url}/functions/v1/get-user-wallet?user_id=${auth.id}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${key}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await response.json();
+        console.log('[balanceSlice] Query result:', { data, status: response.status });
+
+        if (response.ok && Array.isArray(data) && data.length > 0) {
+          const wallet = data[0];
+          const main = Number(wallet.balance_main ?? 0)
+          const bonus = Number(wallet.balance_bonus ?? 0)
+          console.log('[balanceSlice] Setting balance:', { main, bonus });
           try { localStorage.removeItem('n9_wallet_balances') } catch { /* ignore */ }
           set({
             totalBalance: main + bonus,
@@ -84,6 +95,8 @@ export const balanceSlice = (set, get) => ({
             referralBonus: bonus,
           })
           return
+        } else {
+          console.log('[balanceSlice] Invalid response:', data);
         }
       } catch (e) {
         _warn('fetchBalances failed', e)
