@@ -1,4 +1,6 @@
-import { importProvidersFrom } from '@angular/core';
+import { importProvidersFrom, LOCALE_ID } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeId from '@angular/common/locales/id';
 
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -11,6 +13,8 @@ import { AuthInterceptor } from './app/core/interceptor/auth.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 
+registerLocaleData(localeId);
+
 if (environment.production && typeof window !== 'undefined') {
   selfXSSWarning();
 }
@@ -22,6 +26,7 @@ bootstrapApplication(AppComponent, {
     provideZonelessChangeDetection(),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: LOCALE_ID, useValue: 'id' },
     providePrimeNG({
       theme: {
         preset: Aura,

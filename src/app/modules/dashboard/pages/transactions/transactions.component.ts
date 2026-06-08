@@ -385,7 +385,13 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.realtime.subscribeTransactions();
     this.realtime.transactions$.pipe(takeUntil(this.destroy$)).subscribe((transactions) => {
       if (transactions) {
-        this.all = transactions as TransactionItem[];
+        // Realtime data arrives without user join (anon key, RLS on users).
+        // Preserve existing user data from admin-proxy load.
+        const existing = new Map(this.all.map((t) => [t.id, t]));
+        this.all = (transactions as TransactionItem[]).map((tx) => ({
+          ...tx,
+          user: tx.user ?? existing.get(tx.id)?.user ?? undefined,
+        }));
         this.all.forEach((tx) => {
           if (tx.notes && !this.editNotes[tx.id]) {
             this.editNotes[tx.id] = tx.notes;
