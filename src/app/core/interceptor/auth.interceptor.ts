@@ -10,6 +10,13 @@ export class AuthInterceptor implements HttpInterceptor {
   private router = inject(Router);
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Don't add auth headers to static assets (SVG icons, fonts, etc.)
+    const isAsset = req.url.includes('/assets/') || req.url.endsWith('.svg') || req.url.endsWith('.woff');
+
+    if (isAsset) {
+      return next.handle(req);
+    }
+
     const user = this.auth.getCurrentUser();
     if (user?.token) {
       req = req.clone({

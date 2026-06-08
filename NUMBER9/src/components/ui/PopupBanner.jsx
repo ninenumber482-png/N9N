@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { apiRpc } from '../../utils/api';
+import { apiInvoke } from '../../utils/api';
 import { useStore } from '../../store/useStore';
 
 export default function PopupBanner() {
@@ -12,7 +12,7 @@ export default function PopupBanner() {
     if (fetched.current === key) return;
     fetched.current = key;
     setBanner(null);
-    apiRpc('get_active_popup_banners', {}).then((data) => {
+    apiInvoke('get-popup-banners', {}).then((data) => {
       const arr = Array.isArray(data) ? data : [];
       if (arr.length > 0) setBanner(arr[0]);
     }).catch(() => {});

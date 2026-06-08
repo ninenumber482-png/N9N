@@ -152,7 +152,7 @@ export async function requestDeposit(params) {
     if (params.proof && !proofUrl) return { ok: false, error: "Proof upload failed. Check your connection and try again." };
     const idempotencyKey = newIdempotencyKey();
 
-    const data = await apiRpc('submit_deposit', {
+    const data = await apiInvoke('submit-deposit-wrapper', {
       p_user_id: params.userUuid,
       p_amount: amt,
       p_method: params.method || 'Transfer Bank',

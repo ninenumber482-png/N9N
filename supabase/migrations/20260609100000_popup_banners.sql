@@ -114,3 +114,5 @@ RETURNS SETOF popup_banners
 AS $$
   SELECT * FROM popup_banners WHERE active = true ORDER BY sort_order ASC, created_at DESC;
 $$;
+
+GRANT EXECUTE ON FUNCTION get_active_popup_banners() TO anon, authenticated, service_role;

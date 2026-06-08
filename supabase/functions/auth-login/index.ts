@@ -44,10 +44,10 @@ const corsHeaders = (req?: Request, extra: Record<string, string> = {}) => {
   };
 };
 
-const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
+const json = (body: unknown, status = 200, extra: Record<string, string> = {}, req?: Request) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: corsHeaders(undefined, extra),
+    headers: corsHeaders(req, extra),
   });
 
 function setSessionCookie(token: string, maxAgeSec: number): string {
@@ -62,20 +62,20 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(req) });
     }
     if (req.method !== "POST") {
-      return json({ error: "Method not allowed" }, 405);
+      return json({ error: "Method not allowed" }, 405, {}, req);
     }
 
     try {
       const { username, password, email }: LoginPayload = await req.json();
 
       if (!username || !password || !email) {
-        return json({ error: "Missing required fields: username, password, email" }, 400);
+        return json({ error: "Missing required fields: username, password, email" }, 400, {}, req);
       }
 
       const supabaseUrl = Deno.env.get('SUPABASE_URL')
       const serviceRoleKey = Deno.env.get('N9_SERVICE_ROLE_KEY')
       if (!supabaseUrl || !serviceRoleKey) {
-        return json({ error: 'Server misconfiguration' }, 500)
+        return json({ error: 'Server misconfiguration' }, 500, {}, req)
       }
 
       const supabase = createClient(supabaseUrl, serviceRoleKey)
@@ -91,7 +91,7 @@ export default {
         .gte('attempted_at', cutoff);
 
       if ((count || 0) >= RATE_LIMIT_MAX) {
-        return json({ error: 'Too many failed attempts. Try again later.' }, 429, { "Retry-After": "900" });
+        return json({ error: 'Too many failed attempts. Try again later.' }, 429, { "Retry-After": "900" }, req);
       }
 
       // Query both tables — no account_status filter for admins (they bypass member checks)
@@ -120,7 +120,7 @@ export default {
       if (!matchedHash) {
         try { await supabase.from('failed_logins').insert({ username: dbUsername, ip_address, reason: 'wrong_password' }) } catch {}
         console.warn(`[SECURITY] Login attempt with wrong password: ${dbUsername}`);
-        return json({ error: "Invalid username or password" }, 401);
+        return json({ error: "Invalid username or password" }, 401, {}, req);
       }
 
       let userRow: Record<string, any> | null = null;
@@ -129,7 +129,7 @@ export default {
       } else if (n9Data) {
         userRow = { ...n9Data, display_name: n9Data.username, email: '', account_status: 'ACTIVE' };
       } else {
-        return json({ error: "Invalid username or password" }, 401);
+        return json({ error: "Invalid username or password" }, 401, {}, req);
       }
 
       // ── Create session ──
@@ -164,7 +164,7 @@ export default {
         }, { onConflict: 'id' })
       if (upsertErr) {
         console.error('[LOGIN] users upsert failed:', upsertErr.message)
-        return json({ error: 'Failed to create session' }, 500)
+        return json({ error: 'Failed to create session' }, 500, {}, req)
       }
 
       // Step 2: Insert session record (FK now satisfied since user exists in users)
@@ -194,11 +194,11 @@ export default {
           isNewAccount: false,
         },
         message: "Login successful",
-      }, 200, { "Set-Cookie": cookie });
+      }, 200, { "Set-Cookie": cookie }, req);
 
     } catch (error) {
       console.error("[ERROR] Login exception:", error);
-      return json({ error: "Internal server error" }, 500);
+      return json({ error: "Internal server error" }, 500, {}, req);
     }
   },
 };

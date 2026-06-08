@@ -20,12 +20,12 @@ if (supabaseUrl && supabaseKey) {
         headers['apikey'] = supabaseKey;
       }
 
-      // Add session token for authenticated requests
+      // Add session token for authenticated requests (x-user-token is required by submit_deposit/submit_withdrawal RPC)
       try {
         const authRaw = localStorage.getItem('n9_auth');
         if (authRaw) {
           const auth = JSON.parse(authRaw);
-          if (auth.token) headers['x-session-token'] = auth.token;
+          if (auth.token) headers['x-user-token'] = auth.token;
         }
       } catch {}
       return originalFetch(url, { ...options, headers, signal }).finally(() => clearTimeout(timer))
