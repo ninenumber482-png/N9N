@@ -68,6 +68,7 @@ export const authSlice = (set, get) => ({
       set({ auth: authData })
 
       await get().fetchBalances()
+      get().subscribeToWalletUpdates()
 
       try {
         const prof = await get().fetchProfile()
@@ -81,6 +82,7 @@ export const authSlice = (set, get) => ({
           writeJSON(LS.byUuid, byUuid)
           set({ users: { ...users } })
         }
+        get().subscribeToProfileUpdates()
       } catch (e) {
         _warn('login: save profile failed', e)
       }
@@ -102,6 +104,8 @@ export const authSlice = (set, get) => ({
 
   logout: () => {
     stopHeartbeat()
+    get().unsubscribeFromWalletUpdates()
+    get().unsubscribeFromProfileUpdates()
 
     localStorage.removeItem(LS.auth)
     localStorage.removeItem(LS.users)

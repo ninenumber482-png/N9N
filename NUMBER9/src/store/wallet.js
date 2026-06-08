@@ -7,28 +7,57 @@ const _warn = (msg, e) => { if (import.meta.env.DEV) console.warn('[wallet]', ms
 /* ---------- platform accounts ---------- */
 export async function fetchPlatformAccounts() {
   try {
+    console.log('[wallet] fetchPlatformAccounts called, supabase:', !!supabase);
     if (!supabase) {
-      _warn('fetchPlatformAccounts: supabase client not initialized');
+      console.warn('[wallet] fetchPlatformAccounts: supabase client not initialized');
       return [];
     }
+
+    // Check auth token
+    const authRaw = localStorage.getItem('n9_auth');
+    console.log('[wallet] Auth token in localStorage:', !!authRaw);
+    if (authRaw) {
+      try {
+        const auth = JSON.parse(authRaw);
+        console.log('[wallet] Auth token value:', auth.token ? auth.token.substring(0, 20) + '...' : 'NONE');
+      } catch {}
+    }
+
+    console.log('[wallet] Querying platform_accounts with status=ACTIVE');
     const { data, error } = await supabase
       .from('platform_accounts')
       .select('*')
       .eq('status', 'ACTIVE')
       .order('created_at');
 
+    console.log('[wallet] fetchPlatformAccounts response:', {
+      hasError: !!error,
+      errorCode: error?.code,
+      errorMsg: error?.message,
+      dataLength: data?.length,
+      errorKeys: error ? Object.keys(error) : []
+    });
+
     if (error) {
-      _warn('fetchPlatformAccounts query error', error);
+      console.error('[wallet] FULL ERROR OBJECT:', JSON.stringify({
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        status: error.status,
+        statusText: error.statusText,
+        toString: error.toString()
+      }, null, 2));
       return [];
     }
 
     if (!data) {
-      _warn('fetchPlatformAccounts: no data returned');
+      console.warn('[wallet] fetchPlatformAccounts: no data returned');
       return [];
     }
 
     if (data.length === 0) {
-      if (import.meta.env.DEV) console.log('[wallet] No ACTIVE platform accounts found');
+      console.log('[wallet] No ACTIVE platform accounts found in database');
       return [];
     }
 
@@ -41,10 +70,10 @@ export async function fetchPlatformAccounts() {
       note: a.instructions || '',
     }));
 
-    if (import.meta.env.DEV) console.log('[wallet] Fetched platform accounts:', transformed.length, transformed);
+    console.log('[wallet] Fetched platform accounts:', transformed.length, transformed);
     return transformed;
   } catch (e) {
-    _warn('fetchPlatformAccounts exception', e);
+    console.error('[wallet] fetchPlatformAccounts exception:', e.message, e);
   }
   return [];
 }

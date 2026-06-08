@@ -1,7 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-const ALLOWED_ORIGINS = ["https://app.mynumber9.uk", "https://mynumber9.uk", "https://admin.mynumber9.uk"];
+const ALLOWED_ORIGINS = [
+  "https://app.mynumber9.uk",
+  "https://mynumber9.uk",
+  "https://admin.mynumber9.uk",
+  "http://localhost:5175",
+  "http://localhost:5176",
+  "http://localhost:5177",
+  "http://localhost:4200",
+  "http://localhost:4201"
+];
 
 function corsOrigin(req: Request): string {
   const o = req.headers.get("origin") || "";

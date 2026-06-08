@@ -14,6 +14,13 @@ if (supabaseUrl && supabaseKey) {
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       const signal = options.signal ? anySignal([options.signal, controller.signal]) : controller.signal
       const headers = { ...options.headers };
+
+      // Ensure apikey is always present for Supabase REST API
+      if (!headers['apikey'] && !headers['Authorization']) {
+        headers['apikey'] = supabaseKey;
+      }
+
+      // Add session token for authenticated requests
       try {
         const authRaw = localStorage.getItem('n9_auth');
         if (authRaw) {

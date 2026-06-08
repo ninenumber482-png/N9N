@@ -18,7 +18,13 @@ const COOKIE_NAME = "n9_session";
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 900_000; // 15 minutes
 
-const ALLOWED_ORIGINS = ["https://admin.mynumber9.uk", "https://number9-admin.pages.dev", "https://master.number9-admin.pages.dev"];
+const ALLOWED_ORIGINS = [
+  "https://admin.mynumber9.uk",
+  "https://number9-admin.pages.dev",
+  "https://master.number9-admin.pages.dev",
+  "http://localhost:4200",
+  "http://localhost:4201"
+];
 
 function corsOrigin(req: Request): string {
   const o = req.headers.get("origin") || "";

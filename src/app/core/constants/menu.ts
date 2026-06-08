@@ -20,6 +20,7 @@ export class Menu {
         { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposit / Withdraw', route: '/wallet' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Transactions', route: '/transactions' },
         { icon: 'assets/icons/heroicons/outline/view-grid.svg', label: 'Wallets', route: '/wallets' },
+        { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Member Balance', route: '/member-balance' },
         { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Turnover', route: '/turnover' },
       ],
     },

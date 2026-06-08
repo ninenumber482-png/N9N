@@ -21,17 +21,23 @@ function getHeaders() {
   return headers;
 }
 
-async function apiFetch(url, options = {}) {
+async function apiFetch(fetchUrl, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(url, { ...options, credentials: 'include', signal: controller.signal });
+    console.log('[apiFetch] Calling:', fetchUrl.substring(0, 100));
+    const res = await fetch(fetchUrl, { ...options, credentials: 'include', signal: controller.signal });
+    console.log('[apiFetch] Response status:', res.status);
     if (res.status === 401 || res.status === 403) {
+      console.log('[apiFetch] Unauthorized, redirecting to login');
       localStorage.removeItem('n9_auth');
       window.location.href = '/login';
       return null;
     }
     return res;
+  } catch (err) {
+    console.error('[apiFetch] Fetch error:', err.name, err.message, 'URL:', fetchUrl.substring(0, 100));
+    throw err;
   } finally {
     clearTimeout(timer);
   }

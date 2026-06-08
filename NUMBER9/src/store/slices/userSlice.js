@@ -6,6 +6,64 @@ export const userSlice = (set, get) => ({
   users: readJSON(LS.users, {}),
   refreshUsers: () => set({ users: readJSON(LS.users, {}) }),
 
+  profileSubscription: null,
+
+  subscribeToProfileUpdates: () => {
+    const authData = readJSON(LS.auth, null)
+    if (!authData?.id) return
+
+    // Unsubscribe from existing subscription
+    const existingSub = get().profileSubscription
+    if (existingSub) {
+      supabase.removeChannel(existingSub)
+    }
+
+    // Create new subscription for user profile updates
+    const channel = supabase
+      .channel(`profile-updates-${authData.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${authData.id}`
+        },
+        async (payload) => {
+          _warn('Profile update received', payload)
+          // Refresh profile when user data changes
+          const prof = await get().fetchProfile()
+          if (prof) {
+            const users = readJSON(LS.users, {})
+            const byUuid = readJSON(LS.byUuid, {})
+            const key = prof.username.toLowerCase()
+            users[key] = prof
+            byUuid[prof.uuid] = { ...prof, username: key }
+            writeJSON(LS.users, users)
+            writeJSON(LS.byUuid, byUuid)
+            set({ users: { ...users } })
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          _warn('Subscribed to profile updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          _warn('Profile subscription error')
+        }
+      })
+
+    set({ profileSubscription: channel })
+  },
+
+  unsubscribeFromProfileUpdates: () => {
+    const existingSub = get().profileSubscription
+    if (existingSub) {
+      supabase.removeChannel(existingSub)
+      set({ profileSubscription: null })
+    }
+  },
+
   updateUser: (uuid, updates) => {
     const users = readJSON(LS.users, {})
     const byUuid = readJSON(LS.byUuid, {})

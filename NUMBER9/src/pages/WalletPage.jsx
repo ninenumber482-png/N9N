@@ -112,24 +112,56 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
   useEffect(() => {
     let alive = true;
     setAccountsLoading(true);
-    fetchPlatformAccounts()
-      .then((r) => {
+    console.log('[DepositTab] Component mounted, fetching accounts');
+    (async () => {
+      try {
+        const r = await fetchPlatformAccounts();
         if (!alive) return;
+        console.log('[DepositTab] fetchPlatformAccounts returned:', r);
         if (Array.isArray(r)) {
-          if (import.meta.env.DEV) console.log('[DepositTab] Loaded accounts:', r);
+          console.log('[DepositTab] Loaded accounts:', r.length, r);
           setAccounts(r);
         } else {
           console.warn('[DepositTab] fetchPlatformAccounts returned non-array:', r);
           setAccounts([]);
         }
-      })
-      .catch((e) => {
+      } catch (e) {
         if (alive) {
           console.error('[DepositTab] fetchPlatformAccounts error:', e);
           setAccounts([]);
         }
-      })
-      .finally(() => { if (alive) setAccountsLoading(false); });
+      } finally {
+        if (alive) setAccountsLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    setAccountsLoading(true);
+    console.log('[DepositTab] _accountsVersion changed:', _accountsVersion, ', refetching accounts');
+    (async () => {
+      try {
+        const r = await fetchPlatformAccounts();
+        if (!alive) return;
+        console.log('[DepositTab] fetchPlatformAccounts returned:', r);
+        if (Array.isArray(r)) {
+          console.log('[DepositTab] Loaded accounts:', r.length, r);
+          setAccounts(r);
+        } else {
+          console.warn('[DepositTab] fetchPlatformAccounts returned non-array:', r);
+          setAccounts([]);
+        }
+      } catch (e) {
+        if (alive) {
+          console.error('[DepositTab] fetchPlatformAccounts error:', e);
+          setAccounts([]);
+        }
+      } finally {
+        if (alive) setAccountsLoading(false);
+      }
+    })();
     return () => { alive = false; };
   }, [_accountsVersion]);
 

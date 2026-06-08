@@ -20,6 +20,7 @@ import { SecurityCenterComponent } from 'src/app/modules/dashboard/pages/securit
 import { RiskManagementComponent } from 'src/app/modules/dashboard/pages/risk-management/risk-management.component';
 import { SystemComponent } from 'src/app/modules/dashboard/pages/system/system.component';
 import { MemberPasswordComponent } from 'src/app/modules/dashboard/pages/member-password/member-password.component';
+import { MemberBalanceComponent } from 'src/app/modules/dashboard/pages/member-balance/member-balance.component';
 import { IpWhitelistComponent } from 'src/app/modules/dashboard/pages/ip-whitelist/ip-whitelist.component';
 import { PopupBannerComponent } from 'src/app/modules/dashboard/pages/popup-banner/popup-banner.component';
 import { RoleManagementComponent } from 'src/app/modules/dashboard/pages/role-management/role-management.component';
@@ -51,7 +52,7 @@ const routes: Routes = [
       { path: 'risk-management', component: RiskManagementComponent },
       { path: 'system', component: SystemComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'member-password', component: MemberPasswordComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
-      { path: 'member-balance', redirectTo: 'wallets', pathMatch: 'full' },
+      { path: 'member-balance', component: MemberBalanceComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'ip-whitelist', component: IpWhitelistComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'popup-banner', component: PopupBannerComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'role-management', component: RoleManagementComponent, canActivate: [RoleGuard], data: { requiredRole: 'superadmin' } },

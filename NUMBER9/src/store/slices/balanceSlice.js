@@ -13,6 +13,54 @@ export const balanceSlice = (set, get) => ({
   lastDepositAt: null,
   setLastDepositAt: (ts) => set({ lastDepositAt: ts }),
 
+  walletSubscription: null,
+
+  subscribeToWalletUpdates: () => {
+    const auth = get().auth
+    if (!auth?.id) return
+
+    // Unsubscribe from existing subscription
+    const existingSub = get().walletSubscription
+    if (existingSub) {
+      supabase.removeChannel(existingSub)
+    }
+
+    // Create new subscription for wallet updates
+    const channel = supabase
+      .channel(`wallet-updates-${auth.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wallet',
+          filter: `user_id=eq.${auth.id}`
+        },
+        (payload) => {
+          _warn('Wallet update received', payload)
+          // Refresh balances when wallet data changes
+          get().fetchBalances()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          _warn('Subscribed to wallet updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          _warn('Wallet subscription error')
+        }
+      })
+
+    set({ walletSubscription: channel })
+  },
+
+  unsubscribeFromWalletUpdates: () => {
+    const existingSub = get().walletSubscription
+    if (existingSub) {
+      supabase.removeChannel(existingSub)
+      set({ walletSubscription: null })
+    }
+  },
+
   fetchBalances: async () => {
     const auth = get().auth
     const url = import.meta.env.VITE_SUPABASE_URL

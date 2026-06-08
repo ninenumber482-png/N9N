@@ -107,9 +107,12 @@ export class SignInComponent implements OnInit {
     const credentials = { username, password };
 
     try {
+      console.log('[SignIn] Attempting authentication for:', username);
       const result = await this.authService.authenticate(credentials);
+      console.log('[SignIn] Auth result:', result);
 
       if (result?.success) {
+        console.log('[SignIn] Authentication successful, setting user');
         this.authService.login(
           {
             id: result.user?.id,
@@ -124,12 +127,14 @@ export class SignInComponent implements OnInit {
         this.notificationService.success(`Welcome, ${username}!`, result.message || 'You have successfully logged in.');
         this._router.navigate(['/']);
       } else {
+        console.error('[SignIn] Authentication failed:', result?.error);
         this.notificationService.error(
           'Invalid username or password',
           result?.error || 'Please check your credentials and try again.',
         );
       }
-    } catch {
+    } catch (err) {
+      console.error('[SignIn] Catch block error:', err);
       this.notificationService.error('Connection error', 'Unable to reach the authentication server.');
     } finally {
       this.isLoading = false;

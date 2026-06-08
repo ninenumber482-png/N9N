@@ -180,7 +180,7 @@ export class MemberBalanceComponent implements OnDestroy {
       }
       this.foundUser = users[0];
 
-      const wallets = await this.admin.getWallet(this.foundUser.id);
+      const wallets = await this.admin.getWallet(this.foundUser!.id);
       this.walletBalance = wallets?.[0]?.balance_main ?? 0;
       this.walletBonus = wallets?.[0]?.balance_bonus ?? 0;
     } catch (e) {
@@ -216,7 +216,7 @@ export class MemberBalanceComponent implements OnDestroy {
     try {
       const result = await this.admin.adjustBalance(
         admin.username,
-        this.foundUser.id,
+        this.foundUser!.id,
         signedAmount,
         this.reason.trim() || undefined,
       );
@@ -227,7 +227,7 @@ export class MemberBalanceComponent implements OnDestroy {
       this.reason = '';
       this.notification.success(
         'Saldo diubah',
-        `${this.foundUser.username}: ${signedAmount > 0 ? '+' : ''}${signedAmount}`,
+        `${this.foundUser!.username}: ${signedAmount > 0 ? '+' : ''}${signedAmount}`,
       );
     } catch (e) {
       this.adjustError = e instanceof AdminRpcError ? e.message : 'Gagal mengubah saldo.';
