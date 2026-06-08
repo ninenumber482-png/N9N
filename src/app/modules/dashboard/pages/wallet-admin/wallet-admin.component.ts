@@ -775,8 +775,8 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     const all = this.toAll;
     this.toTotal = all.reduce((s: number, w: TurnoverItem) => s + w.turnover, 0);
     this.toNetDeposit = all.reduce((s: number, w: TurnoverItem) => s + w.deposited - w.withdrawn, 0);
-    this.toPlatformPnl = all.reduce((s: number, w: TurnoverItem) => s + w.withdrawn - w.deposited, 0);
-    const pos = all.filter((w: TurnoverItem) => w.net >= 0).length;
+    this.toPlatformPnl = all.reduce((s: number, w: TurnoverItem) => s + w.pnl, 0);
+    const pos = all.filter((w: TurnoverItem) => w.pnl >= 0).length;
     this.toWinRate = all.length > 0 ? Math.round((pos / all.length) * 100) : 0;
     this.toFiltered = all.map((w: TurnoverItem) => ({
       ...w,

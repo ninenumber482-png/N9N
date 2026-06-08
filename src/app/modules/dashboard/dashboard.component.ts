@@ -10,6 +10,7 @@ const PAGE_ORDER = [
   { route: '/wallet', label: 'Deposit / Withdraw' },
   { route: '/transactions', label: 'Transactions' },
   { route: '/wallets', label: 'Wallets' },
+  { route: '/member-balance', label: 'Member Balance' },
   { route: '/turnover', label: 'Turnover' },
   { route: '/gaming', label: 'Gaming' },
   { route: '/3dking', label: '3D King' },

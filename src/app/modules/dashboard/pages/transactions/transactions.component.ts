@@ -432,7 +432,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     if (this.typeFilter) result = result.filter((tx) => tx.type === this.typeFilter);
     if (this.statusFilter) result = result.filter((tx) => tx.status === this.statusFilter);
     if (this.dateFrom) {
-      const from = new Date(this.dateFrom).getTime();
+      const from = new Date(this.dateFrom + 'T00:00:00').getTime();
       result = result.filter((tx) => new Date(tx.created_at).getTime() >= from);
     }
     if (this.dateTo) {
