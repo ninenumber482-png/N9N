@@ -43,7 +43,7 @@ import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-
             </p>
             <p class="text-[10px] text-muted-foreground font-mono select-all">{{ foundUser.id }}</p>
             <p class="text-xs text-muted-foreground">
-              Balance: <span class="text-foreground font-mono font-semibold">{{ foundBalance | number: '1.2-2' }}</span>
+              Balance: <span class="text-foreground font-mono font-semibold">{{ foundBalance | number: '1.0-0' }}</span>
             </p>
           </div>
 

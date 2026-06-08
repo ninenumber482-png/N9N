@@ -196,7 +196,7 @@ interface BetRow {
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
                     <span class="font-mono text-foreground font-semibold">{{
-                      walletBalance(u.id) | number: '1.2-2'
+                      walletBalance(u.id) | number: '1.0-0'
                     }}</span>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
@@ -418,19 +418,19 @@ interface BetRow {
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Main Balance</span>
                             <span class="text-foreground font-bold font-mono">{{
-                              modalData.wallet.balance_main | number: '1.2-2'
+                              modalData.wallet.balance_main | number: '1.0-0'
                             }}</span>
                           </div>
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Bonus Balance</span>
                             <span class="text-foreground font-bold font-mono">{{
-                              modalData.wallet.balance_bonus | number: '1.2-2'
+                              modalData.wallet.balance_bonus | number: '1.0-0'
                             }}</span>
                           </div>
                           <div class="flex justify-between pt-1 border-t border-border">
                             <span class="text-muted-foreground text-sm">Total</span>
                             <span class="text-foreground font-bold font-mono">{{
-                              modalData.wallet.balance_main + modalData.wallet.balance_bonus | number: '1.2-2'
+                              modalData.wallet.balance_main + modalData.wallet.balance_bonus | number: '1.0-0'
                             }}</span>
                           </div>
                         </div>
@@ -456,19 +456,19 @@ interface BetRow {
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Stake (settled)</span>
                             <span class="text-foreground font-mono font-medium">{{
-                              modalBetsTotalStake() | number: '1.2-2'
+                              modalBetsTotalStake() | number: '1.0-0'
                             }}</span>
                           </div>
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Payout (settled)</span>
                             <span class="text-foreground font-mono font-medium">{{
-                              modalBetsTotalPayout() | number: '1.2-2'
+                              modalBetsTotalPayout() | number: '1.0-0'
                             }}</span>
                           </div>
                           <div class="flex justify-between pt-1 border-t border-border">
                             <span class="text-muted-foreground text-sm font-semibold">Net P&L (settled)</span>
                             <span class="font-bold font-mono" [class.text-emerald-400]="modalBetsPnL() >= 0" [class.text-red-400]="modalBetsPnL() < 0">{{
-                              modalBetsPnL() | number: '1.2-2'
+                              modalBetsPnL() | number: '1.0-0'
                             }}</span>
                           </div>
                         </div>
@@ -509,7 +509,7 @@ interface BetRow {
                           @for (tx of modalData.transactions; track tx.id) {
                             <tr class="border-border border-b">
                               <td class="px-3 py-2 text-foreground font-medium">{{ tx.type }}</td>
-                              <td class="px-3 py-2 font-mono text-foreground">{{ tx.amount | number: '1.2-2' }}</td>
+                              <td class="px-3 py-2 font-mono text-foreground">{{ tx.amount | number: '1.0-0' }}</td>
                               <td class="px-3 py-2">
                                 <p-tag [value]="tx.status" [severity]="tx.status | severityMap" />
                               </td>
@@ -546,9 +546,9 @@ interface BetRow {
                             <tr class="border-border border-b">
                               <td class="px-3 py-2 font-mono text-[10px] text-foreground">{{ b.session_code }}</td>
                               <td class="px-3 py-2 text-foreground">{{ b.selection }}</td>
-                              <td class="px-3 py-2 font-mono text-foreground">{{ b.stake | number: '1.2-2' }}</td>
+                              <td class="px-3 py-2 font-mono text-foreground">{{ b.stake | number: '1.0-0' }}</td>
                               <td class="px-3 py-2 font-mono text-foreground">
-                                {{ b.actual_payout | number: '1.2-2' }}
+                                {{ b.actual_payout | number: '1.0-0' }}
                               </td>
                               <td class="px-3 py-2">
                                 <span

@@ -45,10 +45,10 @@ import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-
             <div class="flex gap-4 pt-1">
               <p class="text-xs text-muted-foreground">
                 Main Balance:
-                <span class="text-foreground font-mono font-bold">{{ walletBalance | number: '1.2-2' }}</span>
+                <span class="text-foreground font-mono font-bold">{{ walletBalance | number: '1.0-0' }}</span>
               </p>
               <p class="text-xs text-muted-foreground">
-                Bonus: <span class="text-foreground font-mono font-bold">{{ walletBonus | number: '1.2-2' }}</span>
+                Bonus: <span class="text-foreground font-mono font-bold">{{ walletBonus | number: '1.0-0' }}</span>
               </p>
             </div>
           </div>
@@ -115,8 +115,8 @@ import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-
                 Saldo <strong>{{ foundUser.username }}</strong> berhasil diubah.
                 @if (adjustResult) {
                   <br /><span class="text-xs"
-                    >{{ adjustResult.old_balance | number: '1.2-2' }} →
-                    {{ adjustResult.new_balance | number: '1.2-2' }}</span
+                    >{{ adjustResult.old_balance | number: '1.0-0' }} →
+                    {{ adjustResult.new_balance | number: '1.0-0' }}</span
                   >
                 }
               </div>

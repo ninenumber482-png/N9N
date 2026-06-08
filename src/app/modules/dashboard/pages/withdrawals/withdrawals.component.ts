@@ -125,8 +125,8 @@ interface PageEvent {
             <div class="space-y-3">
               <div class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
                 <p class="text-xs"><span class="text-muted-foreground">ID: </span><span class="font-mono text-[10px] text-foreground">{{ selectedTx.id }}</span></p>
-                <p class="text-xs"><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-muted-foreground">{{ selectedTx.amount | number:'1.2-2' }} P</span></p>
-                <p class="text-xs"><span class="text-muted-foreground">Fee: </span><span class="text-muted-foreground">{{ selectedTx.withdrawal_fee | number:'1.2-2' }} P</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-muted-foreground">{{ selectedTx.amount | number:'1.0-0' }} P</span></p>
+                <p class="text-xs"><span class="text-muted-foreground">Fee: </span><span class="text-muted-foreground">{{ selectedTx.withdrawal_fee | number:'1.0-0' }} P</span></p>
                 <p class="text-xs"><span class="text-muted-foreground">Status: </span><p-tag [value]="selectedTx.status" [severity]="selectedTx.status | severityMap" /></p>
                 <p class="text-xs"><span class="text-muted-foreground">Bank: </span><span class="font-semibold text-foreground">{{ selectedTx.bank_name }}</span></p>
                 <p class="text-xs"><span class="text-muted-foreground">No. Rek: </span><span class="font-mono font-semibold text-foreground">{{ selectedTx.bank_account_number }}</span></p>

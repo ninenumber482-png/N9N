@@ -128,31 +128,31 @@ interface PlatformAccountRecord {
                       </p>
                     </td>
                     <td class="px-3 py-2.5 font-bold text-foreground whitespace-nowrap">
-                      {{ w.balance_main | number: '1.2-2' }} P
+                      {{ w.balance_main | number: '1.0-0' }} P
                     </td>
                     <td class="px-3 py-2.5 font-semibold text-muted-foreground whitespace-nowrap">
-                      {{ w.balance_bonus | number: '1.2-2' }} P
+                      {{ w.balance_bonus | number: '1.0-0' }} P
                     </td>
                     <td class="px-3 py-2.5 text-foreground font-semibold whitespace-nowrap">
-                      {{ w.total_deposited | number: '1.2-2' }} P
+                      {{ w.total_deposited | number: '1.0-0' }} P
                     </td>
                     <td class="px-3 py-2.5 text-muted-foreground font-semibold whitespace-nowrap">
-                      {{ w.total_withdrawn | number: '1.2-2' }} P
+                      {{ w.total_withdrawn | number: '1.0-0' }} P
                     </td>
                     <td
                       class="max-sm:hidden px-3 py-2.5 font-semibold whitespace-nowrap"
                       [class.text-foreground]="net(w) >= 0"
                       [class.text-muted-foreground]="net(w) < 0">
-                      {{ net(w) | number: '1.2-2' }} P
+                      {{ net(w) | number: '1.0-0' }} P
                     </td>
                     <td
                       class="max-sm:hidden px-3 py-2.5 font-semibold whitespace-nowrap"
                       [class.text-foreground]="pnl(w) >= 0"
                       [class.text-muted-foreground]="pnl(w) < 0">
-                      {{ pnl(w) | number: '1.2-2' }} P
+                      {{ pnl(w) | number: '1.0-0' }} P
                     </td>
                     <td class="px-3 py-2.5 text-foreground font-semibold whitespace-nowrap">
-                      {{ w.total_turnover | number: '1.2-2' }} P
+                      {{ w.total_turnover | number: '1.0-0' }} P
                       @if (w.total_deposited > 0) {
                         <span class="text-muted-foreground text-[9px] ml-1"
                           >({{ w.total_turnover / w.total_deposited | number: '1.1-1' }}x)</span
@@ -378,13 +378,13 @@ interface PlatformAccountRecord {
                   <p class="text-xs text-muted-foreground">
                     Main:
                     <span class="text-foreground font-mono font-bold">{{
-                      adjusting.balance_main | number: '1.2-2'
+                      adjusting.balance_main | number: '1.0-0'
                     }}</span>
                   </p>
                   <p class="text-xs text-muted-foreground">
                     Bonus:
                     <span class="text-foreground font-mono font-bold">{{
-                      adjusting.balance_bonus | number: '1.2-2'
+                      adjusting.balance_bonus | number: '1.0-0'
                     }}</span>
                   </p>
                 </div>
@@ -442,8 +442,8 @@ interface PlatformAccountRecord {
               }
               @if (adjSuccess) {
                 <div class="bg-card border-border rounded-lg border p-3 text-xs text-foreground">
-                  Saldo berhasil diubah. {{ adjResult?.old_balance | number: '1.2-2' }} →
-                  {{ adjResult?.new_balance | number: '1.2-2' }}
+                  Saldo berhasil diubah. {{ adjResult?.old_balance | number: '1.0-0' }} →
+                  {{ adjResult?.new_balance | number: '1.0-0' }}
                 </div>
               }
               <div class="flex gap-2 pt-2">
