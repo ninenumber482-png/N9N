@@ -139,11 +139,35 @@ export const userSlice = (set, get) => ({
     if (!authData?.id) return null
     try {
       if (!supabase) return _fallbackProfile(authData)
-      const { data, error } = await supabase.rpc('get_my_full_profile')
-      if (error) {
-        if (error.message?.includes('UNAUTHORIZED') || error.code === 'PGRST301') return null
+
+      // Use Edge Function wrapper instead of direct RPC to avoid CORS issues
+      const url = import.meta.env.VITE_SUPABASE_URL
+      const key = import.meta.env.VITE_SUPABASE_KEY
+
+      if (!url || !key) return _fallbackProfile(authData)
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+      }
+
+      // Add user token if available
+      try {
+        const auth = readJSON(LS.auth, null)
+        if (auth?.token) headers['x-user-token'] = auth.token
+      } catch {}
+
+      const response = await fetch(`${url}/functions/v1/get-profile-wrapper`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({}),
+      })
+
+      if (!response.ok) {
         return _fallbackProfile(authData)
       }
+
+      const data = await response.json()
       if (!data) return _fallbackProfile(authData)
       return data
     } catch (e) {
