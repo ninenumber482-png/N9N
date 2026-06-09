@@ -460,6 +460,10 @@ export class AdminService {
     const adminId = await this.resolveAdminId(adminUsernameOrId);
     return this.rpc('admin_reset_turnover', { p_user_id: userId, p_admin_id: adminId });
   }
+  async adjustTurnover(userId: string, adminUsernameOrId: string, amount: number) {
+    const adminId = await this.resolveAdminId(adminUsernameOrId);
+    return this.rpc('admin_adjust_turnover', { p_user_id: userId, p_admin_id: adminId, p_amount: amount });
+  }
 
   // ── USER APPROVAL ──
   async approveUser(userId: string, usernameOrId: string) {

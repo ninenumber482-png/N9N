@@ -490,7 +490,8 @@ interface PageEvent {
                   <td class="px-3 py-3">
                     @if (w.locked > 0) {
                       <span class="text-foreground font-semibold">{{ w.locked | number: '1.0-0' }}</span>
-                      <button (click)="confirmResetTurnover(w)" class="ml-1.5 px-2 py-0.5 text-[9px] font-bold rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/30 transition">Reset</button>
+                      <button (click)="confirmResetTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[8px] font-bold rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/30 transition">Reset</button>
+                      <button (click)="openAdjustTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[8px] font-bold rounded bg-sky-400/20 text-sky-400 hover:bg-sky-400/30 transition">Adjust</button>
                     } @else {
                       <span class="text-foreground text-[10px]">Lunas</span>
                     }
@@ -789,6 +790,30 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
       acceptLabel: 'Reset',
       accept: () => this.resetTurnover(w),
     });
+  }
+
+  openAdjustTurnover(w: TurnoverItem) {
+    const input = prompt(`Adjust turnover untuk ${w.displayName}\n\nPositif = tambah TO (bantu user)\nNegatif = kurangi TO (hukuman)\n\nContoh: 100000 atau -50000`, '0');
+    if (input === null) return;
+    const amount = Number(input.replace(/[^0-9\-]/g, ''));
+    if (!amount || amount === 0) {
+      this.notification.error('Invalid', 'Masukkan jumlah valid (contoh: 100000 atau -50000)');
+      return;
+    }
+    this.adjustTurnoverSubmit(w, amount);
+  }
+
+  async adjustTurnoverSubmit(w: TurnoverItem, amount: number) {
+    const admin = this.auth.getCurrentUser();
+    if (!admin?.username) return;
+    try {
+      await this.admin.adjustTurnover(w.userId, admin.username, amount);
+      const label = amount > 0 ? `+${amount}` : `${amount}`;
+      this.notification.success('Turnover disesuaikan', `${w.displayName}: ${label} P`);
+      this.loadTurnover();
+    } catch (e: unknown) {
+      this.notification.error('Gagal', (e instanceof Error ? e.message : '') || 'Gagal adjust turnover.');
+    }
   }
 
   async resetTurnover(w: TurnoverItem) {

@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
     'create_popup_banner', 'update_popup_banner', 'delete_popup_banner',
     'check_rate_limit', 'log_failed_login',
     'get_platform_stats',
-    'admin_reset_turnover',
+    'admin_reset_turnover', 'admin_adjust_turnover',
   ])
 
   const pathAllowed = ALLOWED_PREFIXES.some(p => path.startsWith(p)) ||
