@@ -41,8 +41,9 @@ export default function LandingPage() {
           <div className="flex gap-3">
             <button
               onClick={() => setLang(lang === 'id' ? 'en' : 'id')}
-              className="px-3 py-2 rounded-lg border border-zinc-700 text-xs font-bold text-zinc-300 hover:border-yellow-400/50 hover:text-yellow-400 transition"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-700 text-[10px] font-bold text-zinc-300 hover:border-yellow-400/50 hover:text-yellow-400 transition"
             >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
               {lang === 'id' ? 'EN' : 'ID'}
             </button>
             <Link to="/login" className="px-4 py-2 rounded-lg border border-white/10 hover:border-white/20 text-sm font-semibold transition">{t('nav.login')}</Link>
@@ -53,7 +54,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative px-4 py-32 md:py-48" style={{ backgroundImage: 'url(/assets/img/hero-globe.png)', backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed' }}>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050607]/40 to-[#050607]/90" />
+        <div className="absolute inset-0 bg-linear-to-b from-[#050607]/40 to-[#050607]/90" />
 
         <div className="mx-auto max-w-4xl text-center relative z-10">
           <p className="text-sm font-black tracking-widest text-yellow-400 mb-4 uppercase">{t('landing.hero_badge')}</p>

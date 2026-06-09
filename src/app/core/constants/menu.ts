@@ -20,7 +20,7 @@ export class Menu {
         { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposit / Withdraw', route: '/wallet' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Transactions', route: '/transactions' },
         { icon: 'assets/icons/heroicons/outline/view-grid.svg', label: 'Wallets', route: '/wallets' },
-        { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Member Balance', route: '/member-balance' },
+        { icon: 'assets/icons/heroicons/outline/minus.svg', label: 'Member Balance', route: '/member-balance' },
         { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Turnover', route: '/turnover' },
       ],
     },
@@ -28,10 +28,10 @@ export class Menu {
       group: 'Gaming',
       separator: true,
       items: [
-        { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Gaming', route: '/gaming' },
+        { icon: 'assets/icons/heroicons/outline/cube.svg', label: 'Gaming', route: '/gaming' },
         { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: '3D King', route: '/3dking' },
-        { icon: 'assets/icons/heroicons/outline/chart-pie.svg', label: 'Bets', route: '/bets' },
-        { icon: 'assets/icons/heroicons/outline/cursor-click.svg', label: 'Session Monitor', route: '/session-monitor' },
+        { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Bets', route: '/bets' },
+        { icon: 'assets/icons/heroicons/outline/eye.svg', label: 'Session Monitor', route: '/session-monitor' },
       ],
     },
     {
@@ -39,11 +39,11 @@ export class Menu {
       separator: true,
       items: [
         { icon: 'assets/icons/heroicons/outline/identification.svg', label: 'KYC', route: '/kyc' },
-        { icon: 'assets/icons/heroicons/outline/cursor-click.svg', label: 'Audit Log', route: '/audit' },
+        { icon: 'assets/icons/heroicons/outline/bookmark.svg', label: 'Audit Log', route: '/audit' },
         { icon: 'assets/icons/heroicons/outline/shield-check.svg', label: 'Security Center', route: '/security-center' },
         { icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg', label: 'Risk Management', route: '/risk-management' },
         { icon: 'assets/icons/heroicons/outline/lock-closed.svg', label: 'IP Whitelist', route: '/ip-whitelist' },
-        { icon: 'assets/icons/heroicons/outline/view-grid.svg', label: 'Popup Banner', route: '/popup-banner' },
+        { icon: 'assets/icons/heroicons/outline/information-circle.svg', label: 'Popup Banner', route: '/popup-banner' },
       ],
     },
     {

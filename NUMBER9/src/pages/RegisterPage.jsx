@@ -276,7 +276,7 @@ export default function RegisterPage() {
         {/* Card */}
         <div className="overflow-hidden rounded-xl border border-[#1f2128] bg-[#0c0e14]">
           {/* Gold Accent Top */}
-          <div className="h-0.5 bg-gradient-to-r from-yellow-400 via-yellow-400/40 to-transparent" />
+          <div className="h-0.5 bg-linear-to-r from-yellow-400 via-yellow-400/40 to-transparent" />
 
           <div className="p-5 sm:p-6">
             <h2 className="text-base font-extrabold text-white">

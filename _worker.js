@@ -29,7 +29,10 @@ async function isIpWhitelisted(ip, allowedIps, env) {
     });
     const allowed = res.ok && await res.json() === true;
     whitelistCache.set(ip, { allowed, ts: Date.now() });
-    if (whitelistCache.size > 100) whitelistCache.clear();
+    if (whitelistCache.size > 100) {
+      const oldest = [...whitelistCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+      if (oldest) whitelistCache.delete(oldest[0]);
+    }
     return allowed;
   } catch {
     return false;
@@ -46,7 +49,7 @@ async function addIpToWhitelist(ip, env) {
         apikey: key,
         Authorization: `Bearer ${key}`,
       },
-      body: JSON.stringify({ p_ip_address: ip, p_label: 'emergency-self-whitelist' }),
+      body: JSON.stringify({ p_ip: ip, p_label: 'emergency-self-whitelist' }),
     });
     whitelistCache.delete(ip);
     return res.ok;
@@ -127,20 +130,22 @@ async function handleRequest(request, env) {
       const formData = await request.formData();
       const key = formData.get('gateway_key') || '';
 
-      let valid = false;
-      if (key.length === gatewayKey.length) {
-        const keyBuf = new TextEncoder().encode(key);
-        const gwBuf = new TextEncoder().encode(gatewayKey);
-        valid = crypto.subtle ? await crypto.subtle.timingSafeEqual(keyBuf, gwBuf) : key === gatewayKey;
-      }
+      const keyBuf = new TextEncoder().encode(key.padEnd(gatewayKey.length, '\0'));
+      const gwBuf = new TextEncoder().encode(gatewayKey);
+      const valid = await crypto.subtle.timingSafeEqual(keyBuf, gwBuf);
       if (!valid) {
-        return new Response(blockedHtml(ip, 'Gateway key salah!'), {
+        return new Response(blockedHtml(ip, 'Akses ditolak.'), {
           status: 403,
           headers: { 'Content-Type': 'text/html;charset=utf-8' },
         });
       }
 
-      const added = await addIpToWhitelist(ip, env);
+      let added = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        added = await addIpToWhitelist(ip, env);
+        if (added) break;
+        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      }
       if (!added) {
         return new Response(blockedHtml(ip, 'Gagal mendaftarkan IP. Coba lagi.'), {
           status: 500,
@@ -148,7 +153,6 @@ async function handleRequest(request, env) {
         });
       }
 
-      // Success → redirect to login page
       return new Response(null, {
         status: 302,
         headers: { Location: '/' },

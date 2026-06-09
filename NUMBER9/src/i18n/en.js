@@ -441,6 +441,8 @@ export const en = {
     cat_gold: 'Gold Market Trends',
     cat_forex: 'Forex & Commodities',
     cat_press: 'Press Releases',
+    latest_news: 'Latest News',
+    no_news: 'No news available. Please try again later.',
   },
 
   /* ─── TURNOVER ─── */
@@ -513,7 +515,13 @@ export const en = {
     code_pending: 'Referral code pending',
     user_id: 'User ID',
     referral: 'Referral',
-    status: 'Status'
+    status: 'Status',
+    kyc_status: 'KYC Status',
+    registration_status: 'Registration Status',
+    approved_date: 'Approved Date',
+    kyc_verified: 'Verified',
+    kyc_rejected: 'Rejected',
+    kyc_pending: 'Pending'
   },
 
   /* ─── SUPPORT ─── */

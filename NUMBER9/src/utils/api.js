@@ -25,18 +25,9 @@ async function apiFetch(fetchUrl, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    console.log('[apiFetch] Calling:', fetchUrl.substring(0, 100));
     const res = await fetch(fetchUrl, { ...options, credentials: 'include', signal: controller.signal });
-    console.log('[apiFetch] Response status:', res.status);
-    if (res.status === 401 || res.status === 403) {
-      console.log('[apiFetch] Unauthorized, redirecting to login');
-      localStorage.removeItem('n9_auth');
-      window.location.href = '/login';
-      return null;
-    }
     return res;
   } catch (err) {
-    console.error('[apiFetch] Fetch error:', err.name, err.message, 'URL:', fetchUrl.substring(0, 100));
     throw err;
   } finally {
     clearTimeout(timer);
@@ -66,12 +57,12 @@ export async function apiRpc(name, params = {}) {
     headers: h,
     body: JSON.stringify(params),
   });
-  if (!res || !res.ok) {
-    if (res) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body?.error || body?.message || `RPC ${name} failed`);
-    }
-    throw new Error('Network error: request timed out or failed');
+  if (!res) throw new Error('Network error: request timed out or failed');
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg = body?.error || body?.message || `RPC ${name} failed`;
+    if (res.status === 401 || res.status === 403) throw new Error('Sesi habis, silakan login ulang.');
+    throw new Error(msg);
   }
   return res.json();
 }
@@ -83,12 +74,11 @@ export async function apiInvoke(functionName, body = {}) {
     headers: h,
     body: JSON.stringify(body),
   });
-  if (!res || !res.ok) {
-    if (res) {
-      const text = await res.text().catch(() => '');
-      throw new Error(text || `Function ${functionName} failed`);
-    }
-    throw new Error('Network error: request timed out or failed');
+  if (!res) throw new Error('Network error: request timed out or failed');
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    if (res.status === 401 || res.status === 403) throw new Error('Sesi habis, silakan login ulang.');
+    throw new Error(text || `Function ${functionName} failed`);
   }
   return res.json();
 }

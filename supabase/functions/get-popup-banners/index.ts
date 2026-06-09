@@ -4,6 +4,8 @@ const ALLOWED_ORIGINS = [
   "https://app.mynumber9.uk",
   "https://master.number9-app.pages.dev",
   "https://24138db0.number9-app.pages.dev",
+  // *.number9-app.pages.dev
+  // *.number9-admin.pages.dev
   "http://localhost:5175",
   "http://localhost:5176",
   "http://localhost:5177",
@@ -14,8 +16,8 @@ function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") || "";
   return {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.number9-app.pages.dev') || origin.endsWith('.number9-admin.pages.dev') ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
     "Access-Control-Allow-Credentials": "true",
   };
@@ -26,7 +28,7 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
 
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: corsHeaders(req),

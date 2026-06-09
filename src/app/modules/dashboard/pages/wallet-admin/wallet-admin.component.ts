@@ -490,6 +490,7 @@ interface PageEvent {
                   <td class="px-3 py-3">
                     @if (w.locked > 0) {
                       <span class="text-foreground font-semibold">{{ w.locked | number: '1.0-0' }}</span>
+                      <button (click)="confirmResetTurnover(w)" class="ml-1.5 px-2 py-0.5 text-[9px] font-bold rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/30 transition">Reset</button>
                     } @else {
                       <span class="text-foreground text-[10px]">Lunas</span>
                     }
@@ -777,6 +778,28 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     } finally {
       this.editWalletSaving = false;
       this.cdr.markForCheck();
+    }
+  }
+
+  confirmResetTurnover(w: TurnoverItem) {
+    this.confirmation.confirm({
+      message: `Reset turnover untuk <strong>${w.displayName}</strong>? Semua deposit lock akan dihapus.`,
+      header: 'Reset Turnover',
+      rejectLabel: 'Batal',
+      acceptLabel: 'Reset',
+      accept: () => this.resetTurnover(w),
+    });
+  }
+
+  async resetTurnover(w: TurnoverItem) {
+    const admin = this.auth.getCurrentUser();
+    if (!admin?.username) return;
+    try {
+      await this.admin.resetTurnover(w.userId, admin.username);
+      this.notification.success('Turnover direset', `Turnover ${w.displayName} berhasil direset.`);
+      this.loadTurnover();
+    } catch (e: unknown) {
+      this.notification.error('Gagal', (e instanceof Error ? e.message : '') || 'Gagal mereset turnover.');
     }
   }
 

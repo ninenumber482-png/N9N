@@ -441,6 +441,8 @@ export const id = {
     cat_gold: 'Tren Pasar Emas',
     cat_forex: 'Forex & Komoditas',
     cat_press: 'Siaran Pers',
+    latest_news: 'Berita Utama',
+    no_news: 'Belum ada berita. Silakan coba lagi nanti.',
   },
 
   /* ─── TURNOVER ─── */
@@ -513,7 +515,13 @@ export const id = {
     code_pending: 'Kode referral tertunda',
     user_id: 'ID Pengguna',
     referral: 'Referral',
-    status: 'Status'
+    status: 'Status',
+    kyc_status: 'Status KYC',
+    registration_status: 'Status Registrasi',
+    approved_date: 'Tanggal Disetujui',
+    kyc_verified: 'Terverifikasi',
+    kyc_rejected: 'Ditolak',
+    kyc_pending: 'Menunggu'
   },
 
   /* ─── SUPPORT ─── */

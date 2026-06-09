@@ -430,16 +430,35 @@ export class AdminService {
   }
 
   // ── MEMBER MANAGEMENT ──
-  async resetPassword(userId: string, adminId: string, newPassword: string) {
+  async resetPassword(userIdentifier: string, adminUsernameOrId: string, newPassword: string) {
+    const userId = await this.resolveUserId(userIdentifier);
+    const adminId = await this.resolveAdminId(adminUsernameOrId);
     return this.rpc('admin_reset_password', { p_admin_id: adminId, p_user_id: userId, p_new_password: newPassword });
   }
-  async adjustBalance(adminId: string, userId: string, amount: number, reason?: string) {
+
+  private async resolveUserId(usernameOrId: string): Promise<string> {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(usernameOrId)) {
+      return usernameOrId;
+    }
+    const rows = await this.get<any>(`users?username=eq.${usernameOrId}&select=id&limit=1`);
+    const id = rows[0]?.['id'] as string | undefined;
+    if (!id) throw new Error(`User not found: ${usernameOrId}`);
+    return id;
+  }
+
+  async adjustBalance(adminUsernameOrId: string, userId: string, amount: number, reason?: string) {
+    const adminId = await this.resolveAdminId(adminUsernameOrId);
     return this.rpc('admin_adjust_balance', {
       p_admin_id: adminId,
       p_user_id: userId,
       p_amount: amount,
       p_reason: reason || null,
     });
+  }
+
+  async resetTurnover(userId: string, adminUsernameOrId: string) {
+    const adminId = await this.resolveAdminId(adminUsernameOrId);
+    return this.rpc('admin_reset_turnover', { p_user_id: userId, p_admin_id: adminId });
   }
 
   // ── USER APPROVAL ──
@@ -562,13 +581,16 @@ export class AdminService {
     return this.updateRow('popup_banners', id, data);
   }
   async uploadPopupImage(dataUrl: string, title: string, linkUrl = '', bannerId?: string): Promise<unknown> {
+    const user = this.auth.getCurrentUser();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      apikey: environment.supabaseKey,
+      Authorization: `Bearer ${environment.supabaseKey}`,
+    };
+    if (user?.token) headers['x-session-token'] = user.token;
     const res = await fetch(`${environment.supabaseUrl}/functions/v1/admin-popup-image`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: environment.supabaseKey,
-        Authorization: `Bearer ${environment.supabaseKey}`,
-      },
+      headers,
       credentials: 'include',
       body: JSON.stringify({ dataUrl, title, linkUrl, bannerId }),
     });
@@ -626,7 +648,8 @@ export class AdminService {
   }
 
   async getOnlineSessions(): Promise<number> {
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const SESSION_MS = 300_000;
+    const fiveMinAgo = new Date(Date.now() - SESSION_MS).toISOString();
     const rows = await this.get<any>('sessions', `logged_out_at=is.null&last_activity=gte.${fiveMinAgo}&select=id`);
     return rows.length;
   }

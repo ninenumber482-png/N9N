@@ -399,7 +399,8 @@ export class RealtimeService implements OnDestroy {
   }
 
   private _removeRef(key: string) {
-    const refs = (this.channelRefs.get(key) || 1) - 1;
+    if (!this.channelRefs.has(key)) return;
+    const refs = this.channelRefs.get(key)! - 1;
     if (refs <= 0) {
       const ch = this.channels.get(key);
       if (ch) {
@@ -450,12 +451,12 @@ export class RealtimeService implements OnDestroy {
       if (payload.old.status !== tx.status) {
         const userLabel = tx.user?.username || tx.user_id?.slice(0, 8) || 'User';
         if (tx.type === 'DEPOSIT') {
-          if (tx.status === 'APPROVED') this.toastService.success('Deposit Disetujui', `${userLabel}: ${tx.amount}P`);
-          else if (tx.status === 'REJECTED') this.toastService.error('Deposit Ditolak', `${userLabel}: ${tx.amount}P`);
+          if (tx.status === 'COMPLETED') this.toastService.success('Deposit Disetujui', `${userLabel}: ${tx.amount}P`);
+          else if (tx.status === 'FAILED') this.toastService.error('Deposit Ditolak', `${userLabel}: ${tx.amount}P`);
         } else if (tx.type === 'WITHDRAWAL') {
-          if (tx.status === 'APPROVED')
+          if (tx.status === 'COMPLETED')
             this.toastService.success('Withdrawal Disetujui', `${userLabel}: ${tx.amount}P`);
-          else if (tx.status === 'REJECTED')
+          else if (tx.status === 'FAILED')
             this.toastService.error('Withdrawal Ditolak', `${userLabel}: ${tx.amount}P`);
         }
       }

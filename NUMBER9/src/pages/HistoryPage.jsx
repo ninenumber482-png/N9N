@@ -8,6 +8,7 @@ import PageShell from "../components/ui/PageShell";
 import useAlive from "../hooks/useAlive";
 import { useI18n } from '../i18n';
 import { wibDateTime } from '../utils/wib';
+import { formatIDR } from '../utils/format';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 export default function HistoryPage() {
@@ -97,13 +98,15 @@ export default function HistoryPage() {
 
   const bidRows = bids.map((b) => {
     const won = b.result === "WIN";
-    const displayAmount = won && b.payout != null
-      ? `+${b.payout.toLocaleString()}`
+    const profit = won && b.payout != null ? b.payout - b.stake : 0;
+    const displayAmount = won
+      ? `+${profit.toLocaleString()}`
+      : b.result === "LOSE" ? `-${(b.stake || 0).toLocaleString()}`
       : `-${(b.stake || 0).toLocaleString()}`;
     return {
       id: b.clientBetId,
       type: "Bet",
-      desc: t('history.game_position', { code: b.betCode || '—', session: b.sessionCode || '—' }),
+      desc: `${b.betCode || '—'} · ${b.displayCode || b.sessionCode || '—'}`,
       date: wibDateTime(b.placedAt),
       status: b.status,
       result: b.result,
@@ -117,7 +120,7 @@ export default function HistoryPage() {
   bids.forEach((b) => {
     if (!sessionBetMap[b.sessionCode]) sessionBetMap[b.sessionCode] = { bets: [], pnl: 0 };
     sessionBetMap[b.sessionCode].bets.push(b);
-    if (b.result === "WIN") sessionBetMap[b.sessionCode].pnl += (b.payout ?? 0);
+    if (b.result === "WIN") sessionBetMap[b.sessionCode].pnl += (b.payout ?? 0) - (b.stake ?? 0);
     else if (b.result === "LOSE") sessionBetMap[b.sessionCode].pnl -= (b.stake ?? 0);
   });
 
@@ -126,14 +129,14 @@ export default function HistoryPage() {
       const r = getSettled(sessionCode);
       if (!r) return null;
       const betCount = sessionBids.length;
-      const pnlStr = pnl >= 0 ? `+${pnl.toLocaleString()}` : `${pnl.toLocaleString()}`;
+      const pnlStr = pnl > 0 ? `+${pnl.toLocaleString()}` : pnl < 0 ? `${pnl.toLocaleString()}` : '0';
       return {
         id: `res-${sessionCode}`,
         type: "Result",
         desc: `${r.displayCode} · ${r.digit1}${r.digit2}${r.digit3} · ${r.resultTotal} ${r.bigSmall} ${r.oddEven} · ${betCount} ${betCount === 1 ? 'bet' : 'bets'}`,
         date: wibDateTime(r.settledAt),
         status: 'SETTLED',
-        result: pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSE' : '',
+        result: pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSE' : 'DRAW',
         won: pnl > 0,
         amount: pnlStr,
         ts: r.settledAt ? new Date(r.settledAt).getTime() : 0,
@@ -153,10 +156,8 @@ export default function HistoryPage() {
       desc: `${tx.method || '—'} · ${tx.referenceCode || String(tx.id || '').slice(-6)}`,
       date: wibDateTime(tx.requestedAt),
       status: tx.status,
-      amount:
-        txType === "Deposit"
-          ? `+${(tx.amount || 0).toLocaleString('id-ID')}`
-          : `-${(tx.amount || 0).toLocaleString('id-ID')}`,
+      amount: `${txType === "Deposit" ? '+' : '-'}${(tx.amount || 0).toLocaleString('id-ID')} P`,
+      amountIdr: formatIDR(tx.amount || 0),
       ts: new Date(tx.requestedAt).getTime(),
       proof: tx.proof || null,
     };
@@ -251,8 +252,9 @@ export default function HistoryPage() {
                 <p className="text-[8px] text-yellow-400/70">{t('history.proof_uploaded')}</p>
               )}
             </div>
-            <span className={`w-16 shrink-0 text-right text-[11px] font-extrabold tabular-nums sm:w-20 sm:text-sm ${String(r.amount || '').startsWith("+") ? "text-emerald-400" : "text-red-400"}`}>
-              {r.amount || ''}
+            <span className={`w-20 shrink-0 text-right text-[11px] font-extrabold tabular-nums sm:w-28 sm:text-sm ${String(r.amount || '').startsWith("+") ? "text-emerald-400" : "text-red-400"}`}>
+              <span>{r.amount || ''}</span>
+              {r.amountIdr && <span className="block text-[9px] text-yellow-400/80 font-medium sm:text-[10px]">{r.amountIdr}</span>}
             </span>
             <span className={`w-12 shrink-0 text-right text-[9px] font-bold uppercase tracking-widest sm:w-20 sm:text-[10px] ${statusColor(r)}`}>
               <span className="sm:hidden">{statusLabel(r)}</span>

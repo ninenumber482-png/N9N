@@ -225,7 +225,13 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
       setTimeout(() => { if (aliveRef.current) fetchUserTransactions(auth.id).then(txs => { if (aliveRef.current) setUserTxs(txs || []); }).catch(() => {}); }, 500);
     } catch (err) {
       setLoading(false);
-      setToast({ type: err?.message === 'Request timeout' ? 'warn' : 'err', text: err?.message === 'Request timeout' ? t('common.request_timeout') : t('common.network_error') });
+      const m = err?.message || '';
+      if (m.includes('Sesi habis')) {
+        localStorage.removeItem('n9_auth');
+        window.location.href = '/login';
+        return;
+      }
+      setToast({ type: m === 'Request timeout' ? 'warn' : 'err', text: m === 'Request timeout' ? t('common.request_timeout') : (m || t('common.network_error')) });
     }
   };
 
@@ -338,9 +344,8 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
                   <p className="text-xs font-mono text-emerald-400 font-bold">{tx.referenceCode}</p>
                   <span className={`text-xs font-bold ${tx.status === "APPROVED" ? "text-emerald-400" : tx.status === "REJECTED" ? "text-red-400" : "text-yellow-400"}`}>{tx.status}</span>
                 </div>
-                <p className="text-sm font-semibold text-white">{fmt(tx.amount)} {t('common.points')}</p>
+                <p className="text-sm font-semibold text-white">{fmt(tx.amount)} {t('common.points')} <span className="text-yellow-400/90 text-[11px] font-medium">({formatIDR(tx.amount)})</span></p>
                 <p className="text-xs text-zinc-500">{tx.method} · {wibDate(tx.requestedAt)}</p>
-                <p className="text-[10px] text-yellow-400/80">{formatIDR(tx.amount)}</p>
               </div>
             ))}
           </div>
@@ -426,7 +431,13 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
       setAmount("");
     } catch (err) {
       setLoading(false);
-      setToast({ type: err?.message === 'Request timeout' ? 'warn' : 'err', text: err?.message === 'Request timeout' ? t('common.request_timeout') : t('common.network_error') });
+      const m = err?.message || '';
+      if (m.includes('Sesi habis')) {
+        localStorage.removeItem('n9_auth');
+        window.location.href = '/login';
+        return;
+      }
+      setToast({ type: m === 'Request timeout' ? 'warn' : 'err', text: m === 'Request timeout' ? t('common.request_timeout') : (m || t('common.network_error')) });
     }
   };
 

@@ -140,7 +140,7 @@ interface BetData {
             [rows]="pageSize"
             [totalRecords]="filtered.length"
             [showCurrentPageReport]="true"
-            currentPageReportTemplate="" />
+            currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
         </div>
       }
     </div>

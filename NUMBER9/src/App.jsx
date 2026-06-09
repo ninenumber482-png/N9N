@@ -141,19 +141,18 @@ function App() {
       if (newBetSeen) lastBetCheckRef.current = latestBetTime;
       if (newAccountSeen) lastAccountCheckRef.current = latestAccountTime;
 
-      // Batch into a single setState to avoid cascading re-renders
-      if (newTxSeen || newBetSeen || newAccountSeen) {
-        useStore.setState(s => ({
-          _rtTick: newTxSeen ? (s._rtTick || 0) + 1 : s._rtTick,
-          _kingVersion: newBetSeen ? (s._kingVersion || 0) + 1 : s._kingVersion,
-          _accountsVersion: newAccountSeen ? (s._accountsVersion || 0) + 1 : s._accountsVersion,
-        }));
-      }
+      // Always bump _rtTick — catches status changes on existing tx/bet rows where
+      // created_at stays the same but updated_at changed (admin approval, settlement).
+      useStore.setState(s => ({
+        _rtTick: (s._rtTick || 0) + 1,
+        _kingVersion: newBetSeen ? (s._kingVersion || 0) + 1 : s._kingVersion,
+        _accountsVersion: newAccountSeen ? (s._accountsVersion || 0) + 1 : s._accountsVersion,
+      }));
     } catch (e) {
       // Polling error — silent in production, log in dev
       if (import.meta.env.DEV) console.warn('[Polling]', e);
     }
-  }, 10000, [auth?.id]);
+  }, 5000, [auth?.id]);
 
   // Realtime subscriptions for transactions, bets, and platform accounts (WebSocket is now enabled)
   useEffect(() => {
@@ -162,28 +161,58 @@ function App() {
 
     // Subscribe to user's transactions (if logged in)
     if (auth?.id) {
+      const onTxChange = (payload) => {
+        useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
+      };
+      const onBetChange = (payload) => {
+        useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1, _rtTick: (s._rtTick || 0) + 1 }));
+      };
+
       const txChannel = supabase
-        .channel(`transactions:user_id=eq.${auth.id}`)
+        .channel(`tx:${auth.id}`)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${auth.id}` },
-          () => {
-            useStore.setState(s => ({ _rtTick: (s._rtTick || 0) + 1 }));
-          }
+          onTxChange
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (import.meta.env.DEV && status === 'CHANNEL_ERROR') console.warn('[RT] tx sub error');
+        });
       subs.push(txChannel);
 
-      // Subscribe to user's bets
       const betChannel = supabase
-        .channel(`bets:user_id=eq.${auth.id}`)
+        .channel(`bet:${auth.id}`)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'bets', filter: `user_id=eq.${auth.id}` },
+          onBetChange
+        )
+        .subscribe((status) => {
+          if (import.meta.env.DEV && status === 'CHANNEL_ERROR') console.warn('[RT] bet sub error');
+        });
+      subs.push(betChannel);
+
+      // Subscribe to wallet balance changes
+      const walletChannel = supabase
+        .channel(`wal:${auth.id}`)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'wallet', filter: `user_id=eq.${auth.id}` },
+          onTxChange
+        )
+        .subscribe((status) => {
+          if (import.meta.env.DEV && status === 'CHANNEL_ERROR') console.warn('[RT] wallet sub error');
+        });
+      subs.push(walletChannel);
+
+      // Subscribe to king results (global - affects all users)
+      const krChannel = supabase
+        .channel(`kr:global`)
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'king_results' },
           () => {
-            useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 }));
+            useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1, _rtTick: (s._rtTick || 0) + 1 }));
           }
         )
         .subscribe();
-      subs.push(betChannel);
+      subs.push(krChannel);
     }
 
     // Subscribe to platform accounts (global, affects all users)

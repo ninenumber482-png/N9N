@@ -112,7 +112,7 @@ interface PageEvent {
             </tbody>
           </table>
         </div>
-        <p-paginator (onPageChange)="onPageChange($event)" [first]="(currentPage - 1) * pageSize" [rows]="pageSize" [totalRecords]="filtered.length" [showCurrentPageReport]="true" currentPageReportTemplate="" />
+        <p-paginator (onPageChange)="onPageChange($event)" [first]="(currentPage - 1) * pageSize" [rows]="pageSize" [totalRecords]="filtered.length" [showCurrentPageReport]="true" currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
       </div>
 
       <p-dialog [(visible)]="detailVisible" [modal]="true" [style]="{ width: '500px' }"

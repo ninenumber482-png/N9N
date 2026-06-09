@@ -189,7 +189,7 @@ interface PlatformAccountRecord {
           [rows]="pageSize"
           [totalRecords]="filteredWallets.length"
           [showCurrentPageReport]="true"
-          currentPageReportTemplate="" />
+          currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
       }
 
       @if (tab === 'accounts') {

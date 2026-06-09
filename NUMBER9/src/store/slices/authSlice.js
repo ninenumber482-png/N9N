@@ -76,14 +76,14 @@ export const authSlice = (set, get) => ({
       try {
         const prof = await get().fetchProfile()
         if (prof) {
-          const users = readJSON(LS.users, {})
-          const byUuid = readJSON(LS.byUuid, {})
+          const users = { ...readJSON(LS.users, {}) }
+          const byUuid = { ...readJSON(LS.byUuid, {}) }
           const key = prof.username.toLowerCase()
           users[key] = prof
           byUuid[prof.uuid] = { ...prof, username: key }
           writeJSON(LS.users, users)
           writeJSON(LS.byUuid, byUuid)
-          set({ users: { ...users } })
+          set({ users })
         }
         get().subscribeToProfileUpdates()
       } catch (e) {

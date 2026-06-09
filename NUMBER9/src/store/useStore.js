@@ -12,13 +12,17 @@ export const useStore = create((set, get) => ({
   ...userSlice(set, get),
   ...balanceSlice(set, get),
   ...configSlice(set, get),
+  _demoMode: DEMO_MODE,
 }))
 
-export const isDemoMode = () => DEMO_MODE
-export const setDemoMode = () => {}
+export const isDemoMode = () => useStore.getState()._demoMode ?? DEMO_MODE
+export let setDemoMode = (enabled) => {
+  useStore.setState({ _demoMode: enabled })
+}
 
 // Bootstrapper: auto-login + cross-tab sync on page load
 let _storageListenerAdded = false
+let _storageHandler = null
 {
   const _auth = readJSON(LS.auth, null)
   if (_auth?.id && _auth?.username) {
@@ -35,7 +39,7 @@ let _storageListenerAdded = false
         const stillValid = () => useStore.getState().auth?.id === sessionId
 
         if (typeof globalThis !== 'undefined' && globalThis.addEventListener && !_storageListenerAdded) {
-          const handler = (e) => {
+          _storageHandler = (e) => {
             if (e.key === LS.auth) {
               try {
                 const next = e.newValue ? JSON.parse(e.newValue) : null
@@ -47,7 +51,7 @@ let _storageListenerAdded = false
               } catch { /* ignore */ }
             }
           }
-          globalThis.addEventListener('storage', handler)
+          globalThis.addEventListener('storage', _storageHandler)
           _storageListenerAdded = true
         }
 
@@ -86,19 +90,27 @@ let _storageListenerAdded = false
             return
           }
 
-          const users = readJSON(LS.users, {})
-          const byUuid = readJSON(LS.byUuid, {})
+          const users = { ...readJSON(LS.users, {}) }
+          const byUuid = { ...readJSON(LS.byUuid, {}) }
           const key = prof.username.toLowerCase()
           users[key] = prof
           byUuid[prof.uuid] = { ...prof, username: key }
           writeJSON(LS.users, users)
           writeJSON(LS.byUuid, byUuid)
-          useStore.setState({ users: { ...users } })
+          useStore.setState({ users })
         }).catch((e) => { _warn('auto-login fetchProfile failed', e) })
 
         if (!stillValid()) return
         startHeartbeat(_auth.id)
       })()
     }
+  }
+}
+
+export const cleanupStorageListener = () => {
+  if (_storageHandler) {
+    globalThis.removeEventListener('storage', _storageHandler)
+    _storageHandler = null
+    _storageListenerAdded = false
   }
 }

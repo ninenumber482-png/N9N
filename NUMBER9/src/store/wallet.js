@@ -9,61 +9,20 @@ const _warn = (msg, e) => { if (import.meta.env.DEV) console.warn('[wallet]', ms
 /* ---------- platform accounts ---------- */
 export async function fetchPlatformAccounts() {
   try {
-    console.log('[wallet] fetchPlatformAccounts called, supabase:', !!supabase);
-    if (!supabase) {
-      console.warn('[wallet] fetchPlatformAccounts: supabase client not initialized');
-      return [];
-    }
-
-    // Check auth token
-    const authRaw = localStorage.getItem('n9_auth');
-    console.log('[wallet] Auth token in localStorage:', !!authRaw);
-    if (authRaw) {
-      try {
-        const auth = JSON.parse(authRaw);
-        console.log('[wallet] Auth token value:', auth.token ? auth.token.substring(0, 20) + '...' : 'NONE');
-      } catch {}
-    }
-
-    console.log('[wallet] Querying platform_accounts with status=ACTIVE');
+    if (!supabase) return [];
     const { data, error } = await supabase
       .from('platform_accounts')
       .select('*')
       .eq('status', 'ACTIVE')
       .order('created_at');
 
-    console.log('[wallet] fetchPlatformAccounts response:', {
-      hasError: !!error,
-      errorCode: error?.code,
-      errorMsg: error?.message,
-      dataLength: data?.length,
-      errorKeys: error ? Object.keys(error) : []
-    });
-
     if (error) {
-      console.error('[wallet] FULL ERROR OBJECT:', JSON.stringify({
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        status: error.status,
-        statusText: error.statusText,
-        toString: error.toString()
-      }, null, 2));
+      _warn('fetchPlatformAccounts error', error);
       return [];
     }
+    if (!data || data.length === 0) return [];
 
-    if (!data) {
-      console.warn('[wallet] fetchPlatformAccounts: no data returned');
-      return [];
-    }
-
-    if (data.length === 0) {
-      console.log('[wallet] No ACTIVE platform accounts found in database');
-      return [];
-    }
-
-    const transformed = data.map(a => ({
+    return data.map(a => ({
       id: a.id,
       type: a.type === 'BANK' ? 'BANK_TRANSFER' : a.type === 'EWALLET' ? 'E_WALLET' : a.type,
       label: a.provider_name,
@@ -71,11 +30,8 @@ export async function fetchPlatformAccounts() {
       number: a.account_number,
       note: a.instructions || '',
     }));
-
-    console.log('[wallet] Fetched platform accounts:', transformed.length, transformed);
-    return transformed;
   } catch (e) {
-    console.error('[wallet] fetchPlatformAccounts exception:', e.message, e);
+    _warn('fetchPlatformAccounts exception', e);
   }
   return [];
 }
@@ -192,14 +148,8 @@ export async function requestWithdraw(params) {
       return { ok: false, error: `Withdraw locked. Turnover remaining: ${formatNumber(eligibility.remaining)} P.` };
     }
 
-    // Check balance
-    const wallet = await fetchWalletBalance(params.userUuid);
-    if (amt > wallet.main) {
-      return { ok: false, error: "Insufficient main balance." };
-    }
-
     const idempotencyKey = newIdempotencyKey();
-    const data = await apiRpc('submit_withdrawal', {
+    const data = await apiInvoke('submit-withdrawal-wrapper', {
       p_user_id: params.userUuid,
       p_amount: amt,
       p_method: params.method || 'Bank Transfer',
@@ -213,7 +163,10 @@ export async function requestWithdraw(params) {
   } catch (e) {
     const msg = e?.message || "Network error";
     if (msg.includes('23505')) return { ok: false, error: "Withdrawal already pending (duplicate)" };
-    return { ok: false, error: "Failed to create withdrawal request" };
+    if (msg.includes('INSUFFICIENT_BALANCE')) return { ok: false, error: "Saldo utama tidak mencukupi." };
+    if (msg.includes('TURNOVER_NOT_MET')) return { ok: false, error: "Turnover belum terpenuhi." };
+    if (msg.includes('UNAUTHORIZED')) return { ok: false, error: "Sesi habis, silakan login ulang." };
+    return { ok: false, error: msg };
   }
 }
 
