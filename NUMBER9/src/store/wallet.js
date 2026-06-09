@@ -107,7 +107,7 @@ export async function requestDeposit(params) {
 
   try {
     const proofUrl = await uploadProof(params.userUuid, params.proof);
-    if (params.proof && !proofUrl) return { ok: false, error: "Proof upload failed. Check your connection and try again." };
+    if (params.proof && !proofUrl) return { ok: false, error: "Bukti gagal diupload. Cek koneksi dan coba lagi." };
     const idempotencyKey = newIdempotencyKey();
 
     const data = await apiInvoke('submit-deposit-wrapper', {
@@ -118,11 +118,16 @@ export async function requestDeposit(params) {
       p_idempotency_key: idempotencyKey,
     });
 
-    return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
+    if (!data?.id) {
+      return { ok: false, error: data?.message || data?.error || "Deposit gagal. Coba lagi." };
+    }
+
+    return { ok: true, tx: { id: data.id, amount: amt, status: 'PENDING', requestedAt: data.created_at || new Date().toISOString() } };
   } catch (e) {
     const msg = e?.message || "Network error";
     if (msg.includes('23505')) return { ok: false, error: "Deposit already pending (duplicate detected)" };
-    return { ok: false, error: "Failed to create deposit request" };
+    if (msg.includes('UNAUTHORIZED') || msg.includes('Sesi habis')) return { ok: false, error: "Sesi habis, silakan login ulang." };
+    return { ok: false, error: msg || "Gagal membuat deposit." };
   }
 }
 
@@ -243,23 +248,24 @@ export async function fetchUserTransactions(userId, limit = 100) {
       .order('created_at', { ascending: false })
       .limit(limit);
     if (!error && data) return data.map(t => {
-      const mapped = {
+      if (!t?.id) return null;
+      const idStr = String(t.id);
+      return {
         id: t.id,
-        referenceCode: t.reference_code || (t.type === 'DEPOSIT' ? 'DEP-' : t.type === 'WITHDRAWAL' ? 'WTH-' : 'TXN-') + t.id.slice(0, 8).toUpperCase(),
+        referenceCode: t.reference_code || (t.type === 'DEPOSIT' ? 'DEP-' : t.type === 'WITHDRAWAL' ? 'WTH-' : 'TXN-') + (idStr.length >= 8 ? idStr.slice(0, 8).toUpperCase() : idStr.toUpperCase()),
         type: t.type === 'WITHDRAWAL' ? 'WITHDRAW' : t.type,
-        amount: Number(t.amount),
-        status: t.status === 'COMPLETED' ? 'APPROVED' : t.status === 'FAILED' ? 'REJECTED' : t.status,
+        amount: Number(t.amount ?? 0),
+        status: t.status === 'COMPLETED' ? 'APPROVED' : t.status === 'FAILED' ? 'REJECTED' : (t.status || 'PENDING'),
         method: t.method || '',
         bankName: t.bank_name || '',
         bankAccountNumber: t.bank_account_number || '',
         bankAccountName: t.bank_account_name || '',
         proof: t.proof_image_url || '',
-        requestedAt: t.created_at,
+        requestedAt: t.created_at || new Date().toISOString(),
         processedAt: t.processed_at,
         notes: t.notes,
       };
-      return mapped;
-    });
+    }).filter(Boolean);
   } catch (e) {
     _warn('fetchUserTransactions failed', e);
   }
