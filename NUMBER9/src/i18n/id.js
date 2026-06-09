@@ -44,7 +44,9 @@ export const id = {
     edit: 'Ubah',
     login_required: 'Silakan login untuk melanjutkan.',
     back_to_login: 'Kembali ke Login',
-    file_read_error: 'Tidak dapat membaca file. Coba file lain.'
+    file_read_error: 'Tidak dapat membaca file. Coba file lain.',
+    idr_rate: '1 P = Rp 1.000',
+    idr_value: 'Nilai IDR',
   },
 
   /* ─── NAVIGATION ─── */

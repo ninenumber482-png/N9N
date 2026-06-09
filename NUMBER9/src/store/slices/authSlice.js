@@ -63,6 +63,9 @@ export const authSlice = (set, get) => ({
         role: user.role || "user",
         token: respData.token || "",
         loggedInAt: new Date().toISOString(),
+        bankName: user.bank_name || "",
+        bankAccountNumber: user.bank_account_number || "",
+        bankAccountName: user.bank_account_name || "",
       }
       writeJSON(LS.auth, authData)
       set({ auth: authData })

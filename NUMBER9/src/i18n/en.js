@@ -44,7 +44,9 @@ export const en = {
     edit: 'Edit',
     login_required: 'Please log in to continue.',
     back_to_login: 'Back to Login',
-    file_read_error: 'Cannot read file. Try another.'
+    file_read_error: 'Cannot read file. Try another.',
+    idr_rate: '1 P = Rp 1.000',
+    idr_value: 'IDR Value',
   },
 
   /* ─── NAVIGATION ─── */

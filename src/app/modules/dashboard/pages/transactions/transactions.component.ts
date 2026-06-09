@@ -27,6 +27,7 @@ interface TransactionItem {
   amount: number;
   status: string;
   created_at: string;
+  reference_code?: string;
   user?: { username: string; display_name: string };
   method?: string;
   bank_name?: string;
@@ -127,7 +128,7 @@ interface TransactionItem {
                   class="border-border hover:bg-accent/30 border-b text-xs transition-colors cursor-pointer"
                   (click)="toggleDetail(tx)">
                   <td class="px-3 py-2.5 font-mono text-[10px] text-muted-foreground">
-                    {{ tx.id.slice(0, 8).toUpperCase() }}
+                    {{ tx.reference_code || tx.id.slice(0, 8).toUpperCase() }}
                   </td>
                   <td class="px-3 py-2.5">
                     <p class="font-medium text-foreground">{{ tx.user?.display_name || tx.user?.username || '—' }}</p>
@@ -240,6 +241,7 @@ interface TransactionItem {
             <div class="space-y-4 text-xs">
               <!-- Info utama -->
               <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+                <p><span class="text-muted-foreground">Ref: </span><span class="font-mono text-[10px] text-foreground">{{ selectedTx.reference_code || selectedTx.id.slice(0, 8).toUpperCase() }}</span></p>
                 <p><span class="text-muted-foreground">ID: </span><span class="font-mono text-[10px] text-foreground break-all">{{ selectedTx.id }}</span></p>
                 <p><span class="text-muted-foreground">Tipe: </span><span class="text-foreground font-medium">{{ selectedTx.type }}</span></p>
                 <p><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-foreground">{{ selectedTx.amount | number: '1.0-0' }} P</span></p>
@@ -430,6 +432,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       result = result.filter(
         (tx) =>
           tx.id.toLowerCase().includes(q) ||
+          (tx.reference_code?.toLowerCase().includes(q) ?? false) ||
           tx.user?.username?.toLowerCase().includes(q) ||
           tx.user?.display_name?.toLowerCase().includes(q) ||
           String(tx.amount).includes(q),

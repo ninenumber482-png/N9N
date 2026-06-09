@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
 
     const { data: user, error: userErr } = await supabase
       .from('users')
-      .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, created_at')
+      .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, created_at, bank_name, bank_account_number, bank_account_name')
       .eq('username', uname)
       .maybeSingle()
 
@@ -163,6 +163,9 @@ Deno.serve(async (req) => {
         role: user.role,
         country: user.country,
         created_at: user.created_at,
+        bank_name: user.bank_name || null,
+        bank_account_number: user.bank_account_number || null,
+        bank_account_name: user.bank_account_name || null,
       },
     }), { status: 200, headers: corsHeaders(req, { "Set-Cookie": cookie }) });
 

@@ -22,10 +22,11 @@ import { StatCardComponent } from 'src/app/shared/components/stat-card/stat-card
 import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
 import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
-type TabId = 'deposits' | 'withdrawals' | 'turnover';
+type TabId = 'deposits' | 'withdrawals' | 'turnover' | 'manual';
 
 interface DepositTx {
   id: string;
+  reference_code?: string;
   user?: { username: string; display_name?: string };
   amount: number;
   method?: string;
@@ -37,6 +38,7 @@ interface DepositTx {
 
 interface WithdrawTx {
   id: string;
+  reference_code?: string;
   user?: { username: string; display_name?: string };
   amount: number;
   bank_name?: string;
@@ -184,7 +186,7 @@ interface PageEvent {
                   class="border-border hover:bg-accent/30 border-b text-xs transition-colors cursor-pointer"
                   (click)="openDepDetail(tx)">
                   <td class="px-3 py-3 font-mono text-[10px] text-muted-foreground">
-                    {{ tx.id.slice(0, 8).toUpperCase() }}
+                    {{ tx.reference_code || tx.id.slice(0, 8).toUpperCase() }}
                   </td>
                   <td class="px-3 py-3">
                     <p class="font-semibold text-foreground">{{ tx.user?.display_name || tx.user?.username || '—' }}</p>
@@ -241,8 +243,12 @@ interface PageEvent {
           @if (depDetail) {
             <div class="space-y-3 text-xs">
               <div class="flex justify-between">
+                <span class="text-muted-foreground">Ref</span
+                ><span class="font-mono text-foreground">{{ depDetail.reference_code || depDetail.id.slice(0, 8).toUpperCase() }}</span>
+              </div>
+              <div class="flex justify-between">
                 <span class="text-muted-foreground">ID</span
-                ><span class="font-mono text-foreground">{{ depDetail.id }}</span>
+                ><span class="font-mono text-[10px] text-muted-foreground break-all">{{ depDetail.id }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">User</span
@@ -329,7 +335,7 @@ interface PageEvent {
                   class="border-border hover:bg-accent/30 border-b text-xs transition-colors cursor-pointer"
                   (click)="openWdDetail(tx)">
                   <td class="px-3 py-3 font-mono text-[10px] text-muted-foreground">
-                    {{ tx.id.slice(0, 8).toUpperCase() }}
+                    {{ tx.reference_code || tx.id.slice(0, 8).toUpperCase() }}
                   </td>
                   <td class="px-3 py-3">
                     <p class="font-semibold text-foreground">{{ tx.user?.display_name || tx.user?.username || '—' }}</p>
@@ -389,8 +395,12 @@ interface PageEvent {
           @if (wdDetail) {
             <div class="space-y-3 text-xs">
               <div class="flex justify-between">
+                <span class="text-muted-foreground">Ref</span
+                ><span class="font-mono text-foreground">{{ wdDetail.reference_code || wdDetail.id.slice(0, 8).toUpperCase() }}</span>
+              </div>
+              <div class="flex justify-between">
                 <span class="text-muted-foreground">ID</span
-                ><span class="font-mono text-foreground">{{ wdDetail.id }}</span>
+                ><span class="font-mono text-[10px] text-muted-foreground break-all">{{ wdDetail.id }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">User</span
@@ -499,6 +509,125 @@ interface PageEvent {
       </div>
     </ng-template>
 
+    <ng-template #manualTab>
+      <app-filter-bar [search]="manSearch" (searchChange)="manSearch=$event; applyManFilter()" placeholder="Cari username, display name…">
+        <app-refresh-button [loading]="manLoading" (clicked)="loadManual()" />
+      </app-filter-bar>
+      <div class="bg-card border-border rounded-lg border overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+            <thead>
+              <tr class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                <th class="px-3 py-3">User</th>
+                <th class="px-3 py-3">Main (P)</th>
+                <th class="px-3 py-3">Bonus (P)</th>
+                <th class="px-3 py-3">Total Deposited</th>
+                <th class="px-3 py-3">Total Withdrawn</th>
+                <th class="px-3 py-3">Turnover</th>
+                <th class="px-3 py-3">Locked TO</th>
+                <th class="px-3 py-3 w-24">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (w of manDisplay; track w.userId) {
+                <tr class="border-border border-b text-xs">
+                  <td class="px-3 py-3">
+                    <p class="font-semibold text-foreground">{{ w.displayName }}</p>
+                    <p class="text-muted-foreground text-[10px]">&#64;{{ w.username }}</p>
+                  </td>
+                  <td class="px-3 py-3 font-bold text-foreground">{{ w.main | number: '1.0-0' }}</td>
+                  <td class="px-3 py-3 text-foreground">{{ w.bonus | number: '1.0-0' }}</td>
+                  <td class="px-3 py-3 text-foreground font-semibold">{{ w.deposited | number: '1.0-0' }}</td>
+                  <td class="px-3 py-3 text-muted-foreground font-semibold">{{ w.withdrawn | number: '1.0-0' }}</td>
+                  <td class="px-3 py-3 font-bold text-foreground">{{ w.turnover | number: '1.0-0' }}</td>
+                  <td class="px-3 py-3">
+                    @if (w.locked > 0) {
+                      <span class="text-foreground font-semibold">{{ w.locked | number: '1.0-0' }}</span>
+                    } @else {
+                      <span class="text-foreground text-[10px]">Lunas</span>
+                    }
+                  </td>
+                  <td class="px-3 py-3">
+                    <button
+                      (click)="openEditWallet(w)"
+                      class="bg-card border-border hover:bg-accent rounded border px-2 py-1 text-[10px] font-medium text-foreground transition-colors"
+                    >
+                      Edit Saldo
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p-paginator
+          (onPageChange)="manPageChange($event)"
+          [first]="(manPage - 1) * manPageSize"
+          [rows]="manPageSize"
+          [totalRecords]="manFiltered.length" />
+      </div>
+    </ng-template>
+
+    <p-dialog
+      [(visible)]="editWalletVisible"
+      [modal]="true"
+      [style]="{ width: '420px' }"
+      [draggable]="false"
+      [resizable]="false"
+      [closable]="true"
+      (onHide)="editWalletVisible = false; editWallet = null;">
+      <ng-template pTemplate="header">
+        <span class="text-sm font-bold text-foreground">Edit Saldo</span>
+      </ng-template>
+      <ng-template pTemplate="content">
+        @if (editWallet) {
+          <div class="space-y-4 text-xs">
+            <div>
+              <p class="text-muted-foreground mb-1">User</p>
+              <p class="font-semibold text-foreground">{{ editWallet.displayName }} (&#64;{{ editWallet.username }})</p>
+            </div>
+            <div>
+              <label class="block text-muted-foreground mb-1">Balance Main (P)</label>
+              <input
+                type="number"
+                [(ngModel)]="editMain"
+                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
+                step="1"
+                min="0"
+              />
+            </div>
+            <div>
+              <label class="block text-muted-foreground mb-1">Balance Bonus (P)</label>
+              <input
+                type="number"
+                [(ngModel)]="editBonus"
+                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
+                step="1"
+                min="0"
+              />
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                (click)="editWalletVisible = false; editWallet = null;"
+                class="bg-card border-border hover:bg-accent rounded border px-3 py-1.5 text-sm font-medium text-foreground transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                (click)="saveEditWallet()"
+                [disabled]="editWalletSaving"
+                class="bg-foreground text-background rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-opacity"
+              >
+                {{ editWalletSaving ? 'Menyimpan…' : 'Simpan' }}
+              </button>
+            </div>
+          </div>
+        }
+      </ng-template>
+    </p-dialog>
+
     <p-confirmdialog />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -517,6 +646,7 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     { id: 'deposits' as TabId, label: 'Deposit' },
     { id: 'withdrawals' as TabId, label: 'Withdraw' },
     { id: 'turnover' as TabId, label: 'Turnover' },
+    { id: 'manual' as TabId, label: 'Saldo Manual' },
   ];
 
   statusOptions = [
@@ -563,15 +693,31 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
   toWinRate = 0;
   toLoading = false;
 
+  editWallet: TurnoverItem | null = null;
+  editWalletVisible = false;
+  editWalletSaving = false;
+  editMain = 0;
+  editBonus = 0;
+
+  manAll: TurnoverItem[] = [];
+  manFiltered: TurnoverItem[] = [];
+  manDisplay: TurnoverItem[] = [];
+  manPage = 1;
+  manPageSize = 20;
+  manLoading = false;
+  manSearch = '';
+
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
     const path = this.route.snapshot.url[0]?.path;
     if (path === 'withdrawals') this.tab = 'withdrawals';
     else if (path === 'turnover') this.tab = 'turnover';
+    else if (path === 'manual') this.tab = 'manual';
     this.loadDeposits();
     this.loadWithdrawals();
     this.loadTurnover();
+    this.loadManual();
     this.realtime.transactions$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.loadDeposits();
       this.loadWithdrawals();
@@ -593,6 +739,45 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     this.wdDetail = tx;
     this.wdDetailVisible = true;
     this.cdr.markForCheck();
+  }
+
+  openEditWallet(w: TurnoverItem) {
+    this.editWallet = w;
+    this.editMain = w.main;
+    this.editBonus = w.bonus;
+    this.editWalletVisible = true;
+    this.cdr.markForCheck();
+  }
+
+  async saveEditWallet() {
+    if (!this.editWallet) return;
+    this.editWalletSaving = true;
+    this.cdr.markForCheck();
+    try {
+      const admin = this.auth.getCurrentUser();
+      if (!admin?.username) return;
+      await this.admin.updateWalletRow(this.editWallet.userId, {
+        balance_main: this.editMain,
+        balance_bonus: this.editBonus,
+      });
+      await this.admin.logAction(
+        admin.username,
+        'EDIT_WALLET',
+        'wallet',
+        this.editWallet.userId,
+        `main:${this.editWallet.main},bonus:${this.editWallet.bonus}`,
+        `main:${this.editMain},bonus:${this.editBonus}`,
+      );
+      this.notification.success('Saldo diperbarui', `Saldo ${this.editWallet.displayName} berhasil diubah.`);
+      this.editWalletVisible = false;
+      this.editWallet = null;
+      this.loadTurnover();
+    } catch (e: unknown) {
+      this.notification.error('Gagal', (e instanceof Error ? e.message : '') || 'Gagal memperbarui saldo.');
+    } finally {
+      this.editWalletSaving = false;
+      this.cdr.markForCheck();
+    }
   }
 
   loadDeposits() {
@@ -791,6 +976,56 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     this.toPage = page;
     this.toPageSize = pageSize;
     this.toDisplay = this.toFiltered.slice((this.toPage - 1) * this.toPageSize, this.toPage * this.toPageSize);
+    this.cdr.markForCheck();
+  }
+
+  loadManual() {
+    this.manLoading = true;
+    Promise.all([this.admin.getWallets(), this.admin.getDepositLocks()])
+      .then(([wallets, locks]) => {
+        const lockMap = new Map<string, number>();
+        (locks || []).forEach((l: DepositLock) => {
+          const rem = Number(l.turnover_required) - Number(l.turnover_applied);
+          if (rem > 0) lockMap.set(l.user_id, (lockMap.get(l.user_id) || 0) + rem);
+        });
+        this.manAll = (wallets || [])
+          .filter((w: WalletRow) => w.user?.role !== 'admin' && w.user?.role !== 'superadmin')
+          .map((w: WalletRow) => ({
+            userId: w.user_id,
+            username: w.user?.username ?? '',
+            displayName: w.user?.display_name ?? '',
+            main: Number(w.balance_main),
+            bonus: Number(w.balance_bonus),
+            deposited: Number(w.total_deposited),
+            withdrawn: Number(w.total_withdrawn),
+            turnover: Number(w.total_turnover),
+            locked: lockMap.get(w.user_id) || 0,
+            net: Number(w.total_deposited) - Number(w.total_withdrawn),
+            pnl: Number(w.total_deposited) - Number(w.total_withdrawn) - Number(w.balance_main) - Number(w.balance_bonus),
+          }));
+        this.applyManFilter();
+      })
+      .catch(() => {})
+      .finally(() => {
+        this.manLoading = false;
+        this.cdr.markForCheck();
+      });
+  }
+  applyManFilter() {
+    let f = this.manAll;
+    if (this.manSearch) {
+      const q = this.manSearch.toLowerCase();
+      f = f.filter((w) => w.username?.toLowerCase().includes(q) || w.displayName?.toLowerCase().includes(q));
+    }
+    this.manFiltered = f;
+    this.manPage = 1;
+    this.manDisplay = f.slice(0, this.manPageSize);
+  }
+  manPageChange(event: PageEvent) {
+    const { page, pageSize } = PaginationHelper.onPageChange(event, this.manPageSize);
+    this.manPage = page;
+    this.manPageSize = pageSize;
+    this.manDisplay = this.manFiltered.slice((this.manPage - 1) * this.manPageSize, this.manPage * this.manPageSize);
     this.cdr.markForCheck();
   }
 }

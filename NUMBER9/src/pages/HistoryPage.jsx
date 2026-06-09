@@ -150,13 +150,13 @@ export default function HistoryPage() {
     return {
       id: tx.id,
       type: txType,
-      desc: `${tx.method || '—'} · ${String(tx.id || '').slice(-6)}`,
+      desc: `${tx.method || '—'} · ${tx.referenceCode || String(tx.id || '').slice(-6)}`,
       date: wibDateTime(tx.requestedAt),
       status: tx.status,
       amount:
         txType === "Deposit"
-          ? `+${(tx.amount || 0).toLocaleString()}`
-          : `-${(tx.amount || 0).toLocaleString()}`,
+          ? `+${(tx.amount || 0).toLocaleString('id-ID')}`
+          : `-${(tx.amount || 0).toLocaleString('id-ID')}`,
       ts: new Date(tx.requestedAt).getTime(),
       proof: tx.proof || null,
     };

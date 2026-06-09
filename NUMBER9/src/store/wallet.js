@@ -252,26 +252,24 @@ export async function fetchUserBank(userId) {
 
 export async function fetchTurnoverSummary(userId) {
   try {
-    const walletRow = await apiSelect('wallet', 'total_deposited', 'user_id', userId);
-    const totalDeposited = Number(walletRow?.total_deposited ?? 0);
-
-    const lockRows = await apiSelectAll('deposit_locks', `user_id=eq.${userId}&select=amount,turnover_required,turnover_applied,created_at&order=created_at.asc`);
-    if (!lockRows || lockRows.length === 0) return defaultTurnover();
-
-    const locks = (lockRows || []).map(r => {
-      const required = Number(r.turnover_required);
-      const applied = Math.min(Number(r.turnover_applied), required);
-      const remaining = Math.max(0, required - applied);
-      return { amount: Number(r.amount), required, applied, remaining,
-        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100, done: remaining <= 0 };
-    });
-
-    const outstanding = locks.filter(l => !l.done);
-    const required = outstanding.reduce((s, l) => s + l.required, 0);
-    const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
-    const remaining = Math.max(0, required - achieved);
-    const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
-    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
+    const data = await apiInvoke('get-turnover-summary', { userId });
+    if (!data) return defaultTurnover();
+    return {
+      required: Number(data.required ?? 0),
+      achieved: Number(data.achieved ?? 0),
+      remaining: Number(data.remaining ?? 0),
+      pct: Number(data.pct ?? 0),
+      totalDeposited: Number(data.totalDeposited ?? 0),
+      locks: Array.isArray(data.locks) ? data.locks.map(l => ({
+        amount: Number(l.amount ?? 0),
+        required: Number(l.required ?? 0),
+        applied: Number(l.applied ?? 0),
+        remaining: Number(l.remaining ?? 0),
+        pct: Number(l.pct ?? 0),
+        done: Boolean(l.done),
+      })) : [],
+      isUnlocked: Boolean(data.isUnlocked),
+    };
   } catch (e) {
     _warn('fetchTurnoverSummary failed', e);
     return defaultTurnover();
@@ -279,7 +277,7 @@ export async function fetchTurnoverSummary(userId) {
 }
 
 function defaultTurnover() {
-  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: true };
+  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: false };
 }
 
 export async function fetchUserTransactions(userId, limit = 100) {
@@ -294,7 +292,7 @@ export async function fetchUserTransactions(userId, limit = 100) {
     if (!error && data) return data.map(t => {
       const mapped = {
         id: t.id,
-        referenceCode: t.reference_code || t.id.slice(0, 8).toUpperCase(),
+        referenceCode: t.reference_code || (t.type === 'DEPOSIT' ? 'DEP-' : t.type === 'WITHDRAWAL' ? 'WTH-' : 'TXN-') + t.id.slice(0, 8).toUpperCase(),
         type: t.type === 'WITHDRAWAL' ? 'WITHDRAW' : t.type,
         amount: Number(t.amount),
         status: t.status === 'COMPLETED' ? 'APPROVED' : t.status === 'FAILED' ? 'REJECTED' : t.status,

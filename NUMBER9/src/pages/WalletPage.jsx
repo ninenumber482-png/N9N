@@ -4,7 +4,7 @@ import { useStore } from "../store/useStore";
 import {
   requestDeposit, fetchPlatformAccounts,
   fetchUserTransactions, getDepositLockRemaining,
-  requestWithdraw, fetchTurnoverSummary, updateUserBank,
+  requestWithdraw, fetchTurnoverSummary, updateUserBank, fetchUserBank,
 } from "../store/wallet";
 import { supabase } from "../utils/supabase";
 import { Icon } from "../components/icons";
@@ -22,7 +22,7 @@ import { DEPOSIT_PRESETS, WITHDRAWAL_METHODS, WITHDRAW_PRESETS, DEPOSIT_LOCK_MS 
 import { useI18n } from '../i18n';
 import { wibDate } from '../utils/wib';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import { formatNumber } from '../utils/format';
+import { formatNumber, formatIDR } from '../utils/format';
 
 const TABS = [
   { k: 'deposit', l: 'wallet.tabs_deposit', I: Icon.ArrowDown },
@@ -316,6 +316,9 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
         <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('deposit.summary')}</p>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between border-b border-[#1f2128] pb-2"><span className="text-zinc-400">{t('deposit.amount')}</span><span className="font-bold text-white">{fmt(Number(amount) || 0)} {t('common.points')}</span></div>
+          {Number(amount) > 0 && (
+            <div className="flex justify-between border-b border-[#1f2128] pb-2"><span className="text-zinc-400">{t('common.idr_value')}</span><span className="font-bold text-yellow-400">{formatIDR(Number(amount))}</span></div>
+          )}
           <div className="flex justify-between border-b border-[#1f2128] pb-2"><span className="text-zinc-400">{t('deposit.method')}</span><span className="font-semibold text-white">{selected?.label || "—"}</span></div>
           <div className="flex justify-between"><span className="text-zinc-400">{t('deposit.proof')}</span><span className={`font-semibold ${proof ? "text-emerald-400" : "text-zinc-500"}`}>{proof ? t('common.attached') : t('common.required')}</span></div>
         </div>
@@ -337,6 +340,7 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
                 </div>
                 <p className="text-sm font-semibold text-white">{fmt(tx.amount)} {t('common.points')}</p>
                 <p className="text-xs text-zinc-500">{tx.method} · {wibDate(tx.requestedAt)}</p>
+                <p className="text-[10px] text-yellow-400/80">{formatIDR(tx.amount)}</p>
               </div>
             ))}
           </div>
@@ -358,18 +362,24 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
   const [bank, setBank] = useState({ bankName: '', bankAccountNumber: '', bankAccountName: '' });
   const [editBank, setEditBank] = useState({ name: '', number: '', holder: '' });
   const [isEditingBank, setIsEditingBank] = useState(false);
-  const [turnoverData, setTurnoverData] = useState({ remaining: 0, isUnlocked: true });
+  const [turnoverData, setTurnoverData] = useState({ remaining: 0, isUnlocked: false });
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!auth?.id) return;
-    const p1 = fetchProfile().then(prof => {
-      if (aliveRef.current && prof && !prof.error) {
-        setBank({
-          bankName: prof.bankName || '',
-          bankAccountNumber: prof.bankAccountNumber || '',
-          bankAccountName: prof.bankAccountName || '',
-        });
+    const p1 = fetchProfile().then(async prof => {
+      if (!aliveRef.current) return;
+      const bName = prof?.bankName || '';
+      const bNum = prof?.bankAccountNumber || '';
+      const bHolder = prof?.bankAccountName || '';
+      if (bName || bNum || bHolder) {
+        setBank({ bankName: bName, bankAccountNumber: bNum, bankAccountName: bHolder });
+      } else {
+        // fetchProfile returned no bank data — fall back to direct DB fetch
+        const fb = await fetchUserBank(auth.id).catch(() => null);
+        if (aliveRef.current && fb && (fb.bankName || fb.bankAccountNumber)) {
+          setBank({ bankName: fb.bankName || '', bankAccountNumber: fb.bankAccountNumber || '', bankAccountName: fb.bankAccountName || '' });
+        }
       }
     }).catch(() => {});
     const p2 = fetchTurnoverSummary(auth.id).then(r => { if (aliveRef.current) setTurnoverData(r); }).catch(() => {});
@@ -512,6 +522,9 @@ function WithdrawTab({ auth, balanceMain, _rtTick, aliveRef, t, setToast }) {
         <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('withdraw.summary')}</p>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between border-b border-[#1f2128] pb-2"><span className="text-zinc-400">{t('withdraw.amount')}</span><span className="font-bold text-white">{fmt(Number(amount) || 0)} {t('common.points')}</span></div>
+          {Number(amount) > 0 && (
+            <div className="flex justify-between border-b border-[#1f2128] pb-2"><span className="text-zinc-400">{t('common.idr_value')}</span><span className="font-bold text-yellow-400">{formatIDR(Number(amount))}</span></div>
+          )}
           <div className="flex justify-between border-b border-[#1f2128] pb-2"><span className="text-zinc-400">{t('withdraw.method')}</span><span className="font-semibold text-white">{sel?.label || method}</span></div>
           <div className="flex justify-between"><span className="text-zinc-400">{t('withdraw.fee')}</span><span className="font-semibold text-white">{(sel?.note?.split("·") ?? [])[1]?.trim?.() || t('withdraw.fee_free')}</span></div>
         </div>

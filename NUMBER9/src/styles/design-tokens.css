@@ -1,0 +1,63 @@
+/* ─── NUMBER9 Design Tokens ─────────────────────────────────────────────
+   Shared CSS variables for visual consistency between React & Angular.
+   React uses these; Angular references them from src/styles.css.
+   ----------------------------------------------------------------------- */
+
+:root {
+  /* Font */
+  --font-sans: 'Poppins', system-ui, sans-serif;
+
+  /* Accent palette */
+  --color-accent: #EAB308;
+  --color-accent-soft: rgba(234, 179, 8, 0.12);
+  --color-accent-glow: rgba(234, 179, 8, 0.2);
+
+  /* Surface (dark) — React default */
+  --surface-page: #050607;
+  --surface-card: #0c0e14;
+  --surface-card-hover: #13151c;
+  --surface-elevated: #1a1d28;
+  --surface-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Borders */
+  --border-subtle: #1f2128;
+  --border-default: #2a2d3a;
+  --border-accent: rgba(234, 179, 8, 0.3);
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --text-accent: #EAB308;
+
+  /* Status */
+  --color-success: #10B981;
+  --color-success-soft: rgba(16, 185, 129, 0.12);
+  --color-error: #EF4444;
+  --color-error-soft: rgba(239, 68, 68, 0.12);
+  --color-warning: #EAB308;
+  --color-warning-soft: rgba(234, 179, 8, 0.12);
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 0 20px rgba(234, 179, 8, 0.15);
+}
+
+/* ─── Light mode overrides ──────────────────────────────────────────── */
+.light {
+  --surface-page: #F8FAFC;
+  --surface-card: #FFFFFF;
+  --surface-card-hover: #F1F5F9;
+  --surface-elevated: #E2E8F0;
+  --surface-overlay: rgba(0, 0, 0, 0.2);
+
+  --border-subtle: #E2E8F0;
+  --border-default: #CBD5E1;
+  --border-accent: rgba(234, 179, 8, 0.3);
+
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --text-accent: #CA8A04;
+}
