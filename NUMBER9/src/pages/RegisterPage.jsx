@@ -149,6 +149,7 @@ export default function RegisterPage() {
       setSubmitting(false);
       if (!result || !result.ok)
         return setError((result && result.error) || t('register.registration_failed'));
+      if (!result?.user?.uuid) return setError(t('register.registration_failed'));
       setPendingUuid(result.user.uuid);
       setShowThankYou(true);
     }).catch(() => {

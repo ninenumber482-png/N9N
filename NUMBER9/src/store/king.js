@@ -32,6 +32,7 @@ export function setKingUser(userId) { _userId = userId || null; }
 /* Map a Supabase `king_results` row to the result shape the UI expects
    (digit1/2/3, resultTotal, resultNumber, bigSmall, oddEven). */
 function mapResultRow(row) {
+  if (!row || !row.session_code) return null;
   return withDisplay({
     sessionCode: row.session_code,
     digit1: row.d1,
@@ -47,17 +48,18 @@ function mapResultRow(row) {
 
 /* Map a Supabase `bets` row to the in-memory shape the UI already expects. */
 function mapBetRow(row) {
+  if (!row || !row.id) return null;
   return withDisplay({
     clientBetId: row.id,
     id: row.id,
-    sessionCode: row.session_code,
-    betCode: row.bet_code,
-    selection: row.selection,
-    stake: Number(row.stake),
-    potentialPayout: Number(row.potential_payout),
+    sessionCode: row.session_code || '',
+    betCode: row.bet_code || '',
+    selection: row.selection || '',
+    stake: Number(row.stake ?? 0),
+    potentialPayout: Number(row.potential_payout ?? 0),
     payout: Number(row.actual_payout || 0),
-    status: row.status,
-    result: row.result,
+    status: row.status || 'PENDING',
+    result: row.result || '',
     createdAt: row.created_at,
     placedAt: row.created_at,
     settledAt: row.settled_at || null,
@@ -79,12 +81,14 @@ const pad2 = (n) => String(n).padStart(2, "0");
 
 /* Code is YYYYMMDDHHmm (the result / closing target time) - matches backend codeFromDate */
 function codeFor(resultMs) {
+  if (!Number.isFinite(resultMs)) return '';
   const d = new Date(resultMs);
+  if (isNaN(d.getTime())) return '';
   const y = d.getUTCFullYear();
   const m = pad2(d.getUTCMonth() + 1);
   const day = pad2(d.getUTCDate());
   const h = pad2(d.getUTCHours());
-  const min = pad2(Math.floor(d.getUTCMinutes() / 5) * 5); // Round down to nearest 5 min
+  const min = pad2(Math.floor(d.getUTCMinutes() / 5) * 5);
   return `${y}${m}${day}${h}${min}`;
 }
 
@@ -92,7 +96,7 @@ function codeFor(resultMs) {
    WIB (Asia/Jakarta) digits — for DISPLAY only. The canonical sessionCode used
    for matching stays UTC. Mirrors the admin console's fmtSessionCodeWIB. */
 export function toWIBCode(code) {
-  if (!code || code.length < 12) return code;
+  if (!code || typeof code !== 'string' || code.length < 12) return code || '?';
   const y = Number(code.slice(0, 4));
   const mo = Number(code.slice(4, 6)) - 1;
   const d = Number(code.slice(6, 8));
@@ -107,12 +111,14 @@ export function toWIBCode(code) {
 
 /* Parse sessionCode (YYYYMMDDHHmm) → result timestamp (ms) */
 function parseResultMs(sessionCode) {
+  if (!sessionCode || typeof sessionCode !== 'string' || sessionCode.length < 12) return NaN;
   const year = Number(sessionCode.slice(0, 4));
   const month = Number(sessionCode.slice(4, 6)) - 1;
   const day = Number(sessionCode.slice(6, 8));
   const hour = Number(sessionCode.slice(8, 10));
   const minute = Number(sessionCode.slice(10, 12));
-  return Date.UTC(year, month, day, hour, minute);
+  const ms = Date.UTC(year, month, day, hour, minute);
+  return isNaN(ms) ? NaN : ms;
 }
 
 /* Get the NEXT session whose result time is >= nowMs. */
@@ -189,7 +195,7 @@ export function getPreviousSessionCode(sessionCode) {
 let _bets = [];
 let _results = [];
 
-const withDisplay = (o) => ({ ...o, displayCode: "N9K-" + toWIBCode(o.sessionCode) });
+const withDisplay = (o) => ({ ...o, displayCode: o.sessionCode ? "N9K-" + toWIBCode(o.sessionCode) : "N9K-?" });
 
 /* Load this user's bets from Supabase (real persistence). Results come
    from Supabase king_results table. */
@@ -208,15 +214,15 @@ export async function refreshKingData(userId = _userId) {
 
     if (!resultsRes.error) {
       const seen = new Set();
-      _results = (resultsRes.data || []).map(mapResultRow).filter((r) => {
-        if (seen.has(r.sessionCode)) return false;
+      _results = (resultsRes.data || []).map(r => r ? mapResultRow(r) : null).filter(Boolean).filter((r) => {
+        if (!r.sessionCode || seen.has(r.sessionCode)) return false;
         seen.add(r.sessionCode);
         return true;
       });
     }
 
     if (!betsRes.error) {
-      _bets = (betsRes.data || []).map(mapBetRow);
+      _bets = (betsRes.data || []).map(r => r ? mapBetRow(r) : null).filter(Boolean);
     }
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[king] refreshKingData failed:', e);
@@ -260,7 +266,7 @@ const codeFor3 = (sel) => (typeof sel === "number" ? `TOTAL_${sel}` : sel);
 export async function placeBid({ sessionCode, selections, stake, userId = _userId }) {
   if (hasBackend() && userId) {
     try {
-      const p_selections = selections.map((selection) => ({
+      const p_selections = (selections || []).map((selection) => ({
         bet_code: codeFor3(selection),
         selection: String(selection),
         stake,
