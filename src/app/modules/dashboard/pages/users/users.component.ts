@@ -112,7 +112,7 @@ interface BetRow {
   providers: [ConfirmationService],
   template: `
     <div data-page="users" class="space-y-6">
-      <app-page-header icon="users" title="Users" subtitle="Manage all platform users">
+      <app-page-header icon="users" title="Members" subtitle="Manage all platform members">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 

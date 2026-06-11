@@ -108,7 +108,7 @@ interface PageEvent {
   providers: [ConfirmationService],
   template: `
     <div data-page="wallet-admin" class="space-y-6">
-      <app-page-header icon="cog" title="Wallet Management" subtitle="Kelola deposit, penarikan, dan turnover pengguna" />
+      <app-page-header icon="arrow-sm-down" title="Deposits &amp; Withdrawals" subtitle="Approve and manage member transactions" />
 
       <div class="flex gap-1 rounded-lg border border-border bg-card p-1">
         @for (tb of tabs; track tb.id) {

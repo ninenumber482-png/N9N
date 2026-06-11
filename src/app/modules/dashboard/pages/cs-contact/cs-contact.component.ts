@@ -13,7 +13,7 @@ import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/l
   imports: [PageHeaderComponent, LoadingErrorComponent, CommonModule, FormsModule],
   template: `
     <div data-page="cs-contact" class="space-y-6">
-      <app-page-header icon="user-circle" title="Customer Service Contact" subtitle="Manage the WhatsApp customer service widget displayed on the platform" />
+      <app-page-header icon="user-circle" title="Customer Service Contact" subtitle="Configure the customer service widget on the platform" />
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 

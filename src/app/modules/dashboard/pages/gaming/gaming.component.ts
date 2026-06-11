@@ -35,7 +35,7 @@ interface BetData {
   imports: [PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, SeverityMapPipe, CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe, TagModule, PaginatorModule],
   template: `
     <div data-page="gaming" class="space-y-6">
-      <app-page-header icon="view-grid" title="Gaming Operations" subtitle="Platform gaming activity overview">
+      <app-page-header icon="view-grid" title="Gaming Overview" subtitle="Platform gaming activity overview">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 

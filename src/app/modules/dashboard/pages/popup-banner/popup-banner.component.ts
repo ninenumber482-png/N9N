@@ -25,7 +25,7 @@ interface BannerData {
   providers: [ConfirmationService],
   template: `
     <div data-page="popup-banner" class="space-y-6">
-      <app-page-header icon="bell" title="Popup Banner">
+      <app-page-header icon="bell" title="Popup Banners">
         <span class="text-[11px] text-muted-foreground">{{ banners.length }} banner</span>
       </app-page-header>
 

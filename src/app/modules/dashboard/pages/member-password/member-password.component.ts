@@ -13,7 +13,7 @@ import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-
   imports: [CommonModule, FormsModule, PageHeaderComponent],
   template: `
     <div data-page="member-password" class="space-y-6">
-      <app-page-header icon="lock-closed" title="Reset Password Member" subtitle="Cari user dan reset password" />
+      <app-page-header icon="lock-closed" title="Reset Password Member" subtitle="Search and reset member passwords" />
       <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #EC4899;">
         <div class="flex flex-wrap gap-2 mb-4">
           <input

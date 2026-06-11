@@ -3,27 +3,33 @@ import { RouterOutlet, RouterLink, Router } from '@angular/router';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 
 const PAGE_ORDER = [
+  // Dashboard
   { route: '/overview', label: 'Overview' },
-  { route: '/users', label: 'Users' },
-  { route: '/member-password', label: 'Reset Password' },
-  { route: '/referrals', label: 'Referrals' },
-  { route: '/wallet', label: 'Deposit / Withdraw' },
+  { route: '/users', label: 'Members' },
+  // Finance
+  { route: '/wallet', label: 'Deposits & Withdrawals' },
   { route: '/transactions', label: 'Transactions' },
   { route: '/wallets', label: 'Wallets' },
-  { route: '/member-balance', label: 'Member Balance' },
+  { route: '/member-balance', label: 'Balance Adjustment' },
   { route: '/turnover', label: 'Turnover' },
-  { route: '/gaming', label: 'Gaming' },
-  { route: '/3dking', label: '3D King' },
-  { route: '/bets', label: 'Bets' },
+  // Marketplace
+  { route: '/3dking', label: '3D King Engine' },
+  { route: '/bets', label: 'Bet History' },
   { route: '/session-monitor', label: 'Session Monitor' },
-  { route: '/kyc', label: 'KYC' },
-  { route: '/audit', label: 'Audit' },
+  { route: '/gaming', label: 'Gaming Overview' },
+  // Members
+  { route: '/kyc', label: 'KYC Verification' },
+  { route: '/referrals', label: 'Referrals' },
+  { route: '/member-password', label: 'Password Reset' },
+  // Compliance
+  { route: '/audit', label: 'Audit Log' },
   { route: '/security-center', label: 'Security Center' },
   { route: '/risk-management', label: 'Risk Management' },
   { route: '/ip-whitelist', label: 'IP Whitelist' },
-  { route: '/popup-banner', label: 'Popup Banner' },
-  { route: '/system', label: 'System' },
+  // Settings
+  { route: '/system', label: 'Configuration' },
   { route: '/role-management', label: 'Role Management' },
+  { route: '/popup-banner', label: 'Popup Banners' },
   { route: '/cs-contact', label: 'CS Contact' },
 ];
 

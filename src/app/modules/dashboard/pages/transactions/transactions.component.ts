@@ -62,7 +62,7 @@ interface TransactionItem {
   providers: [ConfirmationService],
   template: `
     <div data-page="transactions" class="space-y-6">
-      <app-page-header icon="currency-dollar" title="Transactions" subtitle="Verifikasi dan kelola seluruh transaksi platform">
+      <app-page-header icon="currency-dollar" title="Transactions" subtitle="Review and manage all platform transactions">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 

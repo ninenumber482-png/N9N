@@ -26,7 +26,7 @@ interface AdminUser {
   providers: [ConfirmationService],
   template: `
     <div data-page="role-management" class="space-y-6">
-      <app-page-header icon="users" title="Role Management" subtitle="Kelola role admin &amp; superadmin">
+      <app-page-header icon="users" title="Role Management" subtitle="Manage admin and superadmin roles">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
