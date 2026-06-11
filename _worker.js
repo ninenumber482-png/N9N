@@ -1,4 +1,6 @@
-const ALLOWED_IPS_DEFAULT = '203.144.92.42,203.144.92.170';
+// Subnet prefix: semua IP 203.144.92.x diizinkan (ISP dynamic IP hemo)
+const ALLOWED_SUBNETS_DEFAULT = ['203.144.92.', '10.18.204.', '140.213.202.'];
+const ALLOWED_IPS_DEFAULT = '203.144.92.42,203.144.92.170,203.144.92.253,203.144.92.160,203.144.92.32';
 
 const whitelistCache = new Map();
 const CACHE_TTL = 30_000;
@@ -11,7 +13,12 @@ function getSupabaseEnv(env) {
 }
 
 async function isIpWhitelisted(ip, allowedIps, env) {
+  // Cek exact IP
   if (allowedIps.split(',').map(s => s.trim()).includes(ip)) return true;
+  // Cek subnet prefix (203.144.92.x selalu diizinkan)
+  const subnets = (env.ALLOWED_SUBNETS || '').split(',').map(s => s.trim()).filter(Boolean);
+  const allSubnets = [...ALLOWED_SUBNETS_DEFAULT, ...subnets];
+  if (allSubnets.some(prefix => ip.startsWith(prefix))) return true;
 
   const cached = whitelistCache.get(ip);
   if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.allowed;
