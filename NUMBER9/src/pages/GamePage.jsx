@@ -147,7 +147,7 @@ export default function GamePage() {
       return isSettled && resultAvailable;
     });
     if (newlySettled.length > 0) {
-      const pnl = newlySettled.reduce((s, b) => s + (b.payout || 0) - b.stake, 0);
+      const pnl = newlySettled.reduce((s, b) => s + (b.payout || 0) - (b.stake || 0), 0);
       setResultModal({ win: pnl > 0, pnl, bids: newlySettled });
     }
     const map = {};

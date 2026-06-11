@@ -44,7 +44,9 @@ export const id = {
     edit: 'Ubah',
     login_required: 'Silakan login untuk melanjutkan.',
     back_to_login: 'Kembali ke Login',
-    file_read_error: 'Tidak dapat membaca file. Coba file lain.'
+    file_read_error: 'Tidak dapat membaca file. Coba file lain.',
+    idr_rate: '1 P = Rp 1.000',
+    idr_value: 'Nilai IDR',
   },
 
   /* ─── NAVIGATION ─── */
@@ -439,6 +441,8 @@ export const id = {
     cat_gold: 'Tren Pasar Emas',
     cat_forex: 'Forex & Komoditas',
     cat_press: 'Siaran Pers',
+    latest_news: 'Berita Utama',
+    no_news: 'Belum ada berita. Silakan coba lagi nanti.',
   },
 
   /* ─── TURNOVER ─── */
@@ -511,7 +515,13 @@ export const id = {
     code_pending: 'Kode referral tertunda',
     user_id: 'ID Pengguna',
     referral: 'Referral',
-    status: 'Status'
+    status: 'Status',
+    kyc_status: 'Status KYC',
+    registration_status: 'Status Registrasi',
+    approved_date: 'Tanggal Disetujui',
+    kyc_verified: 'Terverifikasi',
+    kyc_rejected: 'Ditolak',
+    kyc_pending: 'Menunggu'
   },
 
   /* ─── SUPPORT ─── */

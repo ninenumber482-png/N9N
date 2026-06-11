@@ -26,11 +26,11 @@ interface AdminUser {
   providers: [ConfirmationService],
   template: `
     <div data-page="role-management" class="space-y-6">
-      <app-page-header icon="users" title="Role Management" subtitle="Kelola role admin &amp; superadmin">
+      <app-page-header icon="users" title="Role Management" subtitle="Manage admin and superadmin roles">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
-      <app-loading-error [loading]="loading" [error]="null" (retry)="load()" />
+      <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
       @if (!loading) {
         <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #60A5FA;">
@@ -108,6 +108,7 @@ export class RoleManagementComponent implements OnInit {
 
   users: AdminUser[] = [];
   loading = false;
+  error: string | null = null;
   isSuperadmin = false;
   currentUsername = '';
 
@@ -120,10 +121,12 @@ export class RoleManagementComponent implements OnInit {
 
   async load() {
     this.loading = true;
+    this.error = null;
     this.cdr.markForCheck();
     try {
       this.users = await this.admin.getAdminUsers();
     } catch {
+      this.error = 'Tidak bisa memuat data admin.';
       this.notification.error('Gagal', 'Tidak bisa memuat data admin.');
     }
     this.loading = false;

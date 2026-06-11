@@ -13,8 +13,8 @@ export const configSlice = (set, get) => ({
 
   _accountsVersion: 0,
 
-  isDemoMode: () => DEMO_MODE,
-  setDemoMode: () => {},
+  isDemoMode: () => get()._demoMode ?? DEMO_MODE,
+  setDemoMode: (enabled) => set({ _demoMode: enabled }),
   clearAllData: () => {
     APP_KEYS.forEach(k => localStorage.removeItem(k))
     const state = get()

@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders(req) });
 
   try {
-    const { p_user_id, p_amount, p_method, p_proof_image_url, p_idempotency_key } = await req.json();
+    const { p_user_id, p_amount, p_method, p_bank_name, p_bank_account_number, p_bank_account_name, p_idempotency_key } = await req.json();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     }
 
     // Call RPC with service_role (bypasses x-user-token check in RPC)
-    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_deposit`, {
+    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_withdrawal`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
         p_user_id,
         p_amount,
         p_method,
-        p_proof_image_url,
+        p_bank_name,
+        p_bank_account_number,
+        p_bank_account_name,
         p_idempotency_key,
       }),
     });
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", ...corsHeaders(req) },
     });
   } catch (error) {
-    console.error('[submit-deposit-wrapper]', error);
+    console.error('[submit-withdrawal-wrapper]', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders(req) },

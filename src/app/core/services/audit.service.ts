@@ -141,6 +141,7 @@ export class AuditService {
         p_new_value: log.newValue ? JSON.stringify(log.newValue) : null,
         p_reason: log.reason || null,
         p_ip_address: log.ipAddress || 'unknown',
+        p_success: log.success,
       }),
     });
 

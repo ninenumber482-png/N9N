@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminService } from 'src/app/core/services/admin.service';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -53,6 +54,7 @@ import { AdminService } from 'src/app/core/services/admin.service';
 })
 export class ForgotPasswordComponent {
   private admin = inject(AdminService);
+  private auth = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
 
   username = '';
@@ -73,7 +75,8 @@ export class ForgotPasswordComponent {
     this.cdr.markForCheck();
     try {
       const tempPassword = Math.random().toString(36).slice(-8);
-      await this.admin.resetPassword(u, u, tempPassword);
+      const currentUser = this.auth.getCurrentUser();
+      await this.admin.resetPassword(u, currentUser?.id || '', tempPassword);
       this.success = true;
     } catch (e: unknown) {
       this.error = e instanceof Error ? e.message : 'Gagal mereset password. Hubungi admin.';

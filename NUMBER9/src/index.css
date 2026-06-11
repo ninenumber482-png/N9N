@@ -71,6 +71,15 @@ body,
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 20s linear infinite;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;

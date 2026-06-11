@@ -68,7 +68,7 @@ interface PlatformAccountRecord {
   providers: [ConfirmationService],
   template: `
     <div data-page="wallets" class="space-y-6">
-      <app-page-header icon="folder" title="Wallets" subtitle="Kelola saldo pengguna & rekening platform">
+      <app-page-header icon="currency-dollar" title="Wallets" subtitle="Manage member wallet balances and bank accounts">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
@@ -189,7 +189,7 @@ interface PlatformAccountRecord {
           [rows]="pageSize"
           [totalRecords]="filteredWallets.length"
           [showCurrentPageReport]="true"
-          currentPageReportTemplate="" />
+          currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
       }
 
       @if (tab === 'accounts') {

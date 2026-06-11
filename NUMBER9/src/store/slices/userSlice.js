@@ -34,14 +34,14 @@ export const userSlice = (set, get) => ({
           // Refresh profile when user data changes
           const prof = await get().fetchProfile()
           if (prof) {
-            const users = readJSON(LS.users, {})
-            const byUuid = readJSON(LS.byUuid, {})
+            const users = { ...readJSON(LS.users, {}) }
+            const byUuid = { ...readJSON(LS.byUuid, {}) }
             const key = prof.username.toLowerCase()
             users[key] = prof
             byUuid[prof.uuid] = { ...prof, username: key }
             writeJSON(LS.users, users)
             writeJSON(LS.byUuid, byUuid)
-            set({ users: { ...users } })
+            set({ users })
           }
         }
       )
@@ -65,8 +65,8 @@ export const userSlice = (set, get) => ({
   },
 
   updateUser: (uuid, updates) => {
-    const users = readJSON(LS.users, {})
-    const byUuid = readJSON(LS.byUuid, {})
+    const users = { ...readJSON(LS.users, {}) }
+    const byUuid = { ...readJSON(LS.byUuid, {}) }
     if (byUuid[uuid]) {
       byUuid[uuid] = { ...byUuid[uuid], ...updates }
       const userKey = Object.keys(users).find(k => users[k].uuid === uuid)

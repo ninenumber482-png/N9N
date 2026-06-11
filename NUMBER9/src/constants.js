@@ -2,6 +2,9 @@
 export const DEPOSIT_PRESETS = [100, 500, 1000, 5000, 10000];
 export const WITHDRAW_PRESETS = [100, 500, 1000, 5000];
 
+// Currency conversion: 1 P = Rp 1.000
+export const IDR_RATE = 1000;
+
 // Withdrawal methods
 export const WITHDRAWAL_METHODS = [
   { key: 'BANK_TRANSFER', label: 'Bank Transfer', note: '1–2 hari · 0% fee', min: 100 },

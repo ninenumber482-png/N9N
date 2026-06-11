@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestro
 import { CommonModule } from '@angular/common';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
+import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 
 const SESSION_MS = 300_000;
 const LOCK_MS = 60_000; // betting + result-editing close 1 min before draw (kept in sync with king.js)
@@ -140,16 +141,10 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
 @Component({
   selector: 'app-3dking',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule],
+  imports: [CommonModule, AngularSvgIconModule, PageHeaderComponent],
   template: `
     <div data-page="3dking" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-        <div class="page-header-icon"><svg-icon src="assets/icons/heroicons/outline/cube.svg" svgClass="h-4 w-4"></svg-icon></div>
-        <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">3D King Engine</h1>
-      </div>
-        <span class="text-[11px] text-muted-foreground">Settlement Engine</span>
-      </div>
+      <app-page-header icon="cube" title="3D King Engine" subtitle="Draw engine and session control" />
 
       <div class="bg-card border border-border page-accent-card p-5" style="border-top: 3px solid #D946EF;">
         <div class="grid grid-cols-4 gap-4 text-[11px]">

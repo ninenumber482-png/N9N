@@ -38,7 +38,7 @@ interface BetData {
     PageHeaderComponent, LoadingErrorComponent, FilterBarComponent, SeverityMapPipe],
   template: `
     <div data-page="bets" class="space-y-6">
-      <app-page-header icon="cursor-click" title="Bets" subtitle="View all bets across sessions">
+      <app-page-header icon="cursor-click" title="Bets" subtitle="All bets across marketplace sessions">
         <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari user, session, selection…">
           <p-select
             [(ngModel)]="statusFilter"
@@ -140,7 +140,7 @@ interface BetData {
             [rows]="pageSize"
             [totalRecords]="filtered.length"
             [showCurrentPageReport]="true"
-            currentPageReportTemplate="" />
+            currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
         </div>
       }
     </div>

@@ -28,7 +28,7 @@ export default function ConfirmDialog({
       >
         {showLogo && (
           <div className="mb-5 flex justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400/10 to-yellow-500/5 ring-1 ring-yellow-400/20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-yellow-400/10 to-yellow-500/5 ring-1 ring-yellow-400/20">
               <img
                 src="/assets/img/number9-logo.png"
                 alt="NUMBER9"
@@ -58,7 +58,7 @@ export default function ConfirmDialog({
             data-autofocus
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 h-12 rounded-xl bg-gradient-to-b from-yellow-400 to-yellow-500 text-sm font-extrabold text-black shadow-[0_0_20px_rgba(250,204,21,0.15)] hover:from-yellow-300 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(250,204,21,0.25)] transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex-1 h-12 rounded-xl bg-linear-to-b from-yellow-400 to-yellow-500 text-sm font-extrabold text-black shadow-[0_0_20px_rgba(250,204,21,0.15)] hover:from-yellow-300 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(250,204,21,0.25)] transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="inline-flex items-center justify-center gap-2.5">

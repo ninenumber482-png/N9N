@@ -10,6 +10,8 @@ const ALLOWED_ORIGINS = [
   "https://mynumber9.uk",
   "https://number9-app.pages.dev",
   "https://number9-admin.pages.dev",
+  "https://*.number9-app.pages.dev",
+  "https://*.number9-admin.pages.dev",
   "https://master.number9-app.pages.dev",
   "https://master.number9-admin.pages.dev",
   "http://localhost:5175",
@@ -21,7 +23,9 @@ const ALLOWED_ORIGINS = [
 
 function corsOrigin(req: Request): string {
   const o = req.headers.get("origin") || "";
-  return ALLOWED_ORIGINS.includes(o) ? o : ALLOWED_ORIGINS[0];
+  if (ALLOWED_ORIGINS.includes(o)) return o;
+  if (o.endsWith('.number9-app.pages.dev') || o.endsWith('.number9-admin.pages.dev')) return o;
+  return ALLOWED_ORIGINS[0];
 }
 
 const corsHeaders = (req?: Request, extra: Record<string, string> = {}) => {
@@ -108,7 +112,7 @@ Deno.serve(async (req) => {
 
     const { data: user, error: userErr } = await supabase
       .from('users')
-      .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, created_at')
+      .select('id, username, display_name, email, phone, role, registration_status, login_status, password_hash, country, created_at, bank_name, bank_account_number, bank_account_name')
       .eq('username', uname)
       .maybeSingle()
 
@@ -163,6 +167,9 @@ Deno.serve(async (req) => {
         role: user.role,
         country: user.country,
         created_at: user.created_at,
+        bank_name: user.bank_name || null,
+        bank_account_number: user.bank_account_number || null,
+        bank_account_name: user.bank_account_name || null,
       },
     }), { status: 200, headers: corsHeaders(req, { "Set-Cookie": cookie }) });
 

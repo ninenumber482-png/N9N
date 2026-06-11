@@ -9,61 +9,20 @@ const _warn = (msg, e) => { if (import.meta.env.DEV) console.warn('[wallet]', ms
 /* ---------- platform accounts ---------- */
 export async function fetchPlatformAccounts() {
   try {
-    console.log('[wallet] fetchPlatformAccounts called, supabase:', !!supabase);
-    if (!supabase) {
-      console.warn('[wallet] fetchPlatformAccounts: supabase client not initialized');
-      return [];
-    }
-
-    // Check auth token
-    const authRaw = localStorage.getItem('n9_auth');
-    console.log('[wallet] Auth token in localStorage:', !!authRaw);
-    if (authRaw) {
-      try {
-        const auth = JSON.parse(authRaw);
-        console.log('[wallet] Auth token value:', auth.token ? auth.token.substring(0, 20) + '...' : 'NONE');
-      } catch {}
-    }
-
-    console.log('[wallet] Querying platform_accounts with status=ACTIVE');
+    if (!supabase) return [];
     const { data, error } = await supabase
       .from('platform_accounts')
       .select('*')
       .eq('status', 'ACTIVE')
       .order('created_at');
 
-    console.log('[wallet] fetchPlatformAccounts response:', {
-      hasError: !!error,
-      errorCode: error?.code,
-      errorMsg: error?.message,
-      dataLength: data?.length,
-      errorKeys: error ? Object.keys(error) : []
-    });
-
     if (error) {
-      console.error('[wallet] FULL ERROR OBJECT:', JSON.stringify({
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        status: error.status,
-        statusText: error.statusText,
-        toString: error.toString()
-      }, null, 2));
+      _warn('fetchPlatformAccounts error', error);
       return [];
     }
+    if (!data || data.length === 0) return [];
 
-    if (!data) {
-      console.warn('[wallet] fetchPlatformAccounts: no data returned');
-      return [];
-    }
-
-    if (data.length === 0) {
-      console.log('[wallet] No ACTIVE platform accounts found in database');
-      return [];
-    }
-
-    const transformed = data.map(a => ({
+    return data.map(a => ({
       id: a.id,
       type: a.type === 'BANK' ? 'BANK_TRANSFER' : a.type === 'EWALLET' ? 'E_WALLET' : a.type,
       label: a.provider_name,
@@ -71,11 +30,8 @@ export async function fetchPlatformAccounts() {
       number: a.account_number,
       note: a.instructions || '',
     }));
-
-    console.log('[wallet] Fetched platform accounts:', transformed.length, transformed);
-    return transformed;
   } catch (e) {
-    console.error('[wallet] fetchPlatformAccounts exception:', e.message, e);
+    _warn('fetchPlatformAccounts exception', e);
   }
   return [];
 }
@@ -151,7 +107,7 @@ export async function requestDeposit(params) {
 
   try {
     const proofUrl = await uploadProof(params.userUuid, params.proof);
-    if (params.proof && !proofUrl) return { ok: false, error: "Proof upload failed. Check your connection and try again." };
+    if (params.proof && !proofUrl) return { ok: false, error: "Bukti gagal diupload. Cek koneksi dan coba lagi." };
     const idempotencyKey = newIdempotencyKey();
 
     const data = await apiInvoke('submit-deposit-wrapper', {
@@ -162,11 +118,16 @@ export async function requestDeposit(params) {
       p_idempotency_key: idempotencyKey,
     });
 
-    return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
+    if (!data?.id) {
+      return { ok: false, error: data?.message || data?.error || "Deposit gagal. Coba lagi." };
+    }
+
+    return { ok: true, tx: { id: data.id, amount: amt, status: 'PENDING', requestedAt: data.created_at || new Date().toISOString() } };
   } catch (e) {
     const msg = e?.message || "Network error";
     if (msg.includes('23505')) return { ok: false, error: "Deposit already pending (duplicate detected)" };
-    return { ok: false, error: "Failed to create deposit request" };
+    if (msg.includes('UNAUTHORIZED') || msg.includes('Sesi habis')) return { ok: false, error: "Sesi habis, silakan login ulang." };
+    return { ok: false, error: msg || "Gagal membuat deposit." };
   }
 }
 
@@ -192,14 +153,8 @@ export async function requestWithdraw(params) {
       return { ok: false, error: `Withdraw locked. Turnover remaining: ${formatNumber(eligibility.remaining)} P.` };
     }
 
-    // Check balance
-    const wallet = await fetchWalletBalance(params.userUuid);
-    if (amt > wallet.main) {
-      return { ok: false, error: "Insufficient main balance." };
-    }
-
     const idempotencyKey = newIdempotencyKey();
-    const data = await apiRpc('submit_withdrawal', {
+    const data = await apiInvoke('submit-withdrawal-wrapper', {
       p_user_id: params.userUuid,
       p_amount: amt,
       p_method: params.method || 'Bank Transfer',
@@ -213,7 +168,10 @@ export async function requestWithdraw(params) {
   } catch (e) {
     const msg = e?.message || "Network error";
     if (msg.includes('23505')) return { ok: false, error: "Withdrawal already pending (duplicate)" };
-    return { ok: false, error: "Failed to create withdrawal request" };
+    if (msg.includes('INSUFFICIENT_BALANCE')) return { ok: false, error: "Saldo utama tidak mencukupi." };
+    if (msg.includes('TURNOVER_NOT_MET')) return { ok: false, error: "Turnover belum terpenuhi." };
+    if (msg.includes('UNAUTHORIZED')) return { ok: false, error: "Sesi habis, silakan login ulang." };
+    return { ok: false, error: msg };
   }
 }
 
@@ -252,26 +210,24 @@ export async function fetchUserBank(userId) {
 
 export async function fetchTurnoverSummary(userId) {
   try {
-    const walletRow = await apiSelect('wallet', 'total_deposited', 'user_id', userId);
-    const totalDeposited = Number(walletRow?.total_deposited ?? 0);
-
-    const lockRows = await apiSelectAll('deposit_locks', `user_id=eq.${userId}&select=amount,turnover_required,turnover_applied,created_at&order=created_at.asc`);
-    if (!lockRows || lockRows.length === 0) return defaultTurnover();
-
-    const locks = (lockRows || []).map(r => {
-      const required = Number(r.turnover_required);
-      const applied = Math.min(Number(r.turnover_applied), required);
-      const remaining = Math.max(0, required - applied);
-      return { amount: Number(r.amount), required, applied, remaining,
-        pct: required > 0 ? Math.min(100, Math.round((applied / required) * 100)) : 100, done: remaining <= 0 };
-    });
-
-    const outstanding = locks.filter(l => !l.done);
-    const required = outstanding.reduce((s, l) => s + l.required, 0);
-    const achieved = outstanding.reduce((s, l) => s + l.applied, 0);
-    const remaining = Math.max(0, required - achieved);
-    const pct = required > 0 ? Math.min(100, Math.round((achieved / required) * 100)) : 100;
-    return { required, achieved, remaining, pct, totalDeposited, locks, isUnlocked: remaining <= 0 };
+    const data = await apiInvoke('get-turnover-summary', { userId });
+    if (!data) return defaultTurnover();
+    return {
+      required: Number(data.required ?? 0),
+      achieved: Number(data.achieved ?? 0),
+      remaining: Number(data.remaining ?? 0),
+      pct: Number(data.pct ?? 0),
+      totalDeposited: Number(data.totalDeposited ?? 0),
+      locks: Array.isArray(data.locks) ? data.locks.map(l => ({
+        amount: Number(l.amount ?? 0),
+        required: Number(l.required ?? 0),
+        applied: Number(l.applied ?? 0),
+        remaining: Number(l.remaining ?? 0),
+        pct: Number(l.pct ?? 0),
+        done: Boolean(l.done),
+      })) : [],
+      isUnlocked: Boolean(data.isUnlocked),
+    };
   } catch (e) {
     _warn('fetchTurnoverSummary failed', e);
     return defaultTurnover();
@@ -279,7 +235,7 @@ export async function fetchTurnoverSummary(userId) {
 }
 
 function defaultTurnover() {
-  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: true };
+  return { required: 0, achieved: 0, remaining: 0, pct: 100, totalDeposited: 0, locks: [], isUnlocked: false };
 }
 
 export async function fetchUserTransactions(userId, limit = 100) {
@@ -292,23 +248,24 @@ export async function fetchUserTransactions(userId, limit = 100) {
       .order('created_at', { ascending: false })
       .limit(limit);
     if (!error && data) return data.map(t => {
-      const mapped = {
+      if (!t?.id) return null;
+      const idStr = String(t.id);
+      return {
         id: t.id,
-        referenceCode: t.reference_code || t.id.slice(0, 8).toUpperCase(),
+        referenceCode: t.reference_code || (t.type === 'DEPOSIT' ? 'DEP-' : t.type === 'WITHDRAWAL' ? 'WTH-' : 'TXN-') + (idStr.length >= 8 ? idStr.slice(0, 8).toUpperCase() : idStr.toUpperCase()),
         type: t.type === 'WITHDRAWAL' ? 'WITHDRAW' : t.type,
-        amount: Number(t.amount),
-        status: t.status === 'COMPLETED' ? 'APPROVED' : t.status === 'FAILED' ? 'REJECTED' : t.status,
+        amount: Number(t.amount ?? 0),
+        status: t.status === 'COMPLETED' ? 'APPROVED' : t.status === 'FAILED' ? 'REJECTED' : (t.status || 'PENDING'),
         method: t.method || '',
         bankName: t.bank_name || '',
         bankAccountNumber: t.bank_account_number || '',
         bankAccountName: t.bank_account_name || '',
         proof: t.proof_image_url || '',
-        requestedAt: t.created_at,
+        requestedAt: t.created_at || new Date().toISOString(),
         processedAt: t.processed_at,
         notes: t.notes,
       };
-      return mapped;
-    });
+    }).filter(Boolean);
   } catch (e) {
     _warn('fetchUserTransactions failed', e);
   }

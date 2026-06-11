@@ -44,7 +44,9 @@ export const en = {
     edit: 'Edit',
     login_required: 'Please log in to continue.',
     back_to_login: 'Back to Login',
-    file_read_error: 'Cannot read file. Try another.'
+    file_read_error: 'Cannot read file. Try another.',
+    idr_rate: '1 P = Rp 1.000',
+    idr_value: 'IDR Value',
   },
 
   /* ─── NAVIGATION ─── */
@@ -439,6 +441,8 @@ export const en = {
     cat_gold: 'Gold Market Trends',
     cat_forex: 'Forex & Commodities',
     cat_press: 'Press Releases',
+    latest_news: 'Latest News',
+    no_news: 'No news available. Please try again later.',
   },
 
   /* ─── TURNOVER ─── */
@@ -511,7 +515,13 @@ export const en = {
     code_pending: 'Referral code pending',
     user_id: 'User ID',
     referral: 'Referral',
-    status: 'Status'
+    status: 'Status',
+    kyc_status: 'KYC Status',
+    registration_status: 'Registration Status',
+    approved_date: 'Approved Date',
+    kyc_verified: 'Verified',
+    kyc_rejected: 'Rejected',
+    kyc_pending: 'Pending'
   },
 
   /* ─── SUPPORT ─── */

@@ -38,7 +38,7 @@ export default function PopupBanner() {
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 text-sm font-bold"
         >✕</button>
         {banner.title && (
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-8 rounded-b-2xl">
+          <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/80 to-transparent p-4 pt-8 rounded-b-2xl">
             <p className="text-white text-sm font-semibold">{banner.title}</p>
           </div>
         )}

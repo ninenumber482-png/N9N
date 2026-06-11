@@ -35,12 +35,12 @@
   <div class="mx-3 my-3 rounded-lg bg-sidebar-hover p-2.5">
     <div class="flex items-center gap-2.5">
       <div class="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-accent text-sidebar-accent-foreground">
-        <svg-icon src="assets/icons/heroicons/outline/information-circle.svg" [svgClass]="'h-4 w-4'"></svg-icon>
+        <svg-icon src="assets/icons/heroicons/outline/clock.svg" [svgClass]="'h-4 w-4'"></svg-icon>
       </div>
       @if (menuService.showSideBar) {
         <div class="min-w-0 flex-1">
-          <p class="text-sidebar-foreground/60 truncate text-[10px] font-medium">System D v1.0</p>
-          <p class="text-sidebar-foreground/30 truncate text-[9px]">Connected</p>
+          <p class="text-sidebar-foreground/80 truncate text-[10px] font-medium tabular-nums">{{ clockTime || '--:--:--' }} WIB</p>
+          <p class="text-sidebar-foreground/30 truncate text-[9px]">System D · Connected</p>
         </div>
       }
     </div>

@@ -1,8 +1,33 @@
-const numberFormatter = new Intl.NumberFormat('id-ID', {
-  maximumFractionDigits: 2,
-});
+import { IDR_RATE } from '../constants';
 
-export function formatNumber(value) {
-  const number = Number(value ?? 0);
-  return numberFormatter.format(Number.isFinite(number) ? number : 0);
+export function formatNumber(value, options = {}) {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return '0';
+
+  const {
+    minimumFractionDigits = 0,
+    maximumFractionDigits = 0,
+    locale = 'id-ID'
+  } = options;
+
+  return num.toLocaleString(locale, {
+    minimumFractionDigits,
+    maximumFractionDigits,
+  });
+}
+
+export function formatCurrency(value, options = {}) {
+  return formatNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    ...options,
+  });
+}
+
+export function formatPoints(value) {
+  return formatNumber(value) + ' P';
+}
+
+export function formatIDR(points) {
+  return 'Rp ' + formatNumber(points * IDR_RATE);
 }
