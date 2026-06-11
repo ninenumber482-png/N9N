@@ -169,7 +169,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
 
       <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-[11px]">
+          <table class="saas-table w-full text-left text-[11px]">
             <thead>
               <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
                 <th class="px-3 py-2.5 w-8">#</th>

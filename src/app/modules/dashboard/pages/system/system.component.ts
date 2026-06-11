@@ -150,7 +150,7 @@ interface ConfigEntry {
               </div>
             </div>
           }
-          <table class="w-full text-left text-[11px]">
+          <table class="saas-table w-full text-left text-[11px]">
             <thead>
               <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
                 <th class="px-3 py-2.5">Key</th>

@@ -35,7 +35,7 @@ interface AdminUser {
       @if (!loading) {
         <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #60A5FA;">
           <div class="overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">

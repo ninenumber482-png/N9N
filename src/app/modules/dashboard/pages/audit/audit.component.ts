@@ -59,7 +59,7 @@ interface AuditItem {
       @if (!loading && !error) {
         @if (tab === 'audit') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -116,7 +116,7 @@ interface AuditItem {
 
         @if (tab === 'user_audit') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -168,7 +168,7 @@ interface AuditItem {
 
         @if (tab === 'security') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -217,7 +217,7 @@ interface AuditItem {
 
         @if (tab === 'failed_logins') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">

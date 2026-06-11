@@ -167,7 +167,7 @@ interface PageEvent {
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="depLoading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-xs sm:text-sm">
+          <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
                 class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -316,7 +316,7 @@ interface PageEvent {
 
       <div class="bg-card border-border rounded-lg border overflow-hidden" [class.hidden]="wdLoading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-xs sm:text-sm">
+          <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
                 class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -460,7 +460,7 @@ interface PageEvent {
 
       <div class="bg-card border-border rounded-lg border overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-xs sm:text-sm">
+          <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
                 class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -517,7 +517,7 @@ interface PageEvent {
       </app-filter-bar>
       <div class="bg-card border-border rounded-lg border overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-xs sm:text-sm">
+          <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">User</th>

@@ -57,7 +57,7 @@ interface SecurityItem {
       @if (!loading && !error) {
         @if (tab === 'alerts') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -105,7 +105,7 @@ interface SecurityItem {
         }
         @if (tab === 'failed') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -146,7 +146,7 @@ interface SecurityItem {
         }
         @if (tab === 'audit') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-xs sm:text-sm">
+            <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
                   class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">

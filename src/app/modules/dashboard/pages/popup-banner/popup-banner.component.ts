@@ -105,7 +105,7 @@ interface BannerData {
         }
 
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
+          <table class="saas-table w-full text-left text-sm">
             <thead>
               <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
                 <th class="px-5 py-3.5">Preview</th>

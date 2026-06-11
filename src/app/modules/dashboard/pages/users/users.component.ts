@@ -150,7 +150,7 @@ interface BetRow {
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-xs sm:text-sm">
+          <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
                 class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -494,7 +494,7 @@ interface BetRow {
                 @if (activeTab === 'transactions') {
                   @if (modalData.transactions?.length) {
                     <div class="overflow-x-auto">
-                      <table class="w-full text-left text-xs">
+                      <table class="saas-table w-full text-left text-xs">
                         <thead>
                           <tr
                             class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -528,7 +528,7 @@ interface BetRow {
                 @if (activeTab === 'bets') {
                   @if (modalData.bets?.length) {
                     <div class="overflow-x-auto">
-                      <table class="w-full text-left text-xs">
+                      <table class="saas-table w-full text-left text-xs">
                         <thead>
                           <tr
                             class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
@@ -573,7 +573,7 @@ interface BetRow {
                 @if (activeTab === 'sessions') {
                   @if (modalData.sessions?.length) {
                     <div class="overflow-x-auto">
-                      <table class="w-full text-left text-xs">
+                      <table class="saas-table w-full text-left text-xs">
                         <thead>
                           <tr
                             class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">

@@ -108,7 +108,7 @@ interface TransactionItem {
 
       <div class="bg-card border-border rounded-lg page-accent-card">
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
+          <table class="saas-table w-full text-left text-xs">
             <thead>
               <tr
                 class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
