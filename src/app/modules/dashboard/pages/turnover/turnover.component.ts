@@ -47,52 +47,52 @@ interface WalletData {
         </div>
 
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Main</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Bonus</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Deposited</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Withdrawn</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Turnover</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Locked</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Net</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">PnL</th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Main</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Bonus</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Deposited</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Withdrawn</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Turnover</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Locked</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Net</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">PnL</th>
               </tr>
             </thead>
             <tbody>
               @for (w of displayWallets; track w.user_id) {
                 <tr class="border-border hover:bg-accent/30 border-b">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p class="font-semibold text-foreground text-xs">
                       {{ w.user?.username || w.user_id.slice(0, 8) }}
                     </p>
-                    <p class="text-[10px] text-muted-foreground">{{ w.user?.display_name }}</p>
+                    <p class="text-[11px] text-muted-foreground">{{ w.user?.display_name }}</p>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ w.balance_main | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ w.balance_bonus | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-foreground">
                     {{ w.total_deposited | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ w.total_withdrawn | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-semibold text-foreground">
                     {{ w.total_turnover | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-foreground">
                     {{ w.locked_remaining ? (w.locked_remaining | number) : '—' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ w.total_deposited - w.total_withdrawn | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-foreground">
                     {{ w.total_deposited - w.total_withdrawn >= 0 ? '+' : ''
                     }}{{ w.total_deposited - w.total_withdrawn | number }}
                   </td>

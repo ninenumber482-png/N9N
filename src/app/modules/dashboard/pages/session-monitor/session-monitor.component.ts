@@ -38,42 +38,42 @@ interface SessionData {
 
       @if (!loading && !error) {
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">IP Address</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Browser</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Device</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Last Activity</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Expires</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3"></th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">IP Address</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Browser</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Device</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Last Activity</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Expires</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5"></th>
               </tr>
             </thead>
             <tbody>
               @for (s of displaySessions; track s.id) {
                 <tr class="border-border hover:bg-accent/30 border-b">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-semibold text-foreground">
                     {{ s.user_id.slice(0, 8) }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono text-muted-foreground max-sm:hidden">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono text-muted-foreground max-sm:hidden">
                     {{ s.ip_address || '-' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground max-sm:hidden">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground max-sm:hidden">
                     {{ s.browser_info || '-' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground max-sm:hidden">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground max-sm:hidden">
                     {{ s.device_info?.model || s.user_agent?.slice(0, 30) || '-' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground whitespace-nowrap">
                     {{ s.last_activity | wibDate: 'short' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground whitespace-nowrap">
                     {{ s.expires_at | wibDate: 'short' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     @if (s.logged_out_at) {
                       <p-tag value="Ended" severity="secondary" />
                     } @else if (isExpired(s.expires_at)) {
@@ -82,12 +82,12 @@ interface SessionData {
                       <p-tag value="Active" severity="success" />
                     }
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     @if (!s.logged_out_at && !isExpired(s.expires_at)) {
                       <button
                         (click)="killSession(s.id)"
                         [disabled]="killing === s.id"
-                        class="text-[10px] font-medium text-muted-foreground hover:text-foreground transition">
+                        class="text-[11px] font-medium text-muted-foreground hover:text-foreground transition">
                         {{ killing === s.id ? '...' : 'Kill' }}
                       </button>
                     }

@@ -105,7 +105,7 @@ interface PlatformAccountRecord {
             <table class="w-full text-left text-xs">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="px-3 py-2.5">User</th>
                   <th class="px-3 py-2.5">Balance</th>
                   <th class="px-3 py-2.5">Bonus</th>
@@ -123,7 +123,7 @@ interface PlatformAccountRecord {
                   <tr class="border-border hover:bg-accent/30 border-b text-xs transition-colors">
                     <td class="px-3 py-2.5">
                       <p class="font-medium text-foreground">{{ w.user?.display_name || w.user?.username || '—' }}</p>
-                      <p class="text-muted-foreground text-[10px]">
+                      <p class="text-muted-foreground text-[11px]">
                         &#64;{{ w.user?.username || w.user_id.slice(0, 8) }}
                       </p>
                     </td>
@@ -154,19 +154,19 @@ interface PlatformAccountRecord {
                     <td class="px-3 py-2.5 text-foreground font-semibold whitespace-nowrap">
                       {{ w.total_turnover | number: '1.0-0' }} P
                       @if (w.total_deposited > 0) {
-                        <span class="text-muted-foreground text-[9px] ml-1"
+                        <span class="text-muted-foreground text-xs ml-1"
                           >({{ w.total_turnover / w.total_deposited | number: '1.1-1' }}x)</span
                         >
                       }
                     </td>
-                    <td class="text-muted-foreground px-3 py-2.5 text-[10px] whitespace-nowrap">
+                    <td class="text-muted-foreground px-3 py-2.5 text-[11px] whitespace-nowrap">
                       {{ w.updated_at | wibDate: 'short' }}
                     </td>
                     <td class="px-3 py-2.5">
                       @if (isSuperadmin) {
                         <button
                           (click)="openAdjust(w)"
-                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[10px] font-medium text-foreground transition-colors">
+                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
                           Sesuaikan
                         </button>
                       }
@@ -215,7 +215,7 @@ interface PlatformAccountRecord {
             </h3>
             <div class="grid gap-3 sm:grid-cols-2">
               <div class="space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
                   >Nama Bank / Provider <span class="text-destructive">*</span></label
                 >
                 <input
@@ -225,7 +225,7 @@ interface PlatformAccountRecord {
                   class="!w-full !text-xs" />
               </div>
               <div class="space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
                   >Nama Pemilik <span class="text-destructive">*</span></label
                 >
                 <input
@@ -235,7 +235,7 @@ interface PlatformAccountRecord {
                   class="!w-full !text-xs" />
               </div>
               <div class="space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
                   >Nomor Rekening <span class="text-destructive">*</span></label
                 >
                 <input
@@ -245,7 +245,7 @@ interface PlatformAccountRecord {
                   class="!w-full !text-xs" />
               </div>
               <div class="space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
                   >Kode Pembayaran (opsional)</label
                 >
                 <input
@@ -255,7 +255,7 @@ interface PlatformAccountRecord {
                   class="!w-full !text-xs" />
               </div>
               <div class="space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tipe <span class="text-destructive">*</span></label>
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tipe <span class="text-destructive">*</span></label>
                 <p-select
                   [(ngModel)]="editingAccount.type"
                   [options]="accountTypeOptions"
@@ -265,7 +265,7 @@ interface PlatformAccountRecord {
                   styleClass="!text-xs !w-full" />
               </div>
               <div class="space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Status <span class="text-destructive">*</span></label>
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status <span class="text-destructive">*</span></label>
                 <p-select
                   [(ngModel)]="editingAccount.status"
                   [options]="accountStatusOptions"
@@ -275,7 +275,7 @@ interface PlatformAccountRecord {
                   styleClass="!text-xs !w-full" />
               </div>
               <div class="sm:col-span-2 space-y-1">
-                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
                   >Instruksi Pembayaran</label
                 >
                 <textarea
@@ -305,7 +305,7 @@ interface PlatformAccountRecord {
             <table class="w-full text-left text-xs">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="px-3 py-2.5">Provider</th>
                   <th class="px-3 py-2.5">Pemilik</th>
                   <th class="px-3 py-2.5">No. Rekening</th>
@@ -330,12 +330,12 @@ interface PlatformAccountRecord {
                       <div class="flex gap-1">
                         <button
                           (click)="startEditAccount(a)"
-                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[10px] font-medium text-foreground transition-colors">
+                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
                           Edit
                         </button>
                         <button
                           (click)="confirmToggleAccount(a)"
-                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors">
+                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors">
                           {{ a.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan' }}
                         </button>
                       </div>

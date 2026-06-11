@@ -108,11 +108,11 @@ interface BannerData {
           <table class="w-full text-left text-sm">
             <thead>
               <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
-                <th class="px-4 py-3">Preview</th>
-                <th class="px-4 py-3">Judul</th>
-                <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3">Dibuat</th>
-                <th class="px-4 py-3 text-right">Aksi</th>
+                <th class="px-5 py-3.5">Preview</th>
+                <th class="px-5 py-3.5">Judul</th>
+                <th class="px-5 py-3.5">Status</th>
+                <th class="px-5 py-3.5">Dibuat</th>
+                <th class="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -121,8 +121,8 @@ interface BannerData {
                   <td class="px-4 py-2">
                     <img [src]="b.image_url" class="w-20 h-12 object-cover rounded border border-border" />
                   </td>
-                  <td class="px-4 py-3">{{ b.title || '—' }}</td>
-                  <td class="px-4 py-3">
+                  <td class="px-5 py-3.5">{{ b.title || '—' }}</td>
+                  <td class="px-5 py-3.5">
                     <button
                       (click)="toggleActive(b)"
                       [disabled]="toggling === b.id"
@@ -134,8 +134,8 @@ interface BannerData {
                       {{ b.active ? 'Aktif' : 'Nonaktif' }}
                     </button>
                   </td>
-                  <td class="px-4 py-3 text-xs">{{ b.created_at | wibDate: 'short' }}</td>
-                  <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <td class="px-5 py-3.5 text-xs">{{ b.created_at | wibDate: 'short' }}</td>
+                  <td class="px-5 py-3.5 text-right whitespace-nowrap">
                     <button
                       (click)="editBanner(b)"
                       class="px-3 py-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors rounded hover:bg-amber-400/10">

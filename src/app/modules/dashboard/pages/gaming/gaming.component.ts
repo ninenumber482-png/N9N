@@ -47,7 +47,7 @@ interface BetData {
             routerLink="/3dking"
             class="bg-card border-border hover:border-foreground/20 rounded-lg border p-4 transition-all hover:shadow-sm group">
             <div class="flex items-center justify-between">
-              <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Active Sessions</p>
+              <p class="text-muted-foreground text-xs font-bold uppercase tracking-widest">Active Sessions</p>
               <div class="rounded-lg bg-accent/20 p-2 group-hover:bg-accent/30 transition-colors">
                 <svg-icon
                   src="assets/icons/heroicons/outline/trending-up.svg"
@@ -55,13 +55,13 @@ interface BetData {
               </div>
             </div>
             <p class="mt-2 text-2xl font-black text-foreground">{{ activeSessions }}</p>
-            <p class="mt-1 text-[10px] font-semibold text-muted-foreground">Open for betting</p>
+            <p class="mt-1 text-[11px] font-semibold text-muted-foreground">Open for betting</p>
           </a>
           <a
             routerLink="/bets"
             class="bg-card border-border hover:border-foreground/20 rounded-lg border p-4 transition-all hover:shadow-sm group">
             <div class="flex items-center justify-between">
-              <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Total Bets Today</p>
+              <p class="text-muted-foreground text-xs font-bold uppercase tracking-widest">Total Bets Today</p>
               <div class="rounded-lg bg-accent/20 p-2 group-hover:bg-accent/30 transition-colors">
                 <svg-icon
                   src="assets/icons/heroicons/outline/chart-pie.svg"
@@ -69,11 +69,11 @@ interface BetData {
               </div>
             </div>
             <p class="mt-2 text-2xl font-black text-foreground">{{ totalBetsToday }}</p>
-            <p class="mt-1 text-[10px] font-semibold text-muted-foreground">All timezones</p>
+            <p class="mt-1 text-[11px] font-semibold text-muted-foreground">All timezones</p>
           </a>
           <div class="bg-card border-border rounded-lg border p-4">
             <div class="flex items-center justify-between">
-              <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Total Stakes</p>
+              <p class="text-muted-foreground text-xs font-bold uppercase tracking-widest">Total Stakes</p>
               <div class="rounded-lg bg-accent/20 p-2">
                 <svg-icon
                   src="assets/icons/heroicons/outline/currency-dollar.svg"
@@ -81,56 +81,56 @@ interface BetData {
               </div>
             </div>
             <p class="mt-2 text-2xl font-black text-foreground">{{ totalStakes | number }}</p>
-            <p class="mt-1 text-[10px] font-semibold text-muted-foreground">Aggregated</p>
+            <p class="mt-1 text-[11px] font-semibold text-muted-foreground">Aggregated</p>
           </div>
           <div class="bg-card border-border rounded-lg border p-4">
             <div class="flex items-center justify-between">
-              <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Payout Ratio</p>
+              <p class="text-muted-foreground text-xs font-bold uppercase tracking-widest">Payout Ratio</p>
               <div class="rounded-lg bg-accent/20 p-2">
                 <svg-icon src="assets/icons/heroicons/outline/scale.svg" svgClass="h-4 w-4 text-foreground"></svg-icon>
               </div>
             </div>
             <p class="mt-2 text-2xl font-black text-foreground">{{ payoutRatio }}%</p>
-            <p class="mt-1 text-[10px] font-semibold text-muted-foreground">Payout / Stake</p>
+            <p class="mt-1 text-[11px] font-semibold text-muted-foreground">Payout / Stake</p>
           </div>
         </div>
 
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div class="flex items-center justify-between px-5 py-3.5 border-b border-border">
             <h3 class="text-sm font-bold text-foreground">Recent Game Sessions</h3>
             <a routerLink="/3dking" class="text-xs font-medium text-muted-foreground hover:text-foreground transition"
               >Open 3D King →</a
             >
           </div>
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Session</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Bets</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Total Stake</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Payout</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Created</th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Session</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Bets</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Total Stake</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Payout</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Created</th>
               </tr>
             </thead>
             <tbody>
               @for (s of displaySessions; track s.session_code) {
                 <tr class="border-border hover:bg-accent/30 border-b">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono font-semibold text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono font-semibold text-foreground">
                     {{ s.session_code }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p-tag [value]="s.status" [severity]="s.status | severityMap" />
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">{{ s.bet_count }}</td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">{{ s.bet_count }}</td>
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ s.total_stake | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ s.total_payout | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground whitespace-nowrap">
                     {{ s.created_at | wibDate: 'short' }}
                   </td>
                 </tr>

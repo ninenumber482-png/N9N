@@ -71,26 +71,26 @@ interface RiskProfile {
         </div>
 
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Risk Score</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Level</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Turnover</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Net</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Flags</th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Risk Score</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Level</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Turnover</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Net</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Flags</th>
               </tr>
             </thead>
             <tbody>
               @for (r of displayProfiles; track r.user_id) {
                 <tr class="border-border hover:bg-accent/30 border-b">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p class="font-semibold text-foreground text-xs">{{ r.username }}</p>
-                    <p class="text-[10px] text-muted-foreground">{{ r.display_name }}</p>
+                    <p class="text-[11px] text-muted-foreground">{{ r.display_name }}</p>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <div class="flex items-center gap-2">
                       <div class="h-2 w-16 rounded-full bg-accent/40 overflow-hidden">
                         <div class="h-full rounded-full bg-foreground" [style.width.%]="r.score"></div>
@@ -98,25 +98,25 @@ interface RiskProfile {
                       <span class="font-bold text-foreground">{{ r.score }}</span>
                     </div>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p-tag
                       [value]="r.level"
                       [severity]="r.level === 'HIGH' ? 'danger' : r.level === 'MEDIUM' ? 'warn' : 'success'" />
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground max-sm:hidden">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground max-sm:hidden">
                     {{ r.turnover | number }}
                   </td>
                   <td
-                    class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden"
+                    class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden"
                     [class.text-foreground]="r.net >= 0"
                     [class.text-muted-foreground]="r.net < 0">
                     {{ r.net | number }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">
                     <div class="flex flex-wrap gap-1">
                       @for (f of r.flags; track f) {
                         <span
-                          class="rounded bg-card border-border text-foreground border px-1.5 py-0.5 text-[9px] font-medium"
+                          class="rounded bg-card border-border text-foreground border px-1.5 py-0.5 text-xs font-medium"
                           >{{ f }}</span
                         >
                       }

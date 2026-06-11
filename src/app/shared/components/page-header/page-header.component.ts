@@ -10,12 +10,12 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="page-header-icon">
-          <svg-icon [src]="'assets/icons/heroicons/outline/' + icon() + '.svg'" svgClass="h-4 w-4"></svg-icon>
+          <svg-icon [src]="'assets/icons/heroicons/outline/' + icon() + '.svg'" svgClass="h-5 w-5"></svg-icon>
         </div>
         <div>
-          <h1 class="max-sm:text-lg sm:text-xl font-bold text-foreground tracking-tight">{{ title() }}</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-foreground tracking-tight">{{ title() }}</h1>
           @if (subtitle()) {
-            <p class="text-muted-foreground mt-0.5 text-xs">{{ subtitle() }}</p>
+            <p class="text-muted-foreground mt-1 text-sm">{{ subtitle() }}</p>
           }
         </div>
       </div>

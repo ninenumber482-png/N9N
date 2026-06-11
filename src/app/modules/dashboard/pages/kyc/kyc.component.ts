@@ -58,42 +58,42 @@ interface KycDocument {
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Tipe</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
-                <th class="max-sm:hidden sm:px-4 sm:py-3">Tanggal</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Dokumen</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Aksi</th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Tipe</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
+                <th class="max-sm:hidden sm:px-5 sm:py-3.5">Tanggal</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Dokumen</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Aksi</th>
               </tr>
             </thead>
             <tbody>
               @for (k of displayDocs; track k.id) {
                 <tr class="border-border border-b text-xs">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p class="font-semibold text-foreground">
                       {{ k.user_display_name || k.user_username || k.user_id?.slice(0, 16) || '—' }}
                     </p>
                     @if (k.user_username) {
-                      <p class="text-muted-foreground text-[10px]">&#64;{{ k.user_username }}</p>
+                      <p class="text-muted-foreground text-[11px]">&#64;{{ k.user_username }}</p>
                     }
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                     {{ k.document_type || 'ID' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p-tag [value]="k.status" [severity]="k.status | severityMap" />
                     @if (k.rejection_reason) {
-                      <p class="text-[9px] text-muted-foreground mt-0.5">{{ k.rejection_reason }}</p>
+                      <p class="text-xs text-muted-foreground mt-0.5">{{ k.rejection_reason }}</p>
                     }
                   </td>
-                  <td class="max-sm:hidden text-muted-foreground whitespace-nowrap sm:px-4 sm:py-3 text-[10px]">
+                  <td class="max-sm:hidden text-muted-foreground whitespace-nowrap sm:px-5 sm:py-3.5 text-[11px]">
                     {{ k.created_at | wibDate: 'short' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     @if (docUrls[k.id]) {
                       <img
                         [src]="docUrls[k.id]"
@@ -104,24 +104,24 @@ interface KycDocument {
                       <button
                         (click)="loadDocUrl(k.id)"
                         [disabled]="loadingUrls.has(k.id)"
-                        class="text-muted-foreground hover:text-foreground text-[10px] underline">
+                        class="text-muted-foreground hover:text-foreground text-[11px] underline">
                         {{ loadingUrls.has(k.id) ? '...' : 'Lihat' }}
                       </button>
                     }
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     @if (k.status === 'PENDING') {
                       <div class="flex flex-wrap gap-1">
                         <button
                           (click)="confirmApprove(k)"
                           [disabled]="approving.has(k.id)"
-                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[10px] font-medium">
+                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[11px] font-medium">
                           {{ approving.has(k.id) ? '...' : 'Setujui' }}
                         </button>
                         <button
                           (click)="confirmReject(k)"
                           [disabled]="approving.has(k.id)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
                           Tolak
                         </button>
                       </div>
@@ -130,7 +130,7 @@ interface KycDocument {
                       <button
                         (click)="confirmReverify(k)"
                         [disabled]="approving.has(k.id)"
-                        class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[10px] font-medium">
+                        class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
                         {{ approving.has(k.id) ? '...' : 'Verifikasi Ulang' }}
                       </button>
                     }
@@ -185,7 +185,7 @@ interface KycDocument {
               milik <span class="text-foreground font-medium">{{ rejectModal.doc.user_username || rejectModal.doc.user_id?.slice(0, 16) }}</span>?
             </p>
             <div class="mb-4">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Alasan Penolakan</label>
+              <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Alasan Penolakan</label>
               <input pInputText [(ngModel)]="rejectModal.reason" placeholder="Dokumen tidak lengkap" class="!w-full !text-xs" />
             </div>
             <div class="flex gap-2">

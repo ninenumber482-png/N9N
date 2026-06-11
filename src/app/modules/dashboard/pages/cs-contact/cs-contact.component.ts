@@ -32,7 +32,7 @@ import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/l
                   [(ngModel)]="form.wa_number"
                   placeholder="e.g. 13088802313 (without +)"
                   class="bg-muted border-border text-foreground rounded-lg border px-3 py-2.5 text-sm outline-none w-full focus:border-primary/50 transition-colors" />
-                <p class="text-muted-foreground text-[10px] mt-1">International format, no leading + or spaces</p>
+                <p class="text-muted-foreground text-[11px] mt-1">International format, no leading + or spaces</p>
               </div>
 
               <div>

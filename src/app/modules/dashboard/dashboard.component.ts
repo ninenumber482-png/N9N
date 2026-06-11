@@ -47,27 +47,27 @@ const PAGE_ORDER = [
               @if (prev) {
                 <a
                   [routerLink]="prev.route"
-                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
+                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
                   <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                   </svg>
                   <div class="text-left">
-                    <p class="text-[10px] text-muted-foreground group-hover:text-primary/70">Previous</p>
+                    <p class="text-[11px] text-muted-foreground group-hover:text-primary/70">Previous</p>
                     <p class="text-xs font-bold">{{ prev.label }}</p>
                   </div>
                 </a>
               }
             </div>
-            <div class="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider text-center px-2">
+            <div class="text-muted-foreground text-xs font-semibold uppercase tracking-wider text-center px-2">
               {{ current.label }}
             </div>
             <div>
               @if (next) {
                 <a
                   [routerLink]="next.route"
-                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
+                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
                   <div class="text-right">
-                    <p class="text-[10px] text-muted-foreground group-hover:text-primary/70">Next</p>
+                    <p class="text-[11px] text-muted-foreground group-hover:text-primary/70">Next</p>
                     <p class="text-xs font-bold">{{ next.label }}</p>
                   </div>
                   <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

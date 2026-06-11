@@ -32,12 +32,12 @@ interface ConfigEntry {
       @if (!loading && !error) {
         <!-- Marketplace + Maintenance Controls -->
         <div class="bg-card border border-border rounded-lg">
-          <div class="border-b border-border px-4 py-3">
+          <div class="border-b border-border px-5 py-3.5">
             <h3 class="text-sm font-medium text-foreground">Marketplace Control</h3>
           </div>
           <div class="divide-y divide-border">
             <!-- King Status -->
-            <div class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center justify-between px-5 py-3.5">
               <div class="flex items-center gap-3">
                 <span class="text-base">🎮</span>
                 <div>
@@ -57,7 +57,7 @@ interface ConfigEntry {
             </div>
 
             <!-- Maintenance -->
-            <div class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center justify-between px-5 py-3.5">
               <div class="flex items-center gap-3">
                 <span class="text-base">🔧</span>
                 <div>
@@ -80,10 +80,10 @@ interface ConfigEntry {
 
         <!-- Engine Status -->
         <div class="bg-card border border-border rounded-lg">
-          <div class="border-b border-border px-4 py-3">
+          <div class="border-b border-border px-5 py-3.5">
             <h3 class="text-sm font-medium text-foreground">Engine Status</h3>
           </div>
-          <div class="p-4">
+          <div class="p-5">
             @if (engineData) {
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[11px]">
                 <div>
@@ -117,7 +117,7 @@ interface ConfigEntry {
 
         <!-- Config Table -->
         <div class="bg-card border border-border rounded-lg overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div class="flex items-center justify-between px-5 py-3.5 border-b border-border">
             <h3 class="text-sm font-medium text-foreground">Configuration</h3>
             <button
               (click)="openAddForm()"
@@ -126,25 +126,25 @@ interface ConfigEntry {
             </button>
           </div>
           @if (addForm.open) {
-            <div class="px-4 py-3 border-b border-border bg-accent/10 flex flex-wrap gap-2 items-end">
+            <div class="px-5 py-3.5 border-b border-border bg-accent/10 flex flex-wrap gap-2 items-end">
               <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Config Key</label>
+                <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Config Key</label>
                 <input pInputText [(ngModel)]="addForm.key" placeholder="e.g. max_bet_amount" class="!text-xs !py-1.5 !px-2.5 !w-44" />
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Value</label>
+                <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Value</label>
                 <input pInputText [(ngModel)]="addForm.value" placeholder="Value" class="!text-xs !py-1.5 !px-2.5 !w-44" />
               </div>
               <div class="flex gap-1.5">
                 <button
                   (click)="submitAddConfig()"
                   [disabled]="!addForm.key.trim() || saving"
-                  class="bg-foreground text-background rounded px-3 py-1.5 text-[10px] font-semibold disabled:opacity-50">
+                  class="bg-foreground text-background rounded px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50">
                   {{ saving ? '...' : 'Save' }}
                 </button>
                 <button
                   (click)="addForm = { open: false, key: '', value: '' }"
-                  class="bg-card border-border text-muted-foreground rounded border px-2.5 py-1.5 text-[10px] font-medium">
+                  class="bg-card border-border text-muted-foreground rounded border px-2.5 py-1.5 text-[11px] font-medium">
                   Cancel
                 </button>
               </div>
@@ -152,7 +152,7 @@ interface ConfigEntry {
           }
           <table class="w-full text-left text-[11px]">
             <thead>
-              <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-[9px] bg-muted/10">
+              <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
                 <th class="px-3 py-2.5">Key</th>
                 <th class="px-3 py-2.5">Value</th>
                 <th class="px-3 py-2.5">Updated</th>
@@ -179,14 +179,14 @@ interface ConfigEntry {
                     @if (editingKey === c.key) {
                       <button
                         (click)="saveConfig(c.key)"
-                        class="text-[10px] text-foreground hover:text-muted-foreground mr-2">
+                        class="text-[11px] text-foreground hover:text-muted-foreground mr-2">
                         Save
                       </button>
-                      <button (click)="cancelEdit()" class="text-[10px] text-muted-foreground hover:text-foreground">
+                      <button (click)="cancelEdit()" class="text-[11px] text-muted-foreground hover:text-foreground">
                         Cancel
                       </button>
                     } @else {
-                      <button (click)="startEdit(c)" class="text-[10px] text-foreground hover:text-muted-foreground">
+                      <button (click)="startEdit(c)" class="text-[11px] text-foreground hover:text-muted-foreground">
                         Edit
                       </button>
                     }
@@ -204,7 +204,7 @@ interface ConfigEntry {
 
       <!-- EC2 Server Monitor — selalu tampil, independen dari loading configs -->
       <div class="bg-card border border-border rounded-lg">
-        <div class="flex items-center justify-between border-b border-border px-4 py-3">
+        <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
           <h3 class="text-sm font-medium text-foreground">EC2 Server Monitor</h3>
           <span
             class="flex items-center gap-1.5 text-[11px]"
@@ -220,7 +220,7 @@ interface ConfigEntry {
             {{ serverStatus === 'online' ? 'Online' : serverStatus === 'offline' ? 'Offline' : 'Connecting...' }}
           </span>
         </div>
-        <div class="p-4">
+        <div class="p-5">
           <div class="grid grid-cols-2 gap-4 text-[11px]">
             <div>
               <p class="text-muted-foreground mb-1">CPU Usage</p>
@@ -255,7 +255,7 @@ interface ConfigEntry {
               }
             </div>
           </div>
-          <p class="text-[10px] text-muted-foreground mt-3">Auto-refresh setiap 5 detik via Cloudflare Worker</p>
+          <p class="text-[11px] text-muted-foreground mt-3">Auto-refresh setiap 5 detik via Cloudflare Worker</p>
         </div>
       </div>
     </div>

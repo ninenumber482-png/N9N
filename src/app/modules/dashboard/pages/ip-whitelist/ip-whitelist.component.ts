@@ -59,19 +59,19 @@ interface WhitelistEntry {
           <table class="w-full text-left text-sm">
             <thead>
               <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
-                <th class="px-4 py-3">IP Address</th>
-                <th class="px-4 py-3">Label</th>
-                <th class="px-4 py-3">Ditambahkan</th>
-                <th class="px-4 py-3 text-right">Aksi</th>
+                <th class="px-5 py-3.5">IP Address</th>
+                <th class="px-5 py-3.5">Label</th>
+                <th class="px-5 py-3.5">Ditambahkan</th>
+                <th class="px-5 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
               @for (e of entries; track e.id) {
                 <tr class="border-b border-border text-muted-foreground hover:bg-muted/5">
-                  <td class="px-4 py-3 font-mono text-foreground">{{ e.ip_address }}</td>
-                  <td class="px-4 py-3">{{ e.label || '—' }}</td>
-                  <td class="px-4 py-3 text-xs">{{ e.created_at | wibDate: 'short' }}</td>
-                  <td class="px-4 py-3 text-right">
+                  <td class="px-5 py-3.5 font-mono text-foreground">{{ e.ip_address }}</td>
+                  <td class="px-5 py-3.5">{{ e.label || '—' }}</td>
+                  <td class="px-5 py-3.5 text-xs">{{ e.created_at | wibDate: 'short' }}</td>
+                  <td class="px-5 py-3.5 text-right">
                     <button
                       (click)="removeIp(e.id)"
                       [disabled]="deleting === e.id"

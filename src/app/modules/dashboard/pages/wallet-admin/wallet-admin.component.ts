@@ -167,10 +167,10 @@ interface PageEvent {
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="depLoading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">Ref#</th>
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Nominal</th>
@@ -185,17 +185,17 @@ interface PageEvent {
                 <tr
                   class="border-border hover:bg-accent/30 border-b text-xs transition-colors cursor-pointer"
                   (click)="openDepDetail(tx)">
-                  <td class="px-3 py-3 font-mono text-[10px] text-muted-foreground">
+                  <td class="px-3 py-3 font-mono text-[11px] text-muted-foreground">
                     {{ tx.reference_code || tx.id.slice(0, 8).toUpperCase() }}
                   </td>
                   <td class="px-3 py-3">
                     <p class="font-semibold text-foreground">{{ tx.user?.display_name || tx.user?.username || '—' }}</p>
-                    <p class="text-muted-foreground text-[10px]">&#64;{{ tx.user?.username }}</p>
+                    <p class="text-muted-foreground text-[11px]">&#64;{{ tx.user?.username }}</p>
                   </td>
                   <td class="px-3 py-3 font-bold text-foreground">+{{ tx.amount | number: '1.0-0' }} P</td>
-                  <td class="px-3 py-3 text-[10px] text-muted-foreground">{{ tx.method || '-' }}</td>
+                  <td class="px-3 py-3 text-[11px] text-muted-foreground">{{ tx.method || '-' }}</td>
                   <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="tx.status | severityMap" /></td>
-                  <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[10px]">
+                  <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[11px]">
                     {{ tx.created_at | wibDate: 'short' }}
                   </td>
                   <td class="px-3 py-3">
@@ -204,13 +204,13 @@ interface PageEvent {
                         <button
                           (click)="confirmApproveDep(tx)"
                           [disabled]="depProcessing"
-                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[10px] font-medium">
+                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[11px] font-medium">
                           Setuju
                         </button>
                         <button
                           (click)="confirmRejectDep(tx)"
                           [disabled]="depProcessing"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
                           Tolak
                         </button>
                       </div>
@@ -248,7 +248,7 @@ interface PageEvent {
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">ID</span
-                ><span class="font-mono text-[10px] text-muted-foreground break-all">{{ depDetail.id }}</span>
+                ><span class="font-mono text-[11px] text-muted-foreground break-all">{{ depDetail.id }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">User</span
@@ -316,10 +316,10 @@ interface PageEvent {
 
       <div class="bg-card border-border rounded-lg border overflow-hidden" [class.hidden]="wdLoading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">Ref#</th>
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Nominal</th>
@@ -334,20 +334,20 @@ interface PageEvent {
                 <tr
                   class="border-border hover:bg-accent/30 border-b text-xs transition-colors cursor-pointer"
                   (click)="openWdDetail(tx)">
-                  <td class="px-3 py-3 font-mono text-[10px] text-muted-foreground">
+                  <td class="px-3 py-3 font-mono text-[11px] text-muted-foreground">
                     {{ tx.reference_code || tx.id.slice(0, 8).toUpperCase() }}
                   </td>
                   <td class="px-3 py-3">
                     <p class="font-semibold text-foreground">{{ tx.user?.display_name || tx.user?.username || '—' }}</p>
-                    <p class="text-muted-foreground text-[10px]">&#64;{{ tx.user?.username }}</p>
+                    <p class="text-muted-foreground text-[11px]">&#64;{{ tx.user?.username }}</p>
                   </td>
                   <td class="px-3 py-3 font-bold text-muted-foreground">-{{ tx.amount | number: '1.0-0' }} P</td>
-                  <td class="px-3 py-3 text-[10px] text-muted-foreground">
+                  <td class="px-3 py-3 text-[11px] text-muted-foreground">
                     {{ tx.bank_name || '-' }}
                     {{ tx.bank_account_number ? '· ' + tx.bank_account_number.slice(-4) : '' }}
                   </td>
                   <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="tx.status | severityMap" /></td>
-                  <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[10px]">
+                  <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[11px]">
                     {{ tx.created_at | wibDate: 'short' }}
                   </td>
                   <td class="px-3 py-3">
@@ -356,13 +356,13 @@ interface PageEvent {
                         <button
                           (click)="confirmApproveWd(tx)"
                           [disabled]="wdProcessing"
-                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[10px] font-medium">
+                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[11px] font-medium">
                           Setuju
                         </button>
                         <button
                           (click)="confirmRejectWd(tx)"
                           [disabled]="wdProcessing"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
                           Tolak
                         </button>
                       </div>
@@ -400,7 +400,7 @@ interface PageEvent {
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">ID</span
-                ><span class="font-mono text-[10px] text-muted-foreground break-all">{{ wdDetail.id }}</span>
+                ><span class="font-mono text-[11px] text-muted-foreground break-all">{{ wdDetail.id }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">User</span
@@ -460,10 +460,10 @@ interface PageEvent {
 
       <div class="bg-card border-border rounded-lg border overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Main</th>
                 <th class="px-3 py-3">Bonus</th>
@@ -480,7 +480,7 @@ interface PageEvent {
                 <tr class="border-border border-b text-xs">
                   <td class="px-3 py-3">
                     <p class="font-semibold text-foreground">{{ w.displayName }}</p>
-                    <p class="text-muted-foreground text-[10px]">&#64;{{ w.username }}</p>
+                    <p class="text-muted-foreground text-[11px]">&#64;{{ w.username }}</p>
                   </td>
                   <td class="px-3 py-3 font-bold text-foreground">{{ w.main | number: '1.0-0' }}</td>
                   <td class="px-3 py-3 text-foreground">{{ w.bonus | number: '1.0-0' }}</td>
@@ -490,10 +490,10 @@ interface PageEvent {
                   <td class="px-3 py-3">
                     @if (w.locked > 0) {
                       <span class="text-foreground font-semibold">{{ w.locked | number: '1.0-0' }}</span>
-                      <button (click)="confirmResetTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[8px] font-bold rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/30 transition">Reset</button>
-                      <button (click)="openAdjustTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[8px] font-bold rounded bg-sky-400/20 text-sky-400 hover:bg-sky-400/30 transition">Adjust</button>
+                      <button (click)="confirmResetTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[11px] font-bold rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/30 transition">Reset</button>
+                      <button (click)="openAdjustTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[11px] font-bold rounded bg-sky-400/20 text-sky-400 hover:bg-sky-400/30 transition">Adjust</button>
                     } @else {
-                      <span class="text-foreground text-[10px]">Lunas</span>
+                      <span class="text-foreground text-[11px]">Lunas</span>
                     }
                   </td>
                   <td class="px-3 py-3 font-semibold text-foreground">{{ w.net | number: '1.0-0' }}</td>
@@ -517,9 +517,9 @@ interface PageEvent {
       </app-filter-bar>
       <div class="bg-card border-border rounded-lg border overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Main (P)</th>
                 <th class="px-3 py-3">Bonus (P)</th>
@@ -535,7 +535,7 @@ interface PageEvent {
                 <tr class="border-border border-b text-xs">
                   <td class="px-3 py-3">
                     <p class="font-semibold text-foreground">{{ w.displayName }}</p>
-                    <p class="text-muted-foreground text-[10px]">&#64;{{ w.username }}</p>
+                    <p class="text-muted-foreground text-[11px]">&#64;{{ w.username }}</p>
                   </td>
                   <td class="px-3 py-3 font-bold text-foreground">{{ w.main | number: '1.0-0' }}</td>
                   <td class="px-3 py-3 text-foreground">{{ w.bonus | number: '1.0-0' }}</td>
@@ -546,13 +546,13 @@ interface PageEvent {
                     @if (w.locked > 0) {
                       <span class="text-foreground font-semibold">{{ w.locked | number: '1.0-0' }}</span>
                     } @else {
-                      <span class="text-foreground text-[10px]">Lunas</span>
+                      <span class="text-foreground text-[11px]">Lunas</span>
                     }
                   </td>
                   <td class="px-3 py-3">
                     <button
                       (click)="openEditWallet(w)"
-                      class="bg-card border-border hover:bg-accent rounded border px-2 py-1 text-[10px] font-medium text-foreground transition-colors"
+                      class="bg-card border-border hover:bg-accent rounded border px-2 py-1 text-[11px] font-medium text-foreground transition-colors"
                     >
                       Edit Saldo
                     </button>

@@ -27,10 +27,10 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
               <a
                 routerLink="/users"
-                class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Registered Users</p>
+                class="border-border group border-r border-b lg:border-b-0 p-5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-xs font-medium uppercase tracking-wider">Registered Users</p>
                 <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(stats.totalUsers) }}</p>
-                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                <p class="text-[11px] text-muted-foreground/70 mt-0.5">
                   <span [class]="regGrowth >= 0 ? 'text-foreground' : 'text-muted-foreground'"
                     >{{ regGrowth >= 0 ? '+' : '' }}{{ formatNum(regGrowth) }}</span
                   >
@@ -39,46 +39,46 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
               </a>
               <a
                 routerLink="/users"
-                class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Active / Online</p>
+                class="border-border group border-r border-b lg:border-b-0 p-5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-xs font-medium uppercase tracking-wider">Active / Online</p>
                 <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(health.activeUsers) }}</p>
-                <p class="text-[10px] text-muted-foreground/70 mt-0.5">{{ health.onlineNow }} online now</p>
+                <p class="text-[11px] text-muted-foreground/70 mt-0.5">{{ health.onlineNow }} online now</p>
               </a>
               <a
                 routerLink="/transactions"
-                class="border-border group border-r border-b lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Today Volume</p>
+                class="border-border group border-r border-b lg:border-b-0 p-5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-xs font-medium uppercase tracking-wider">Today Volume</p>
                 <p class="mt-1 text-lg font-bold text-foreground">
                   {{ formatMoney(volume.deposits + volume.withdrawals) }}
                 </p>
-                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                <p class="text-[11px] text-muted-foreground/70 mt-0.5">
                   Deposit {{ formatMoney(volume.deposits) }} · WD {{ formatMoney(volume.withdrawals) }}
                 </p>
               </a>
               <a
                 routerLink="/wallet"
-                class="border-border group border-r border-b lg:border-b-0 sm:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Wallet Total</p>
+                class="border-border group border-r border-b lg:border-b-0 sm:border-b-0 p-5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-xs font-medium uppercase tracking-wider">Wallet Total</p>
                 <p class="mt-1 text-lg font-bold text-foreground">
                   {{ formatMoney(health.totalBalance.main + health.totalBalance.bonus) }}
                 </p>
-                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                <p class="text-[11px] text-muted-foreground/70 mt-0.5">
                   Main {{ formatMoney(health.totalBalance.main) }} · Bonus {{ formatMoney(health.totalBalance.bonus) }}
                 </p>
               </a>
               <a
                 routerLink="/bets"
-                class="border-border group border-r border-b sm:border-b-0 lg:border-b-0 p-3.5 hover:bg-accent/30 transition-colors">
-                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Pending Bets</p>
+                class="border-border group border-r border-b sm:border-b-0 lg:border-b-0 p-5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-xs font-medium uppercase tracking-wider">Pending Bets</p>
                 <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(stats.pendingBets) }}</p>
-                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                <p class="text-[11px] text-muted-foreground/70 mt-0.5">
                   {{ stats.pendingBets > 0 ? 'Needs settlement' : 'All settled' }}
                 </p>
               </a>
-              <a routerLink="/kyc" class="border-border group p-3.5 hover:bg-accent/30 transition-colors">
-                <p class="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Pending KYC</p>
+              <a routerLink="/kyc" class="border-border group p-5 hover:bg-accent/30 transition-colors">
+                <p class="text-muted-foreground text-xs font-medium uppercase tracking-wider">Pending KYC</p>
                 <p class="mt-1 text-lg font-bold text-foreground">{{ formatNum(health.pendingCount) }}</p>
-                <p class="text-[10px] text-muted-foreground/70 mt-0.5">
+                <p class="text-[11px] text-muted-foreground/70 mt-0.5">
                   {{ health.pendingCount > 0 ? 'Needs review' : 'All verified' }}
                 </p>
               </a>
@@ -89,11 +89,11 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
           <div class="grid gap-5 lg:grid-cols-3">
             <!-- 7-Day Growth -->
             <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">User Growth (7d)</h3>
-                <span class="text-[10px] text-muted-foreground">{{ formatNum(weekTotal) }} total</span>
+                <span class="text-[11px] text-muted-foreground">{{ formatNum(weekTotal) }} total</span>
               </div>
-              <div class="p-4">
+              <div class="p-5">
                 @if (growthData.length === 7) {
                   <div class="flex items-end gap-1 h-20">
                     @for (d of growthData; track d.date) {
@@ -103,11 +103,11 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
                           class="w-full rounded-sm"
                           [class]="d.count > 0 ? 'bg-foreground/80' : 'bg-border'"
                           [style.height.%]="Math.max(pct * 100, d.count > 0 ? 30 : 4)"></div>
-                        <span class="text-[8px] text-muted-foreground/50">{{ d.date.slice(5) }}</span>
+                        <span class="text-[11px] text-muted-foreground/50">{{ d.date.slice(5) }}</span>
                       </div>
                     }
                   </div>
-                  <div class="text-[10px] text-muted-foreground/60 mt-3 text-center">
+                  <div class="text-[11px] text-muted-foreground/60 mt-3 text-center">
                     {{ Math.round(weekTotal / 7) }}/day avg
                   </div>
                 }
@@ -116,9 +116,9 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
 
             <!-- Volume Breakdown -->
             <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">Volume Today</h3>
-                <span class="text-[10px] text-muted-foreground"
+                <span class="text-[11px] text-muted-foreground"
                   >{{ formatMoney(volume.deposits + volume.withdrawals) }} total</span
                 >
               </div>
@@ -155,34 +155,34 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
 
             <!-- Pending Queue -->
             <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">Pending Queue</h3>
-                <span class="text-[10px] text-muted-foreground"
+                <span class="text-[11px] text-muted-foreground"
                   >{{ pendingDeposits + pendingWithdrawals + health.pendingCount + stats.pendingBets }} items</span
                 >
               </div>
               <div class="divide-border divide-y text-xs">
                 <a
                   routerLink="/deposits"
-                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  class="flex items-center justify-between px-5 py-3 hover:bg-accent/30 transition-colors">
                   <span class="text-muted-foreground">Deposit Approvals</span>
                   <span class="text-foreground font-medium">{{ pendingDeposits }}</span>
                 </a>
                 <a
                   routerLink="/withdrawals"
-                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  class="flex items-center justify-between px-5 py-3 hover:bg-accent/30 transition-colors">
                   <span class="text-muted-foreground">Withdrawal Approvals</span>
                   <span class="text-foreground font-medium">{{ pendingWithdrawals }}</span>
                 </a>
                 <a
                   routerLink="/kyc"
-                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  class="flex items-center justify-between px-5 py-3 hover:bg-accent/30 transition-colors">
                   <span class="text-muted-foreground">KYC Reviews</span>
                   <span class="text-foreground font-medium">{{ health.pendingCount }}</span>
                 </a>
                 <a
                   routerLink="/bets"
-                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent/30 transition-colors">
+                  class="flex items-center justify-between px-5 py-3 hover:bg-accent/30 transition-colors">
                   <span class="text-muted-foreground">Unsettled Bets</span>
                   <span class="text-foreground font-medium">{{ stats.pendingBets }}</span>
                 </a>
@@ -194,15 +194,15 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
           <div class="grid gap-5 lg:grid-cols-2">
             <!-- Recent Activity -->
             <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">Recent Activity</h3>
-                <a routerLink="/audit" class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                <a routerLink="/audit" class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                   >View all →</a
                 >
               </div>
               <div class="divide-border divide-y">
                 @for (log of recentLogs; track log.id) {
-                  <div class="flex items-start gap-2.5 px-4 py-2.5">
+                  <div class="flex items-start gap-2.5 px-5 py-3">
                     <div class="bg-accent/50 mt-0.5 rounded p-1">
                       <svg-icon
                         src="assets/icons/heroicons/outline/cursor-click.svg"
@@ -210,7 +210,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
                     </div>
                     <div class="min-w-0 flex-1">
                       <p class="truncate text-xs text-foreground">{{ log.action }}</p>
-                      <div class="flex gap-2 text-[10px] text-muted-foreground/60 mt-0.5">
+                      <div class="flex gap-2 text-[11px] text-muted-foreground/60 mt-0.5">
                         <span>{{ log.resource_type }}</span>
                         @if (log.resource_id) {
                           <span>· {{ log.resource_id.slice(0, 8) }}</span>
@@ -227,7 +227,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
 
             <!-- Quick Actions -->
             <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-4 py-2.5">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">Quick Actions</h3>
               </div>
               <div class="grid grid-cols-4 gap-px bg-border">
@@ -236,7 +236,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
                     [routerLink]="action.route"
                     class="bg-card flex flex-col items-center gap-1.5 px-2 py-3.5 hover:bg-accent/30 transition-colors">
                     <svg-icon [src]="action.icon" svgClass="h-4 w-4 text-muted-foreground"></svg-icon>
-                    <span class="text-[10px] text-muted-foreground font-medium">{{ action.label }}</span>
+                    <span class="text-[11px] text-muted-foreground font-medium">{{ action.label }}</span>
                   </a>
                 }
               </div>

@@ -150,18 +150,18 @@ interface BetRow {
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Role</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Balance</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Referral</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">KYC</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Registration</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Created</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 w-48">Actions</th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Role</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Balance</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Referral</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">KYC</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Registration</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Created</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 w-48">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -169,7 +169,7 @@ interface BetRow {
                 <tr
                   class="border-border hover:bg-accent/30 border-b transition-colors cursor-pointer"
                   (click)="openModal(u)">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     <div class="flex items-center gap-2">
                       <span class="relative flex h-2 w-2 shrink-0">
                         @if (isOnline(u.id)) {
@@ -182,83 +182,83 @@ interface BetRow {
                       </span>
                       <div>
                         <p class="font-semibold text-foreground">{{ u.display_name || u.username }}</p>
-                        <p class="text-muted-foreground text-[10px]">&#64;{{ u.username }} &middot; {{ u.email }}</p>
-                        <p class="text-muted-foreground text-[9px]">{{ u.country }} &middot; {{ u.phone }}</p>
-                        <p class="text-muted-foreground text-[9px] font-mono mt-0.5 select-all">{{ u.id }}</p>
+                        <p class="text-muted-foreground text-[11px]">&#64;{{ u.username }} &middot; {{ u.email }}</p>
+                        <p class="text-muted-foreground text-xs">{{ u.country }} &middot; {{ u.phone }}</p>
+                        <p class="text-muted-foreground text-xs font-mono mt-0.5 select-all">{{ u.id }}</p>
                       </div>
                     </div>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     <span
-                      class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[10px] font-medium"
+                      class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[11px] font-medium"
                       >{{ u.role }}</span
                     >
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <span class="font-mono text-foreground font-semibold">{{
                       walletBalance(u.id) | number: '1.0-0'
                     }}</span>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
-                    <span class="font-mono text-[10px] text-muted-foreground">{{ u.referral_code || '-' }}</span>
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
+                    <span class="font-mono text-[11px] text-muted-foreground">{{ u.referral_code || '-' }}</span>
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p-tag [value]="u.kyc_status" [severity]="u.kyc_status | severityMap" />
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p-tag [value]="u.registration_status" [severity]="u.registration_status | severityMap" />
                   </td>
-                  <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[10px]">
+                  <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-[11px]">
                     {{ u.created_at | wibDate: 'short' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       @if (u.registration_status === 'PENDING' || u.registration_status === 'PENDING_VERIFICATION') {
                         <button
                           (click)="confirmAction('approve', u)"
-                          class="bg-foreground text-background rounded px-2 py-1 text-[10px] font-medium">
+                          class="bg-foreground text-background rounded px-2 py-1 text-[11px] font-medium">
                           Approve
                         </button>
                         <button
                           (click)="confirmAction('reject', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
                           Reject
                         </button>
                       }
                       @if (u.login_status === 'ACTIVE') {
                         <button
                           (click)="confirmAction('lock', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
                           Lock
                         </button>
                       } @else {
                         <button
                           (click)="confirmAction('unlock', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
                           Unlock
                         </button>
                       }
                       @if (isSuperadmin) {
                         <button
                           (click)="confirmAction('reset', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
                           Reset
                         </button>
                       }
                       <button
                         (click)="openEditModal(u)"
-                        class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium">
+                        class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
                         Edit
                       </button>
                       @if (editing[u.id] && changed(u)) {
                         <button
                           (click)="saveUser(u)"
-                          class="bg-foreground text-background rounded px-2 py-1 text-[10px] font-medium">
+                          class="bg-foreground text-background rounded px-2 py-1 text-[11px] font-medium">
                           Save
                         </button>
                         <button
                           (click)="editing[u.id] = {}"
-                          class="text-muted-foreground rounded px-2 py-1 text-[10px] font-medium">
+                          class="text-muted-foreground rounded px-2 py-1 text-[11px] font-medium">
                           X
                         </button>
                       }
@@ -344,7 +344,7 @@ interface BetRow {
                 @if (activeTab === 'overview') {
                   <div class="grid gap-6 sm:grid-cols-2">
                     <div class="space-y-3">
-                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Profile</p>
+                      <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Profile</p>
                       <div class="text-sm space-y-1.5">
                         <p>
                           <span class="text-muted-foreground">Name: </span
@@ -368,7 +368,7 @@ interface BetRow {
                         </p>
                         <p>
                           <span class="text-muted-foreground">User ID: </span
-                          ><span class="text-foreground font-mono text-[10px] select-all">{{ selectedUser.id }}</span>
+                          ><span class="text-foreground font-mono text-[11px] select-all">{{ selectedUser.id }}</span>
                         </p>
                         <p>
                           <span class="text-muted-foreground">Role: </span
@@ -392,7 +392,7 @@ interface BetRow {
                         </p>
                       </div>
 
-                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pt-2">Bank Info</p>
+                      <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pt-2">Bank Info</p>
                       <div class="text-sm space-y-1.5">
                         <p>
                           <span class="text-muted-foreground">Bank: </span
@@ -412,7 +412,7 @@ interface BetRow {
                     </div>
 
                     <div class="space-y-3">
-                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Wallet</p>
+                      <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Wallet</p>
                       @if (modalData.wallet) {
                         <div class="bg-accent/20 rounded-lg p-4 space-y-2">
                           <div class="flex justify-between">
@@ -438,14 +438,14 @@ interface BetRow {
                         <p class="text-muted-foreground text-sm">No wallet data.</p>
                       }
 
-                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pt-2">
+                      <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pt-2">
                         Betting Stats
                       </p>
                       @if (modalData.bets?.length) {
                         <div class="bg-accent/20 rounded-lg p-4 space-y-2">
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Total Bets</span>
-                            <span class="text-foreground font-medium">{{ modalData.bets.length }} <span class="text-[10px] text-muted-foreground">({{ modalBetsWinCount() + modalBetsLossCount() }} settled)</span></span>
+                            <span class="text-foreground font-medium">{{ modalData.bets.length }} <span class="text-[11px] text-muted-foreground">({{ modalBetsWinCount() + modalBetsLossCount() }} settled)</span></span>
                           </div>
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Wins / Losses</span>
@@ -476,16 +476,16 @@ interface BetRow {
                         <p class="text-muted-foreground text-sm">No bets yet.</p>
                       }
 
-                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pt-2">
+                      <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pt-2">
                         Recent Activity
                       </p>
                       @for (a of modalData.auditLogs?.slice(0, 5); track a.id) {
                         <div class="border-border border-b pb-1 last:border-0 last:pb-0">
                           <p class="text-xs font-semibold text-foreground">{{ a.action }}</p>
-                          <p class="text-[10px] text-muted-foreground">{{ a.created_at | wibDate: 'short' }}</p>
+                          <p class="text-[11px] text-muted-foreground">{{ a.created_at | wibDate: 'short' }}</p>
                         </div>
                       } @empty {
-                        <p class="text-muted-foreground text-[10px]">No activity found.</p>
+                        <p class="text-muted-foreground text-[11px]">No activity found.</p>
                       }
                     </div>
                   </div>
@@ -497,7 +497,7 @@ interface BetRow {
                       <table class="w-full text-left text-xs">
                         <thead>
                           <tr
-                            class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                            class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                             <th class="px-3 py-2">Type</th>
                             <th class="px-3 py-2">Amount</th>
                             <th class="px-3 py-2">Status</th>
@@ -531,7 +531,7 @@ interface BetRow {
                       <table class="w-full text-left text-xs">
                         <thead>
                           <tr
-                            class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                            class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                             <th class="px-3 py-2">Session</th>
                             <th class="px-3 py-2">Selection</th>
                             <th class="px-3 py-2">Stake</th>
@@ -544,7 +544,7 @@ interface BetRow {
                         <tbody>
                           @for (b of modalData.bets; track b.id) {
                             <tr class="border-border border-b">
-                              <td class="px-3 py-2 font-mono text-[10px] text-foreground">{{ b.session_code }}</td>
+                              <td class="px-3 py-2 font-mono text-[11px] text-foreground">{{ b.session_code }}</td>
                               <td class="px-3 py-2 text-foreground">{{ b.selection }}</td>
                               <td class="px-3 py-2 font-mono text-foreground">{{ b.stake | number: '1.0-0' }}</td>
                               <td class="px-3 py-2 font-mono text-foreground">
@@ -552,7 +552,7 @@ interface BetRow {
                               </td>
                               <td class="px-3 py-2">
                                 <span
-                                  class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[10px] font-medium"
+                                  class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[11px] font-medium"
                                   >{{ b.result || '-' }}</span
                                 >
                               </td>
@@ -576,7 +576,7 @@ interface BetRow {
                       <table class="w-full text-left text-xs">
                         <thead>
                           <tr
-                            class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
+                            class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                             <th class="px-3 py-2">IP Address</th>
                             <th class="px-3 py-2">Device / Browser</th>
                             <th class="px-3 py-2">Last Active</th>
@@ -586,14 +586,14 @@ interface BetRow {
                         <tbody>
                           @for (s of modalData.sessions; track s.id) {
                             <tr class="border-border border-b">
-                              <td class="px-3 py-2 font-mono text-[10px] text-foreground">
+                              <td class="px-3 py-2 font-mono text-[11px] text-foreground">
                                 {{ s.ip_address || 'Unknown IP' }}
                               </td>
                               <td class="px-3 py-2 text-foreground">{{ s.browser_info || 'Unknown browser' }}</td>
                               <td class="px-3 py-2 text-muted-foreground">{{ s.last_activity | wibDate: 'short' }}</td>
                               <td class="px-3 py-2">
                                 <span
-                                  class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[10px] font-medium">
+                                  class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[11px] font-medium">
                                   {{ s.logged_out_at ? 'Ended' : 'Active' }}
                                 </span>
                               </td>
@@ -617,7 +617,7 @@ interface BetRow {
                             (click)="viewImage(d.document_url)"
                             class="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
                             [title]="(d.document_type || 'Doc') + ' (' + d.status + ')'" />
-                          <div class="p-2 text-[10px]">
+                          <div class="p-2 text-[11px]">
                             <p class="text-foreground font-medium truncate">{{ d.document_type || 'Document' }}</p>
                             <p class="text-muted-foreground">{{ d.status }}</p>
                           </div>
@@ -649,31 +649,31 @@ interface BetRow {
             </div>
             <div class="space-y-3">
               <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Bank Name</label
                 >
                 <input pInputText [(ngModel)]="editModal.bank_name" class="!w-full !text-xs" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Account Number</label
                 >
                 <input pInputText [(ngModel)]="editModal.bank_account_number" class="!w-full !text-xs" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Account Name</label
                 >
                 <input pInputText [(ngModel)]="editModal.bank_account_name" class="!w-full !text-xs" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Email</label
                 >
                 <input pInputText [(ngModel)]="editModal.email" class="!w-full !text-xs" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Phone</label
                 >
                 <input pInputText [(ngModel)]="editModal.phone" class="!w-full !text-xs" />

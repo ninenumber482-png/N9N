@@ -35,52 +35,52 @@ interface AdminUser {
       @if (!loading) {
         <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #60A5FA;">
           <div class="overflow-x-auto">
-            <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+            <table class="w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Username</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Email</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Current Role</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Change Role</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Username</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Email</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Current Role</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Change Role</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
                 </tr>
               </thead>
               <tbody>
                 @for (u of users; track u.id) {
                   <tr class="border-border hover:bg-muted/30 border-b text-xs transition-colors">
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-semibold text-foreground">
                       {{ u.username }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                       {{ u.email || '-' }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <p-tag [value]="u.role" [severity]="u.role === 'superadmin' ? 'warn' : 'info'" />
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       @if (isSuperadmin && u.username !== currentUsername) {
                         <div class="flex gap-1">
                           @if (u.role !== 'admin') {
                             <button
                               (click)="confirmRoleChange(u, 'admin')"
-                              class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[10px] font-medium text-foreground transition-colors">
+                              class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
                               → Admin
                             </button>
                           }
                           @if (u.role !== 'superadmin') {
                             <button
                               (click)="confirmRoleChange(u, 'superadmin')"
-                              class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[10px] font-medium text-foreground transition-colors">
+                              class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
                               → Superadmin
                             </button>
                           }
                         </div>
                       } @else {
-                        <span class="text-muted-foreground text-[10px]">—</span>
+                        <span class="text-muted-foreground text-[11px]">—</span>
                       }
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <p-tag [value]="u.login_status" [severity]="u.login_status === 'ACTIVE' ? 'success' : 'secondary'" />
                     </td>
                   </tr>

@@ -71,58 +71,58 @@ interface BetData {
       @if (!loading && !error) {
         <div class="bg-card border-border rounded-lg page-accent-card">
           <div class="overflow-x-auto">
-            <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+            <table class="w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Bet Code</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">User</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Session</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Selection</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Stake</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Potential Payout</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Actual Payout</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Result</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Date</th>
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Bet Code</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Session</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Selection</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Stake</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Potential Payout</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Actual Payout</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Result</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Date</th>
                 </tr>
               </thead>
               <tbody>
                 @for (b of displayBets; track b.id) {
                   <tr class="border-border hover:bg-accent/30 border-b text-xs transition-colors">
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono">
                       {{ b.bet_code.slice(0, 12) }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <p class="font-semibold text-foreground">{{ b.user?.username || b.user_id?.slice(0, 10) }}</p>
-                      <p class="text-muted-foreground text-[10px]">{{ b.user?.display_name }}</p>
+                      <p class="text-muted-foreground text-[11px]">{{ b.user?.display_name }}</p>
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground whitespace-nowrap">
                       {{ sessionDisplay(b.session_code) }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-lg font-black text-foreground">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-lg font-black text-foreground">
                       {{ b.selection }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-bold text-foreground">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-bold text-foreground">
                       {{ b.stake | number }} P
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-muted-foreground">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
                       {{ b.potential_payout ? (b.potential_payout | number) + ' P' : '-' }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-foreground font-semibold">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-foreground font-semibold">
                       {{ b.actual_payout ? (b.actual_payout | number) + ' P' : '-' }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <p-tag [value]="b.status" [severity]="b.status | severityMap" />
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       @if (b.result) {
                         <p-tag [value]="b.result" [severity]="b.result === 'WIN' ? 'success' : 'danger'" />
                       } @else {
                         <span class="text-muted-foreground">-</span>
                       }
                     </td>
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
                       {{ b.created_at | wibDate: 'short' }}
                     </td>
                   </tr>

@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex items-center justify-between border-t border-border px-4 py-3">
+    <div class="flex items-center justify-between border-t border-border px-5 py-3.5">
       <span class="text-xs text-muted-foreground">
         {{ firstItem() }}–{{ lastItem() }} of {{ totalItems() }}
       </span>

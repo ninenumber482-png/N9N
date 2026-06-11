@@ -72,17 +72,17 @@ interface ReferralRecord {
 
       <div class="bg-card border-border rounded-lg page-accent-card" [class.hidden]="loading">
         <div class="overflow-x-auto">
-          <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+          <table class="w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
               <tr
-                class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Code</th>
-                <th class="max-sm:hidden sm:px-4 sm:py-3">Creator</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Status</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Used / Max</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Expires</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Created</th>
-                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 w-44">Actions</th>
+                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Code</th>
+                <th class="max-sm:hidden sm:px-5 sm:py-3.5">Creator</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Used / Max</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Expires</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Created</th>
+                <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 w-44">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -90,27 +90,27 @@ interface ReferralRecord {
                 <tr
                   class="border-border hover:bg-accent/30 border-b transition-colors cursor-pointer"
                   (click)="toggleDetail(r)">
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono text-xs font-bold text-foreground">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono text-xs font-bold text-foreground">
                     {{ r.code }}
                     @if (!r.created_by) {
                       <span
-                        class="bg-card border-border text-foreground rounded border px-1 py-0.5 text-[8px] font-medium ml-1"
+                        class="bg-card border-border text-foreground rounded border px-1 py-0.5 text-[11px] font-medium ml-1"
                         >PLATFORM</span
                       >
                     }
                   </td>
-                  <td class="max-sm:hidden sm:px-4 sm:py-3">
+                  <td class="max-sm:hidden sm:px-5 sm:py-3.5">
                     @if (r.creator) {
                       <span class="text-foreground text-xs">{{ r.creator.display_name || r.creator.username }}</span>
-                      <span class="text-muted-foreground text-[10px]">&#64;{{ r.creator.username }}</span>
+                      <span class="text-muted-foreground text-[11px]">&#64;{{ r.creator.username }}</span>
                     } @else {
-                      <span class="text-muted-foreground text-[10px]">—</span>
+                      <span class="text-muted-foreground text-[11px]">—</span>
                     }
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <p-tag [value]="r.status" [severity]="r.status === 'ACTIVE' ? 'success' : 'secondary'" />
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     @if (editingId === r.id) {
                       <input
                         pInputText
@@ -121,43 +121,43 @@ interface ReferralRecord {
                         class="!w-16 !text-xs" />
                     } @else {
                       <span class="font-mono text-xs font-bold text-foreground">{{ r.used_count || 0 }}</span>
-                      <span class="text-muted-foreground text-[10px]"> / {{ r.max_uses ?? '∞' }}</span>
+                      <span class="text-muted-foreground text-[11px]"> / {{ r.max_uses ?? '∞' }}</span>
                     }
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     @if (editingId === r.id) {
                       <input pInputText type="date" [(ngModel)]="editExpiresAt" class="!w-32 !text-xs" />
                     } @else {
-                      <span class="text-muted-foreground text-[10px]">{{
+                      <span class="text-muted-foreground text-[11px]">{{
                         r.expires_at ? (r.expires_at | wibDate: 'shortDate') : '—'
                       }}</span>
                     }
                   </td>
-                  <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[10px]">
+                  <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-[11px]">
                     {{ r.created_at | wibDate: 'short' }}
                   </td>
-                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3" (click)="$event.stopPropagation()">
+                  <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       <button
                         (click)="confirmToggle(r)"
-                        class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium transition-colors">
+                        class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium transition-colors">
                         {{ r.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                       </button>
                       @if (editingId === r.id) {
                         <button
                           (click)="saveEdit(r)"
-                          class="bg-foreground text-background rounded px-2 py-1 text-[10px] font-medium">
+                          class="bg-foreground text-background rounded px-2 py-1 text-[11px] font-medium">
                           Save
                         </button>
                         <button
                           (click)="cancelEdit()"
-                          class="text-muted-foreground rounded px-2 py-1 text-[10px] font-medium">
+                          class="text-muted-foreground rounded px-2 py-1 text-[11px] font-medium">
                           X
                         </button>
                       } @else {
                         <button
                           (click)="startEdit(r)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[10px] font-medium">
+                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
                           Edit
                         </button>
                       }
@@ -172,31 +172,31 @@ interface ReferralRecord {
                       } @else {
                         <div class="grid gap-4 sm:grid-cols-2 pt-3">
                           <div class="space-y-1.5">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                            <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
                               Registered Users
                             </p>
                             @for (u of detail.users; track u.id) {
                               <div class="border-border border-b pb-1 last:border-0 last:pb-0">
                                 <p class="text-xs font-semibold text-foreground">{{ u.display_name || u.username }}</p>
-                                <p class="text-[10px] text-muted-foreground">
+                                <p class="text-[11px] text-muted-foreground">
                                   &#64;{{ u.username }} · {{ u.created_at | wibDate: 'short' }}
                                 </p>
                               </div>
                             } @empty {
-                              <p class="text-muted-foreground text-[10px]">No users registered with this code.</p>
+                              <p class="text-muted-foreground text-[11px]">No users registered with this code.</p>
                             }
                           </div>
                           <div class="space-y-1.5">
-                            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                            <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
                               Activity Log
                             </p>
                             @for (a of detail.auditLogs; track a.id) {
                               <div class="border-border border-b pb-1 last:border-0 last:pb-0">
                                 <p class="text-xs font-semibold text-foreground">{{ a.action }}</p>
-                                <p class="text-[10px] text-muted-foreground">{{ a.created_at | wibDate: 'short' }}</p>
+                                <p class="text-[11px] text-muted-foreground">{{ a.created_at | wibDate: 'short' }}</p>
                               </div>
                             } @empty {
-                              <p class="text-muted-foreground text-[10px]">No activity recorded.</p>
+                              <p class="text-muted-foreground text-[11px]">No activity recorded.</p>
                             }
                           </div>
                         </div>

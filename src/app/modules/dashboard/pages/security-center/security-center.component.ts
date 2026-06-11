@@ -57,40 +57,40 @@ interface SecurityItem {
       @if (!loading && !error) {
         @if (tab === 'alerts') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+            <table class="w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Time</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Type</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Severity</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">User</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Description</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">IP</th>
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Type</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Severity</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">User</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Description</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">IP</th>
                 </tr>
               </thead>
               <tbody>
                 @for (l of displayItems; track l.id) {
                   <tr class="border-border hover:bg-accent/30 border-b">
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
                       {{ l.created_at | wibDate: 'short' }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <p-tag [value]="l.alert_type" severity="warn" />
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <p-tag [value]="l.severity" [severity]="l.severity | severityMap" />
                     </td>
                     <td
-                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono max-sm:hidden">
+                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
                       {{ l.user_id?.slice(0, 10) || '-' }}
                     </td>
                     <td
-                      class="text-muted-foreground max-w-[200px] truncate max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">
+                      class="text-muted-foreground max-w-[200px] truncate max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">
                       {{ l.description }}
                     </td>
                     <td
-                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono max-sm:hidden">
+                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
                       {{ l.ip_address || '-' }}
                     </td>
                   </tr>
@@ -105,33 +105,33 @@ interface SecurityItem {
         }
         @if (tab === 'failed') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+            <table class="w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Time</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Username</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Reason</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">IP</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">User Agent</th>
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Username</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Reason</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">IP</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">User Agent</th>
                 </tr>
               </thead>
               <tbody>
                 @for (l of displayItems; track l.id) {
                   <tr class="border-border hover:bg-accent/30 border-b">
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
                       {{ l.attempted_at | wibDate: 'short' }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-semibold text-foreground">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-semibold text-foreground">
                       {{ l.username }}
                     </td>
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">{{ l.reason }}</td>
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">{{ l.reason }}</td>
                     <td
-                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono max-sm:hidden">
+                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
                       {{ l.ip_address }}
                     </td>
                     <td
-                      class="text-muted-foreground max-w-[150px] truncate max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 text-[9px] max-sm:hidden">
+                      class="text-muted-foreground max-w-[150px] truncate max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-xs max-sm:hidden">
                       {{ l.user_agent || '-' }}
                     </td>
                   </tr>
@@ -146,38 +146,38 @@ interface SecurityItem {
         }
         @if (tab === 'audit') {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
-            <table class="w-full text-left max-sm:text-[9px] sm:text-xs">
+            <table class="w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
                 <tr
-                  class="border-border text-muted-foreground border-b text-[10px] font-semibold uppercase tracking-wider">
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Time</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">Admin</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Action</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">Resource</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 max-sm:hidden">IP</th>
+                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Admin</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Action</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Resource</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">IP</th>
                 </tr>
               </thead>
               <tbody>
                 @for (l of displayItems; track l.id) {
                   <tr class="border-border hover:bg-accent/30 border-b">
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 whitespace-nowrap">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
                       {{ l.created_at | wibDate: 'short' }}
                     </td>
                     <td
-                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono max-sm:hidden">
+                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
                       {{ l.admin_id?.slice(0, 10) }}
                     </td>
-                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <span
-                        class="bg-card border-border text-foreground rounded border px-2 py-0.5 font-medium text-[10px]"
+                        class="bg-card border-border text-foreground rounded border px-2 py-0.5 font-medium text-[11px]"
                         >{{ l.action }}</span
                       >
                     </td>
-                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3">
+                    <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       {{ l.resource_type }} {{ l.resource_id?.slice(0, 8) }}
                     </td>
                     <td
-                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-4 sm:py-3 font-mono max-sm:hidden">
+                      class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
                       {{ l.ip_address || '-' }}
                     </td>
                   </tr>

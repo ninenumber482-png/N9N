@@ -171,7 +171,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
         <div class="overflow-x-auto">
           <table class="w-full text-left text-[11px]">
             <thead>
-              <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-[9px] bg-muted/10">
+              <tr class="border-b border-border text-muted-foreground uppercase tracking-wider text-xs bg-muted/10">
                 <th class="px-3 py-2.5 w-8">#</th>
                 <th class="px-3 py-2.5">Code</th>
                 <th class="px-3 py-2.5">WIB</th>
@@ -190,11 +190,11 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                 <tr
                   class="border-b border-border hover:bg-muted/5 transition-colors text-muted-foreground"
                   [class.opacity-40]="s.settled">
-                  <td class="px-3 py-2 font-mono text-[10px]">{{ s.index }}</td>
+                  <td class="px-3 py-2 font-mono text-[11px]">{{ s.index }}</td>
                   <td class="px-3 py-2 font-mono text-foreground">{{ s.display }}</td>
-                  <td class="px-3 py-2 font-mono text-[10px]">{{ s.wib }}</td>
+                  <td class="px-3 py-2 font-mono text-[11px]">{{ s.wib }}</td>
                   <td class="px-3 py-2">
-                    <span class="text-[10px]">{{
+                    <span class="text-[11px]">{{
                       s.status === 'SETTLED'
                         ? 'Settled'
                         : s.status === 'RESULTING'
@@ -206,7 +206,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                               : 'Next'
                     }}</span>
                   </td>
-                  <td class="px-3 py-2 text-right font-mono text-[10px]">{{ fmtTimer(s.countdown) }}</td>
+                  <td class="px-3 py-2 text-right font-mono text-[11px]">{{ fmtTimer(s.countdown) }}</td>
                   <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d1 : '—' }}</td>
                   <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d2 : '—' }}</td>
                   <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d3 : '—' }}</td>
@@ -218,7 +218,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                           type="button"
                           (click)="overrideCategory(s.code, 'bs', 'BIG')"
                           title="Force BIG"
-                          class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
+                          class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.bs !== 'BIG'"
                           [class.text-foreground]="s.bs !== 'BIG'"
                           [class.bg-amber-400]="s.bs === 'BIG'"
@@ -230,7 +230,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                           type="button"
                           (click)="overrideCategory(s.code, 'bs', 'SMALL')"
                           title="Force SMALL"
-                          class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
+                          class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.bs !== 'SMALL'"
                           [class.text-foreground]="s.bs !== 'SMALL'"
                           [class.bg-amber-400]="s.bs === 'SMALL'"
@@ -250,7 +250,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                           type="button"
                           (click)="overrideCategory(s.code, 'oe', 'ODD')"
                           title="Force ODD"
-                          class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
+                          class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.oe !== 'ODD'"
                           [class.text-foreground]="s.oe !== 'ODD'"
                           [class.bg-amber-400]="s.oe === 'ODD'"
@@ -262,7 +262,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                           type="button"
                           (click)="overrideCategory(s.code, 'oe', 'EVEN')"
                           title="Force EVEN"
-                          class="px-1.5 py-0.5 rounded text-[10px] transition-colors"
+                          class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.oe !== 'EVEN'"
                           [class.text-foreground]="s.oe !== 'EVEN'"
                           [class.bg-amber-400]="s.oe === 'EVEN'"

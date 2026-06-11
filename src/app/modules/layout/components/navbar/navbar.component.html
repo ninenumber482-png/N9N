@@ -39,7 +39,7 @@
             title="Notifications">
             <svg-icon src="assets/icons/heroicons/outline/bell.svg" [svgClass]="'h-5 w-5'"></svg-icon>
             @if (unreadCount > 0) {
-              <span class="bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none shadow-sm">
+              <span class="bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[11px] font-bold leading-none shadow-sm">
                 {{ unreadCount > 99 ? '99+' : unreadCount }}
               </span>
             }
@@ -48,7 +48,7 @@
           <!-- Notification Dropdown -->
           @if (showNotifPanel) {
             <div class="bg-card absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border shadow-xl">
-              <div class="flex items-center justify-between border-b border-border px-4 py-3">
+              <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
                 <p class="text-foreground text-sm font-bold">Notifikasi</p>
                 <div class="flex items-center gap-2">
                   <button (click)="toggleMute()" class="text-muted-foreground hover:text-foreground p-1 rounded" [title]="isMuted ? 'Aktifkan suara' : 'Matikan suara'">
@@ -73,7 +73,7 @@
                   <div class="text-muted-foreground py-8 text-center text-sm">Tidak ada notifikasi</div>
                 } @else {
                   @for (n of notifications; track n.id) {
-                    <div class="border-b border-border px-4 py-3 hover:bg-accent/30 transition-colors">
+                    <div class="border-b border-border px-5 py-3.5 hover:bg-accent/30 transition-colors">
                       <div class="flex items-start gap-3">
                         <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
                           [class]="n.type === 'success' ? 'bg-emerald-500/20 text-emerald-500' :
