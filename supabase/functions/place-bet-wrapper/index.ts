@@ -45,6 +45,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const userToken = req.headers.get("x-user-token");
+
     // Call place_bet RPC function
     const response = await fetch(
       `${supabaseUrl}/rest/v1/rpc/place_bet`,
@@ -54,6 +56,7 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json',
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
+          ...(userToken ? { 'x-user-token': userToken } : {}),
         },
         body: JSON.stringify(body),
       }

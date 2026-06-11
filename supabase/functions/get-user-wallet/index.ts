@@ -54,15 +54,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    const userToken = req.headers.get("x-user-token");
+
     // Query wallet table for the user
     const response = await fetch(
-      `${supabaseUrl}/rest/v1/wallet?user_id=eq.${userId}&select=balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover`,
+      `${supabaseUrl}/rest/v1/wallet?user_id=eq.${encodeURIComponent(userId)}&select=balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover`,
       {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
+          ...(userToken ? { 'x-user-token': userToken } : {}),
         },
       }
     );

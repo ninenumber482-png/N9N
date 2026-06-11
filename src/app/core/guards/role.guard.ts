@@ -64,16 +64,20 @@ export class RoleGuard {
   private async verifyRoleWithServer(username: string, requiredRole: string): Promise<boolean> {
     const cached = this.roleCache.get(username);
     if (cached && Date.now() - cached.ts < this.ROLE_CACHE_TTL) {
-      return cached.role === requiredRole;
+      return this.roleSatisfies(cached.role, requiredRole);
     }
     try {
       const rows = await this.admin.getUserByUsername(username);
       const serverRole = rows[0]?.['role'] as string | undefined;
       if (serverRole) this.roleCache.set(username, { role: serverRole, ts: Date.now() });
-      return serverRole === requiredRole || serverRole === 'superadmin';
+      return serverRole ? this.roleSatisfies(serverRole, requiredRole) : false;
     } catch {
       return false;
     }
+  }
+
+  private roleSatisfies(actualRole: string, requiredRole: string): boolean {
+    return actualRole === requiredRole || actualRole === 'superadmin';
   }
 
   private isRateLimited(username: string): boolean {

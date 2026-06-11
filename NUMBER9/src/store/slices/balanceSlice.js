@@ -75,7 +75,9 @@ export const balanceSlice = (set, get) => ({
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${key}`,
+            'apikey': key,
             'Content-Type': 'application/json',
+            ...(auth.token ? { 'x-user-token': auth.token } : {}),
           },
         });
         console.log('[balanceSlice] Response status:', response.status, 'ok:', response.ok);

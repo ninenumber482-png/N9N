@@ -46,7 +46,7 @@ async function addIpToWhitelist(ip, env) {
         apikey: key,
         Authorization: `Bearer ${key}`,
       },
-      body: JSON.stringify({ p_ip_address: ip, p_label: 'emergency-self-whitelist' }),
+      body: JSON.stringify({ p_ip: ip, p_label: 'emergency-self-whitelist' }),
     });
     whitelistCache.delete(ip);
     return res.ok;
@@ -57,6 +57,18 @@ async function addIpToWhitelist(ip, env) {
 
 function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function timingSafeEqual(a, b) {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  if (left.length !== right.length) return false;
+
+  let diff = 0;
+  for (let i = 0; i < left.length; i++) {
+    diff |= left[i] ^ right[i];
+  }
+  return diff === 0;
 }
 
 function blockedHtml(ip, error) {
@@ -129,9 +141,7 @@ async function handleRequest(request, env) {
 
       let valid = false;
       if (key.length === gatewayKey.length) {
-        const keyBuf = new TextEncoder().encode(key);
-        const gwBuf = new TextEncoder().encode(gatewayKey);
-        valid = crypto.subtle ? await crypto.subtle.timingSafeEqual(keyBuf, gwBuf) : key === gatewayKey;
+        valid = timingSafeEqual(key, gatewayKey);
       }
       if (!valid) {
         return new Response(blockedHtml(ip, 'Gateway key salah!'), {
