@@ -88,7 +88,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
           <!-- ─── CONSOLE ROW ─── -->
           <div class="grid gap-5 lg:grid-cols-3">
             <!-- 7-Day Growth -->
-            <div class="bg-card border-border rounded-lg border">
+            <div class="bg-card border-border rounded-xl border">
               <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">User Growth (7d)</h3>
                 <span class="text-[11px] text-muted-foreground">{{ formatNum(weekTotal) }} total</span>
@@ -115,7 +115,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
             </div>
 
             <!-- Volume Breakdown -->
-            <div class="bg-card border-border rounded-lg border">
+            <div class="bg-card border-border rounded-xl border">
               <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">Volume Today</h3>
                 <span class="text-[11px] text-muted-foreground"
@@ -154,7 +154,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
             </div>
 
             <!-- Pending Queue -->
-            <div class="bg-card border-border rounded-lg border">
+            <div class="bg-card border-border rounded-xl border">
               <div class="border-border flex items-center justify-between border-b px-5 py-3">
                 <h3 class="text-xs font-semibold text-foreground">Pending Queue</h3>
                 <span class="text-[11px] text-muted-foreground"
@@ -192,55 +192,75 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
 
           <!-- ─── BOTTOM ROW ─── -->
           <div class="grid gap-5 lg:grid-cols-2">
-            <!-- Recent Activity -->
-            <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-5 py-3">
-                <h3 class="text-xs font-semibold text-foreground">Recent Activity</h3>
-                <a routerLink="/audit" class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  >View all →</a
-                >
+
+            <!-- Recent Activity — timeline feed -->
+            <div class="bg-card border-border rounded-xl border overflow-hidden">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3.5">
+                <div class="flex items-center gap-2">
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <h3 class="text-sm font-semibold text-foreground">Recent Activity</h3>
+                </div>
+                <a routerLink="/audit"
+                   class="text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors">
+                  View all →
+                </a>
               </div>
-              <div class="divide-border divide-y">
-                @for (log of recentLogs; track log.id) {
-                  <div class="flex items-start gap-2.5 px-5 py-3">
-                    <div class="bg-accent/50 mt-0.5 rounded p-1">
-                      <svg-icon
-                        src="assets/icons/heroicons/outline/cursor-click.svg"
-                        svgClass="h-2.5 w-2.5 text-muted-foreground"></svg-icon>
-                    </div>
+
+              <div class="px-5 py-3">
+                @for (log of recentLogs; track log.id; let last = $last) {
+                  @let a = parseActivity(log);
+                  <div class="relative flex gap-3 py-2.5" [class.pb-0]="last">
+                    <!-- vertical connector line -->
+                    @if (!last) {
+                      <span class="absolute left-[5px] top-5 bottom-0 w-px bg-border/60"></span>
+                    }
+                    <!-- method dot -->
+                    <span class="relative z-10 mt-1 flex h-3 w-3 flex-shrink-0 rounded-full {{ a.dot }} ring-2 ring-card"></span>
+                    <!-- content -->
                     <div class="min-w-0 flex-1">
-                      <p class="truncate text-xs text-foreground">{{ log.action }}</p>
-                      <div class="flex gap-2 text-[11px] text-muted-foreground/60 mt-0.5">
-                        <span>{{ log.resource_type }}</span>
-                        @if (log.resource_id) {
-                          <span>· {{ log.resource_id.slice(0, 8) }}</span>
-                        }
-                        <span>· {{ log.created_at | wibDate: 'short' }}</span>
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-xs font-medium text-foreground">{{ a.label }}</span>
+                        <span class="inline-flex items-center rounded px-1.5 py-px text-[10px] font-bold uppercase {{ a.badge }}">
+                          {{ a.resource }}
+                        </span>
                       </div>
+                      <p class="mt-0.5 text-[11px] text-muted-foreground/55">
+                        @if (log.ip_address) {<span class="font-mono">{{ log.ip_address.split(',')[0].trim() }}</span> · }
+                        {{ log.created_at | wibDate: 'short' }}
+                      </p>
                     </div>
                   </div>
                 } @empty {
-                  <p class="text-muted-foreground text-xs text-center py-6">No recent activity</p>
+                  <div class="flex flex-col items-center gap-2 py-8 text-center">
+                    <div class="h-8 w-8 rounded-full bg-muted/60 flex items-center justify-center">
+                      <svg-icon src="assets/icons/heroicons/outline/clock.svg" svgClass="h-4 w-4 text-muted-foreground/50"></svg-icon>
+                    </div>
+                    <p class="text-xs text-muted-foreground/60">Belum ada aktivitas</p>
+                  </div>
                 }
               </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="bg-card border-border rounded-lg border">
-              <div class="border-border flex items-center justify-between border-b px-5 py-3">
-                <h3 class="text-xs font-semibold text-foreground">Quick Actions</h3>
+            <div class="bg-card border-border rounded-xl border overflow-hidden">
+              <div class="border-border flex items-center justify-between border-b px-5 py-3.5">
+                <h3 class="text-sm font-semibold text-foreground">Quick Actions</h3>
               </div>
-              <div class="grid grid-cols-4 gap-px bg-border">
-                @for (action of quickActions; track action.label) {
-                  <a
-                    [routerLink]="action.route"
-                    class="bg-card flex flex-col items-center gap-1.5 px-2 py-3.5 hover:bg-accent/30 transition-colors">
-                    <svg-icon [src]="action.icon" svgClass="h-4 w-4 text-muted-foreground"></svg-icon>
-                    <span class="text-[11px] text-muted-foreground font-medium">{{ action.label }}</span>
+              <div class="grid grid-cols-4 divide-x divide-y divide-border/60">
+                @for (qa of quickActions; track qa.label) {
+                  <a [routerLink]="qa.route"
+                     class="group flex flex-col items-center gap-2 p-4 hover:bg-muted/30 transition-colors">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl {{ qa.bg }}">
+                      <svg-icon [src]="qa.icon" [svgClass]="'h-4 w-4 ' + qa.color"></svg-icon>
+                    </div>
+                    <span class="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                      {{ qa.label }}
+                    </span>
                   </a>
                 }
               </div>
             </div>
+
           </div>
         }
       }
@@ -271,14 +291,14 @@ export class OverviewComponent implements OnInit, OnDestroy {
   totalVol = 0;
 
   quickActions = [
-    { label: 'Users', route: '/users', icon: 'assets/icons/heroicons/outline/users.svg' },
-    { label: 'Deposits', route: '/deposits', icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg' },
-    { label: 'WD', route: '/withdrawals', icon: 'assets/icons/heroicons/outline/arrow-sm-up.svg' },
-    { label: 'Bets', route: '/bets', icon: 'assets/icons/heroicons/outline/trending-up.svg' },
-    { label: 'KYC', route: '/kyc', icon: 'assets/icons/heroicons/outline/identification.svg' },
-    { label: '3D King', route: '/3dking', icon: 'assets/icons/heroicons/outline/view-grid.svg' },
-    { label: 'CS', route: '/cs-contact', icon: 'assets/icons/heroicons/outline/phone.svg' },
-    { label: 'Wallet', route: '/wallet', icon: 'assets/icons/heroicons/outline/currency-dollar.svg' },
+    { label: 'Users',    route: '/users',       icon: 'assets/icons/heroicons/outline/users.svg',           bg: 'bg-sky-500/10',    color: 'text-sky-500'    },
+    { label: 'Deposits', route: '/deposits',    icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg',   bg: 'bg-emerald-500/10',color: 'text-emerald-500'},
+    { label: 'WD',       route: '/withdrawals', icon: 'assets/icons/heroicons/outline/arrow-sm-up.svg',     bg: 'bg-amber-500/10',  color: 'text-amber-500'  },
+    { label: 'Bets',     route: '/bets',        icon: 'assets/icons/heroicons/outline/trending-up.svg',     bg: 'bg-indigo-500/10', color: 'text-indigo-500' },
+    { label: 'KYC',      route: '/kyc',         icon: 'assets/icons/heroicons/outline/identification.svg',  bg: 'bg-rose-500/10',   color: 'text-rose-500'   },
+    { label: '3D King',  route: '/3dking',      icon: 'assets/icons/heroicons/outline/view-grid.svg',       bg: 'bg-indigo-500/10', color: 'text-indigo-500' },
+    { label: 'CS',       route: '/cs-contact',  icon: 'assets/icons/heroicons/outline/phone.svg',           bg: 'bg-sky-500/10',    color: 'text-sky-500'    },
+    { label: 'Wallet',   route: '/wallet-admin',icon: 'assets/icons/heroicons/outline/currency-dollar.svg', bg: 'bg-violet-500/10', color: 'text-violet-500' },
   ];
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -329,6 +349,34 @@ export class OverviewComponent implements OnInit, OnDestroy {
     }
     this.loading = false;
     this.cdr.markForCheck();
+  }
+
+  parseActivity(log: { action?: string; resource_type?: string }) {
+    const m = (log.action ?? '').match(/^(GET|POST|PATCH|DELETE|PUT)\s+\/([a-z_]+)/i) ?? [];
+    const method  = (m[1] ?? 'GET').toUpperCase();
+    const table   = m[2] ?? log.resource_type ?? 'system';
+
+    const verbs:    Record<string, string> = { GET:'Melihat', POST:'Membuat', PATCH:'Mengubah', PUT:'Mengubah', DELETE:'Menghapus' };
+    const names:    Record<string, string> = {
+      transactions:'Transaksi', bets:'Taruhan', users:'Member', wallet:'Wallet',
+      king_results:'Hasil Undian', king_planned:'Sesi Planned', kyc_documents:'KYC',
+      support_tickets:'Support', audit_log:'Audit', ip_whitelist:'Whitelist',
+      deposits:'Deposit', withdrawals:'Withdrawal',
+    };
+    const dots:     Record<string, string> = { GET:'bg-slate-400', POST:'bg-emerald-500', PATCH:'bg-amber-500', PUT:'bg-amber-500', DELETE:'bg-rose-500' };
+    const badges:   Record<string, string> = {
+      transactions:'bg-violet-500/10 text-violet-500', bets:'bg-indigo-500/10 text-indigo-500',
+      users:'bg-sky-500/10 text-sky-500', wallet:'bg-violet-500/10 text-violet-500',
+      king_results:'bg-indigo-500/10 text-indigo-500', king_planned:'bg-indigo-500/10 text-indigo-500',
+      kyc_documents:'bg-rose-500/10 text-rose-500', support_tickets:'bg-amber-500/10 text-amber-500',
+    };
+
+    return {
+      label:    `${verbs[method] ?? 'Akses'} ${names[table] ?? table}`,
+      resource: names[table] ?? table,
+      dot:      dots[method]  ?? 'bg-slate-400',
+      badge:    badges[table] ?? 'bg-slate-500/10 text-slate-400',
+    };
   }
 
   formatNum(n: number): string {
