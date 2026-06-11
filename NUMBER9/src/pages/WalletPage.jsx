@@ -56,12 +56,7 @@ export default function WalletPage() {
 
   useEffect(() => {
     if (auth?.id) {
-      console.log('[WalletPage] Fetching balances for user:', auth?.id);
-      fetchBalances().then(() => {
-        console.log('[WalletPage] Balance fetch complete');
-      });
-    } else {
-      console.log('[WalletPage] No auth.id available');
+      fetchBalances();
     }
   }, [auth?.id, fetchBalances]);
 
@@ -125,22 +120,17 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
   useEffect(() => {
     let alive = true;
     setAccountsLoading(true);
-    console.log('[DepositTab] Component mounted, fetching accounts');
     (async () => {
       try {
         const r = await fetchPlatformAccounts();
         if (!alive) return;
-        console.log('[DepositTab] fetchPlatformAccounts returned:', r);
         if (Array.isArray(r)) {
-          console.log('[DepositTab] Loaded accounts:', r.length, r);
           setAccounts(r);
         } else {
-          console.warn('[DepositTab] fetchPlatformAccounts returned non-array:', r);
           setAccounts([]);
         }
       } catch (e) {
         if (alive) {
-          console.error('[DepositTab] fetchPlatformAccounts error:', e);
           setAccounts([]);
         }
       } finally {
@@ -153,22 +143,17 @@ function DepositTab({ auth, lastDepositAt, setLastDepositAt, nowTick, _rtTick, _
   useEffect(() => {
     let alive = true;
     setAccountsLoading(true);
-    console.log('[DepositTab] _accountsVersion changed:', _accountsVersion, ', refetching accounts');
     (async () => {
       try {
         const r = await fetchPlatformAccounts();
         if (!alive) return;
-        console.log('[DepositTab] fetchPlatformAccounts returned:', r);
         if (Array.isArray(r)) {
-          console.log('[DepositTab] Loaded accounts:', r.length, r);
           setAccounts(r);
         } else {
-          console.warn('[DepositTab] fetchPlatformAccounts returned non-array:', r);
           setAccounts([]);
         }
       } catch (e) {
         if (alive) {
-          console.error('[DepositTab] fetchPlatformAccounts error:', e);
           setAccounts([]);
         }
       } finally {

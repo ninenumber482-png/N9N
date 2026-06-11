@@ -1,5 +1,3 @@
 {
-    "recommendations": [
-        "blackboxapp.blackboxagent"
-    ]
+  "recommendations": ["blackboxapp.blackboxagent", "yechielby.copilot-chat-rtl"]
 }
