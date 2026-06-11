@@ -9,7 +9,7 @@ set -euo pipefail
 #   1. Regression test DB (settle_session, invariant check)
 #   2. Build Angular admin
 #   3. Build React user
-#   4. Deploy Edge Functions (admin-proxy)
+#   4. Deploy Edge Functions (all production — scripts/deploy-edge-functions.sh)
 #   5. Deploy to Cloudflare Pages
 # =============================================================================
 
@@ -56,10 +56,10 @@ fi
 echo ""
 echo "=== [4/5] Deploy Edge Functions ==="
 cd "$ROOT_DIR"
-if supabase functions deploy admin-proxy 2>&1; then
-  echo "✅ admin-proxy deployed"
+if bash "$ROOT_DIR/scripts/deploy-edge-functions.sh" 2>&1; then
+  echo "✅ Edge Functions deployed"
 else
-  echo "❌ admin-proxy deploy FAILED"
+  echo "❌ Edge Functions deploy FAILED"
   FAIL=1
 fi
 
@@ -67,6 +67,7 @@ fi
 echo ""
 echo "=== [5/5] Deploy Cloudflare Pages ==="
 cd "$ROOT_DIR"
+cp _worker.js dist/number9systemd/browser/_worker.js
 if npx wrangler pages deploy "$ROOT_DIR/dist/number9systemd/browser" --project-name number9-admin 2>&1; then
   echo "✅ Admin Pages deployed"
 else

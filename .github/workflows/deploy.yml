@@ -22,21 +22,7 @@ jobs:
           version: latest
 
       - name: Deploy all Edge Functions
-        run: |
-          supabase functions deploy auth-login      --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy auth-logout     --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy auth-validate   --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy user-login      --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy user-register   --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy admin-proxy     --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy admin-popup-image --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy upload-proof    --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy audit-log       --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy get-profile-wrapper --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy get-user-wallet --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy place-bet-wrapper --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy submit-deposit-wrapper --project-ref $SUPABASE_PROJECT_ID
-          supabase functions deploy get-popup-banners --project-ref $SUPABASE_PROJECT_ID
+        run: bash scripts/deploy-edge-functions.sh
 
   deploy-apps:
     name: Build & Deploy Apps
