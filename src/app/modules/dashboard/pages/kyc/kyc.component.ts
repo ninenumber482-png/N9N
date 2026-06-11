@@ -50,7 +50,7 @@ interface KycDocument {
             optionValue="value"
             placeholder="Semua"
             class="w-36"
-            styleClass="!text-xs !w-full" />
+            styleClass="!text-sm !w-44" />
         </app-filter-bar>
       </app-page-header>
 

@@ -15,7 +15,7 @@ import { InputTextModule } from 'primeng/inputtext';
           [ngModel]="search()"
           (ngModelChange)="searchChange.emit($event)"
           [placeholder]="placeholder()"
-          class="!w-48 !text-xs !py-1.5 !px-2.5" />
+          class="!w-56 !text-sm !py-2 !px-3" />
       }
       <ng-content />
     </div>

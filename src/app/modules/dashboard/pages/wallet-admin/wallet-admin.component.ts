@@ -146,7 +146,7 @@ interface PageEvent {
           optionValue="value"
           placeholder="Semua Status"
           class="w-36"
-          styleClass="!text-xs !w-full" />
+          styleClass="!text-sm !w-44" />
       </app-filter-bar>
 
       @if (depError) {
@@ -295,7 +295,7 @@ interface PageEvent {
           optionValue="value"
           placeholder="Semua Status"
           class="w-36"
-          styleClass="!text-xs !w-full" />
+          styleClass="!text-sm !w-44" />
       </app-filter-bar>
 
       @if (wdError) {

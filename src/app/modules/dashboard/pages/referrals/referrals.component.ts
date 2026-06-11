@@ -65,7 +65,7 @@ interface ReferralRecord {
           optionValue="value"
           placeholder="All Status"
           class="w-36"
-          styleClass="!text-xs !w-full" />
+          styleClass="!text-sm !w-44" />
       </app-filter-bar>
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />

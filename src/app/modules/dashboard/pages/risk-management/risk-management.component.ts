@@ -56,7 +56,7 @@ interface RiskProfile {
             optionLabel="label"
             optionValue="value"
             class="w-36"
-            styleClass="!text-xs !w-full" />
+            styleClass="!text-sm !w-44" />
           <app-refresh-button [loading]="loading" (clicked)="load()" />
         </div>
       </app-page-header>

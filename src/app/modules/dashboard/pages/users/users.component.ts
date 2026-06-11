@@ -125,7 +125,7 @@ interface BetRow {
           optionValue="value"
           placeholder="Role"
           class="w-32"
-          styleClass="!text-xs !w-full" />
+          styleClass="!text-sm !w-44" />
         <p-select
           [(ngModel)]="statusFilter"
           (ngModelChange)="onFilterChange()"
@@ -134,7 +134,7 @@ interface BetRow {
           optionValue="value"
           placeholder="Status"
           class="w-40"
-          styleClass="!text-xs !w-full" />
+          styleClass="!text-sm !w-44" />
         <p-select
           [(ngModel)]="kycFilter"
           (ngModelChange)="onFilterChange()"
@@ -143,7 +143,7 @@ interface BetRow {
           optionValue="value"
           placeholder="KYC Status"
           class="w-36"
-          styleClass="!text-xs !w-full" />
+          styleClass="!text-sm !w-44" />
       </app-filter-bar>
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />

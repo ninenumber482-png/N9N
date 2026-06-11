@@ -48,7 +48,7 @@ interface BetData {
             optionValue="value"
             placeholder="All"
             class="w-32"
-            styleClass="!text-xs !w-full" />
+            styleClass="!text-sm !w-44" />
           <p-datepicker
             [(ngModel)]="dateFrom"
             (ngModelChange)="applyFilter()"

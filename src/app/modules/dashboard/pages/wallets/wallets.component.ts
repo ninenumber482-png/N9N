@@ -262,7 +262,7 @@ interface PlatformAccountRecord {
                   optionLabel="label"
                   optionValue="value"
                   class="w-full"
-                  styleClass="!text-xs !w-full" />
+                  styleClass="!text-sm !w-44" />
               </div>
               <div class="space-y-1">
                 <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status <span class="text-destructive">*</span></label>
@@ -272,7 +272,7 @@ interface PlatformAccountRecord {
                   optionLabel="label"
                   optionValue="value"
                   class="w-full"
-                  styleClass="!text-xs !w-full" />
+                  styleClass="!text-sm !w-44" />
               </div>
               <div class="sm:col-span-2 space-y-1">
                 <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
