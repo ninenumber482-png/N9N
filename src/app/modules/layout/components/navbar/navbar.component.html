@@ -1,6 +1,6 @@
-<div class="bg-card/80 backdrop-blur-md border-b border-border relative">
-  <div class="mx-auto px-5">
-    <div class="flex items-center justify-between py-3 lg:justify-start">
+<div class="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-30">
+  <div class="mx-auto px-5 sm:px-8 lg:px-10">
+    <div class="flex h-14 items-center justify-between">
       <!-- Mobile Navigation Menu Button-->
       <div class="sm:order-1 lg:hidden">
         <button
@@ -27,8 +27,11 @@
 
       <!-- Right Actions -->
       <div class="flex items-center gap-3 sm:order-4 lg:flex-1 lg:justify-end">
-        <!-- Live Clock -->
-        <span class="text-muted-foreground font-mono text-xs tabular-nums">{{ currentTime }}</span>
+        <!-- Live Clock pill -->
+        <div class="hidden sm:flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1.5">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+          <span class="font-mono text-xs font-medium tabular-nums text-muted-foreground">{{ currentTime }}</span>
+        </div>
 
         <!-- Notification Bell -->
         <div class="notif-wrapper relative">

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap') layer(base);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap') layer(base);
 
 @import 'tailwindcss';
 
@@ -15,286 +15,292 @@
 
 @theme {
   --font-*: initial;
-  --font-poppins: Poppins, system-ui, sans-serif;
-  --font-nunito: Nunito Sans, sans-serif;
+  --font-poppins: Poppins, Inter, system-ui, sans-serif;
+  --font-inter:   Inter, system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  --animate-wiggle: wiggle 1s ease-in-out infinite;
-  --animate-fade-in-down: fade-in-down 0.3s ease-out;
-  --animate-fade-out-down: fade-out-down 0.3s ease-out;
-  --animate-fade-in-up: fade-in-up 0.3s ease-out;
-  --animate-fade-out-up: fade-out-up 0.3s ease-out;
+  --animate-wiggle:       wiggle 1s ease-in-out infinite;
+  --animate-fade-in-down: fade-in-down 0.25s ease-out;
+  --animate-fade-out-down:fade-out-down 0.25s ease-out;
+  --animate-fade-in-up:   fade-in-up 0.25s ease-out;
+  --animate-fade-out-up:  fade-out-up 0.25s ease-out;
+  --animate-slide-in:     slide-in 0.2s ease-out;
 
-  --shadow-custom: 0px 0px 50px 0px rgb(82 63 105 / 15%);
+  --shadow-custom:  0px 0px 50px 0px rgb(82 63 105 / 15%);
+  --shadow-card:    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-panel:   0 4px 16px 0 rgb(0 0 0 / 0.10);
+  --shadow-overlay: 0 8px 32px 0 rgb(0 0 0 / 0.18);
 
-  --color-border: var(--border, #E2E8F0);
-  --color-background: var(--background, #F8FAFC);
-  --color-foreground: var(--foreground, #0F172A);
+  /* ── Design tokens (light mode defaults) ── */
+  --color-background:       var(--background,        #F8FAFC);
+  --color-foreground:       var(--foreground,        #0F172A);
 
-  --color-primary: var(--primary, #2563EB);
-  --color-primary-foreground: var(--primary-foreground, #FFFFFF);
+  --color-primary:          var(--primary,           #2563EB);
+  --color-primary-foreground:var(--primary-foreground,#FFFFFF);
 
-  --color-destructive: var(--destructive, #EF4444);
-  --color-destructive-foreground: var(--destructive-foreground, #FAFAFA);
+  --color-destructive:      var(--destructive,       #EF4444);
+  --color-destructive-foreground:var(--destructive-foreground,#FAFAFA);
 
-  --color-muted: var(--muted, #F1F5F9);
-  --color-muted-foreground: var(--muted-foreground, #64748B);
+  --color-muted:            var(--muted,             #F1F5F9);
+  --color-muted-foreground: var(--muted-foreground,  #64748B);
 
-  --color-card: var(--card, #FFFFFF);
-  --color-card-foreground: var(--card-foreground, #0F172A);
+  --color-accent:           var(--accent,            #EFF6FF);
+  --color-accent-foreground:var(--accent-foreground, #1D4ED8);
 
-  --color-sidebar: var(--sidebar, #1E293B);
-  --color-sidebar-foreground: var(--sidebar-foreground, #F8FAFC);
-  --color-sidebar-border: var(--sidebar-border, #334155);
-  --color-sidebar-accent: var(--sidebar-accent, #3B82F6);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground, #FFFFFF);
-  --color-sidebar-hover: var(--sidebar-hover, rgba(255,255,255,0.06));
+  --color-card:             var(--card,              #FFFFFF);
+  --color-card-foreground:  var(--card-foreground,   #0F172A);
+
+  --color-border:           var(--border,            #E2E8F0);
+  --color-ring:             var(--ring,              #2563EB);
+
+  --color-sidebar:          var(--sidebar,           #0F172A);
+  --color-sidebar-foreground:var(--sidebar-foreground,#CBD5E1);
+  --color-sidebar-border:   var(--sidebar-border,    #1E293B);
+  --color-sidebar-accent:   var(--sidebar-accent,    #2563EB);
+  --color-sidebar-accent-foreground:var(--sidebar-accent-foreground,#FFFFFF);
+  --color-sidebar-hover:    var(--sidebar-hover,     rgba(255,255,255,0.055));
+  --color-sidebar-muted:    var(--sidebar-muted,     rgba(255,255,255,0.30));
 
   @keyframes wiggle {
-
-    0%,
-    100% {
-      transform: rotate(-3deg);
-    }
-
-    50% {
-      transform: rotate(3deg);
-    }
+    0%,100% { transform: rotate(-3deg); }
+    50%      { transform: rotate(3deg); }
   }
-
   @keyframes fade-in-down {
-    0% {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    0%   { opacity:0; transform: translateY(-8px); }
+    100% { opacity:1; transform: translateY(0);    }
   }
-
   @keyframes fade-out-down {
-    from {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-
-    to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
+    from { opacity:1; transform: translateY(0px);  }
+    to   { opacity:0; transform: translateY(8px);  }
   }
-
   @keyframes fade-in-up {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    0%   { opacity:0; transform: translateY(8px);  }
+    100% { opacity:1; transform: translateY(0);    }
   }
-
   @keyframes fade-out-up {
-    from {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-
-    to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
+    from { opacity:1; transform: translateY(0px);  }
+    to   { opacity:0; transform: translateY(-8px); }
+  }
+  @keyframes slide-in {
+    from { opacity:0; transform: translateX(-6px); }
+    to   { opacity:1; transform: translateX(0);    }
   }
 }
 
 @utility container {
   padding-inline: 1rem;
-
-  @media (width >=theme(--breakpoint-sm)) {
-    padding-inline: 2rem;
-  }
-
-  @media (width >=theme(--breakpoint-lg)) {
-    padding-inline: 4rem;
-  }
-
-  @media (width >=theme(--breakpoint-xl)) {
-    padding-inline: 5rem;
-  }
-
-  @media (width >=theme(--breakpoint-2xl)) {
-    padding-inline: 6rem;
-  }
+  @media (width >=theme(--breakpoint-sm))  { padding-inline: 1.5rem; }
+  @media (width >=theme(--breakpoint-lg))  { padding-inline: 2.5rem; }
+  @media (width >=theme(--breakpoint-xl))  { padding-inline: 3rem;   }
+  @media (width >=theme(--breakpoint-2xl)) { padding-inline: 4rem;   }
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+/* ── Compatibility: keep border-color behaviour from Tailwind v3 ── */
 @layer base {
-
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
+  *,::after,::before,::backdrop,::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
+
+  html { font-size: 15px; }
 
   body {
     font-family: var(--font-poppins), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  /* Native form elements — override @tailwindcss/forms base */
+  [type='text'],[type='email'],[type='url'],[type='password'],[type='number'],
+  [type='date'],[type='datetime-local'],[type='month'],[type='search'],
+  [type='tel'],[type='time'],[type='week'],[multiple],textarea,select {
+    @apply w-full rounded-md border border-border bg-card text-sm text-foreground
+           placeholder-muted-foreground/60
+           focus:z-10 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary/40;
+  }
+
+  [type='checkbox'],[type='radio'] {
+    @apply h-4 w-4 rounded-sm border-border bg-card
+           checked:border-primary checked:bg-primary
+           focus:ring-2 focus:ring-primary/40;
   }
 }
 
+/* ── Light mode variables ── */
+:root {
+  --background:         #F8FAFC;
+  --foreground:         #0F172A;
+  --card:               #FFFFFF;
+  --card-foreground:    #0F172A;
+  --primary:            #2563EB;
+  --primary-foreground: #FFFFFF;
+  --muted:              #F1F5F9;
+  --muted-foreground:   #64748B;
+  --accent:             #EFF6FF;
+  --accent-foreground:  #1D4ED8;
+  --destructive:        #EF4444;
+  --destructive-foreground: #FAFAFA;
+  --border:             #E2E8F0;
+  --ring:               #2563EB;
+
+  /* Sidebar — slate-900 base, more premium than slate-800 */
+  --sidebar:            #0F172A;
+  --sidebar-foreground: #CBD5E1;
+  --sidebar-border:     #1E293B;
+  --sidebar-accent:     #2563EB;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-hover:      rgba(255,255,255,0.055);
+  --sidebar-muted:      rgba(203,213,225,0.30);
+}
+
+/* ── Dark mode variables ── */
+.dark {
+  --background:         #0B1120;
+  --foreground:         #F1F5F9;
+  --card:               #111827;
+  --card-foreground:    #F1F5F9;
+  --primary:            #3B82F6;
+  --primary-foreground: #FFFFFF;
+  --muted:              #1E293B;
+  --muted-foreground:   #94A3B8;
+  --accent:             #1E3A5F;
+  --accent-foreground:  #93C5FD;
+  --destructive:        #EF4444;
+  --destructive-foreground: #FAFAFA;
+  --border:             #1E293B;
+  --ring:               #3B82F6;
+
+  --sidebar:            #060D1A;
+  --sidebar-foreground: #94A3B8;
+  --sidebar-border:     #111827;
+  --sidebar-accent:     #3B82F6;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-hover:      rgba(255,255,255,0.042);
+  --sidebar-muted:      rgba(148,163,184,0.25);
+}
+
+/* ── Dropdown utility ── */
 @utility dropdown-content {
   @apply pointer-events-none scale-95 opacity-0 duration-100 ease-in;
-
-  .dropdown:hover>& {
-    @apply pointer-events-auto block scale-100 animate-fade-in-up opacity-100 duration-200;
-  }
+  .dropdown:hover>& { @apply pointer-events-auto block scale-100 animate-fade-in-up opacity-100 duration-200; }
 }
-
 @utility dropdown {
-  &:hover>.dropdown-content {
-    @apply pointer-events-auto block scale-100 animate-fade-in-up opacity-100 duration-200;
-  }
+  &:hover>.dropdown-content { @apply pointer-events-auto block scale-100 animate-fade-in-up opacity-100 duration-200; }
 }
 
-:root {
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --primary: #2563EB;
-  --primary-foreground: #FFFFFF;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
-  --border: #E2E8F0;
-
-  --sidebar: #1E293B;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-border: #334155;
-  --sidebar-accent: #3B82F6;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-hover: rgba(255,255,255,0.06);
-}
-
-.dark {
-  --background: #0F172A;
-  --foreground: #F1F5F9;
-  --card: #1E293B;
-  --card-foreground: #334155;
-  --primary: #3B82F6;
-  --primary-foreground: #FFFFFF;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
-  --border: #334155;
-
-  --sidebar: #0B1120;
-  --sidebar-foreground: #E2E8F0;
-  --sidebar-border: #1E293B;
-  --sidebar-accent: #3B82F6;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-hover: rgba(255,255,255,0.04);
-}
-
-/** ── Dashboard page accents ── **/
+/* ══════════════════════════════════════════════
+   PAGE ACCENT SYSTEM — header icon + card border
+   ══════════════════════════════════════════════ */
 [data-page] .page-header-icon {
-  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-sm;
+  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm;
 }
-[data-page="overview"] .page-header-icon { @apply bg-blue-500/15 text-blue-600 dark:text-blue-400; }
-[data-page="deposits"] .page-header-icon { @apply bg-emerald-500/15 text-emerald-600 dark:text-emerald-400; }
-[data-page="withdrawals"] .page-header-icon { @apply bg-amber-500/15 text-amber-600 dark:text-amber-400; }
-[data-page="transactions"] .page-header-icon { @apply bg-cyan-500/15 text-cyan-600 dark:text-cyan-400; }
-[data-page="wallets"] .page-header-icon { @apply bg-violet-500/15 text-violet-600 dark:text-violet-400; }
-[data-page="wallet-admin"] .page-header-icon { @apply bg-purple-500/15 text-purple-600 dark:text-purple-400; }
-[data-page="bets"] .page-header-icon { @apply bg-rose-500/15 text-rose-600 dark:text-rose-400; }
-[data-page="gaming"] .page-header-icon { @apply bg-indigo-500/15 text-indigo-600 dark:text-indigo-400; }
-[data-page="3dking"] .page-header-icon { @apply bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400; }
-[data-page="turnover"] .page-header-icon { @apply bg-orange-500/15 text-orange-600 dark:text-orange-400; }
-[data-page="users"] .page-header-icon { @apply bg-sky-500/15 text-sky-600 dark:text-sky-400; }
-[data-page="kyc"] .page-header-icon { @apply bg-teal-500/15 text-teal-600 dark:text-teal-400; }
-[data-page="session-monitor"] .page-header-icon { @apply bg-slate-500/15 text-slate-600 dark:text-slate-400; }
-[data-page="security-center"] .page-header-icon { @apply bg-red-500/15 text-red-600 dark:text-red-400; }
-[data-page="audit"] .page-header-icon { @apply bg-stone-500/15 text-stone-600 dark:text-stone-400; }
-[data-page="risk-management"] .page-header-icon { @apply bg-yellow-500/15 text-yellow-600 dark:text-yellow-400; }
-[data-page="member-balance"] .page-header-icon { @apply bg-lime-500/15 text-lime-600 dark:text-lime-400; }
-[data-page="member-password"] .page-header-icon { @apply bg-pink-500/15 text-pink-600 dark:text-pink-400; }
-[data-page="referrals"] .page-header-icon { @apply bg-emerald-500/15 text-emerald-600 dark:text-emerald-400; }
-[data-page="role-management"] .page-header-icon { @apply bg-blue-500/15 text-blue-600 dark:text-blue-400; }
-[data-page="ip-whitelist"] .page-header-icon { @apply bg-slate-500/15 text-slate-600 dark:text-slate-400; }
-[data-page="system"] .page-header-icon { @apply bg-neutral-500/15 text-neutral-600 dark:text-neutral-400; }
-[data-page="cs-contact"] .page-header-icon { @apply bg-violet-500/15 text-violet-600 dark:text-violet-400; }
-[data-page="popup-banner"] .page-header-icon { @apply bg-amber-500/15 text-amber-600 dark:text-amber-400; }
 
+[data-page="overview"]      .page-header-icon { @apply bg-blue-500/12    text-blue-600    dark:text-blue-400;    }
+[data-page="deposits"]      .page-header-icon { @apply bg-emerald-500/12 text-emerald-600 dark:text-emerald-400; }
+[data-page="withdrawals"]   .page-header-icon { @apply bg-amber-500/12   text-amber-600   dark:text-amber-400;   }
+[data-page="transactions"]  .page-header-icon { @apply bg-cyan-500/12    text-cyan-600    dark:text-cyan-400;    }
+[data-page="wallets"]       .page-header-icon { @apply bg-violet-500/12  text-violet-600  dark:text-violet-400;  }
+[data-page="wallet-admin"]  .page-header-icon { @apply bg-purple-500/12  text-purple-600  dark:text-purple-400;  }
+[data-page="bets"]          .page-header-icon { @apply bg-rose-500/12    text-rose-600    dark:text-rose-400;    }
+[data-page="gaming"]        .page-header-icon { @apply bg-indigo-500/12  text-indigo-600  dark:text-indigo-400;  }
+[data-page="3dking"]        .page-header-icon { @apply bg-fuchsia-500/12 text-fuchsia-600 dark:text-fuchsia-400; }
+[data-page="turnover"]      .page-header-icon { @apply bg-orange-500/12  text-orange-600  dark:text-orange-400;  }
+[data-page="users"]         .page-header-icon { @apply bg-sky-500/12     text-sky-600     dark:text-sky-400;     }
+[data-page="kyc"]           .page-header-icon { @apply bg-teal-500/12    text-teal-600    dark:text-teal-400;    }
+[data-page="session-monitor"] .page-header-icon { @apply bg-slate-500/12 text-slate-600   dark:text-slate-400;   }
+[data-page="security-center"] .page-header-icon { @apply bg-red-500/12   text-red-600     dark:text-red-400;     }
+[data-page="audit"]         .page-header-icon { @apply bg-stone-500/12   text-stone-600   dark:text-stone-400;   }
+[data-page="risk-management"].page-header-icon { @apply bg-yellow-500/12 text-yellow-600  dark:text-yellow-400;  }
+[data-page="member-balance"] .page-header-icon { @apply bg-lime-500/12   text-lime-600    dark:text-lime-400;    }
+[data-page="member-password"].page-header-icon { @apply bg-pink-500/12   text-pink-600    dark:text-pink-400;    }
+[data-page="referrals"]     .page-header-icon { @apply bg-emerald-500/12 text-emerald-600 dark:text-emerald-400; }
+[data-page="role-management"].page-header-icon { @apply bg-blue-500/12   text-blue-600    dark:text-blue-400;    }
+[data-page="ip-whitelist"]  .page-header-icon { @apply bg-slate-500/12   text-slate-600   dark:text-slate-400;   }
+[data-page="system"]        .page-header-icon { @apply bg-neutral-500/12 text-neutral-600 dark:text-neutral-400; }
+[data-page="cs-contact"]    .page-header-icon { @apply bg-violet-500/12  text-violet-600  dark:text-violet-400;  }
+[data-page="popup-banner"]  .page-header-icon { @apply bg-amber-500/12   text-amber-600   dark:text-amber-400;   }
+
+/* Card top-border accent */
 [data-page] .page-accent-card {
-  @apply border-t-[3px] rounded-lg overflow-hidden;
+  @apply border-t-2 rounded-xl overflow-hidden;
 }
-[data-page="overview"] .page-accent-card { border-top-color: #3B82F6; }
-[data-page="deposits"] .page-accent-card { border-top-color: #10B981; }
-[data-page="withdrawals"] .page-accent-card { border-top-color: #F59E0B; }
-[data-page="transactions"] .page-accent-card { border-top-color: #06B6D4; }
-[data-page="wallets"] .page-accent-card { border-top-color: #8B5CF6; }
-[data-page="wallet-admin"] .page-accent-card { border-top-color: #A855F7; }
-[data-page="bets"] .page-accent-card { border-top-color: #F43F5E; }
-[data-page="gaming"] .page-accent-card { border-top-color: #6366F1; }
-[data-page="3dking"] .page-accent-card { border-top-color: #D946EF; }
-[data-page="turnover"] .page-accent-card { border-top-color: #F97316; }
-[data-page="users"] .page-accent-card { border-top-color: #0EA5E9; }
-[data-page="kyc"] .page-accent-card { border-top-color: #14B8A6; }
-[data-page="session-monitor"] .page-accent-card { border-top-color: #64748B; }
-[data-page="security-center"] .page-accent-card { border-top-color: #EF4444; }
-[data-page="audit"] .page-accent-card { border-top-color: #78716C; }
-[data-page="risk-management"] .page-accent-card { border-top-color: #EAB308; }
+[data-page="overview"]      .page-accent-card { border-top-color: #3B82F6; }
+[data-page="deposits"]      .page-accent-card { border-top-color: #10B981; }
+[data-page="withdrawals"]   .page-accent-card { border-top-color: #F59E0B; }
+[data-page="transactions"]  .page-accent-card { border-top-color: #06B6D4; }
+[data-page="wallets"]       .page-accent-card { border-top-color: #8B5CF6; }
+[data-page="wallet-admin"]  .page-accent-card { border-top-color: #A855F7; }
+[data-page="bets"]          .page-accent-card { border-top-color: #F43F5E; }
+[data-page="gaming"]        .page-accent-card { border-top-color: #6366F1; }
+[data-page="3dking"]        .page-accent-card { border-top-color: #D946EF; }
+[data-page="turnover"]      .page-accent-card { border-top-color: #F97316; }
+[data-page="users"]         .page-accent-card { border-top-color: #0EA5E9; }
+[data-page="kyc"]           .page-accent-card { border-top-color: #14B8A6; }
+[data-page="session-monitor"].page-accent-card { border-top-color: #64748B; }
+[data-page="security-center"].page-accent-card { border-top-color: #EF4444; }
+[data-page="audit"]         .page-accent-card { border-top-color: #78716C; }
+[data-page="risk-management"].page-accent-card { border-top-color: #EAB308; }
 [data-page="member-balance"] .page-accent-card { border-top-color: #84CC16; }
-[data-page="member-password"] .page-accent-card { border-top-color: #EC4899; }
-[data-page="referrals"] .page-accent-card { border-top-color: #34D399; }
-[data-page="role-management"] .page-accent-card { border-top-color: #60A5FA; }
-[data-page="ip-whitelist"] .page-accent-card { border-top-color: #94A3B8; }
-[data-page="system"] .page-accent-card { border-top-color: #737373; }
-[data-page="cs-contact"] .page-accent-card { border-top-color: #A78BFA; }
-[data-page="popup-banner"] .page-accent-card { border-top-color: #FBBF24; }
+[data-page="member-password"].page-accent-card { border-top-color: #EC4899; }
+[data-page="referrals"]     .page-accent-card { border-top-color: #34D399; }
+[data-page="role-management"].page-accent-card { border-top-color: #60A5FA; }
+[data-page="ip-whitelist"]  .page-accent-card { border-top-color: #94A3B8; }
+[data-page="system"]        .page-accent-card { border-top-color: #737373; }
+[data-page="cs-contact"]    .page-accent-card { border-top-color: #A78BFA; }
+[data-page="popup-banner"]  .page-accent-card { border-top-color: #FBBF24; }
 
-/** Scroll bar **/
+/* ══════════════════════════════════════════════
+   GLOBAL TABLE ENHANCEMENTS
+   ══════════════════════════════════════════════ */
+.saas-table { @apply w-full text-left; }
+.saas-table thead tr {
+  @apply border-b border-border bg-muted/40;
+}
+.saas-table thead th {
+  @apply px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+}
+.saas-table tbody td {
+  @apply px-5 py-3.5 text-sm text-foreground border-b border-border/50;
+}
+.saas-table tbody tr:last-child td { @apply border-b-0; }
+.saas-table tbody tr { @apply transition-colors; }
+.saas-table tbody tr:hover { @apply bg-muted/30; }
+
+/* ══════════════════════════════════════════════
+   SAAS CARD + PANEL UTILITIES
+   ══════════════════════════════════════════════ */
+.saas-card {
+  @apply bg-card rounded-xl border border-border shadow-[var(--shadow-card)];
+}
+.saas-card-header {
+  @apply flex items-center justify-between border-b border-border px-5 py-3.5;
+}
+.saas-card-body { @apply p-5; }
+
+/* Stat / KPI card */
+.kpi-card {
+  @apply bg-card rounded-xl border border-border p-5 shadow-[var(--shadow-card)];
+}
+.kpi-label {
+  @apply text-xs font-semibold uppercase tracking-widest text-muted-foreground;
+}
+.kpi-value {
+  @apply mt-2 text-2xl font-extrabold tracking-tight text-foreground;
+}
+.kpi-sub {
+  @apply mt-1 text-xs text-muted-foreground;
+}
+
+/* ══════════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════════ */
 @supports selector(::-webkit-scrollbar) {
-  .supports-scrollbars\: pr-2 {
-    padding-right: 0.5rem;
-  }
+  .supports-scrollbars\:pr-2 { padding-right: 0.5rem; }
 }
 
-/** Custom Forms **/
-[type='text'],
-[type='email'],
-[type='url'],
-[type='password'],
-[type='number'],
-[type='date'],
-[type='datetime-local'],
-[type='month'],
-[type='search'],
-[type='tel'],
-[type='time'],
-[type='week'],
-[multiple],
-textarea,
-select {
-  @apply w-full rounded-md border border-border bg-background text-xs text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-hidden focus:ring-primary;
-}
-
-[type='checkbox'],
-[type='radio'] {
-  @apply h-4 w-4 rounded-sm border-border bg-background checked:border-primary checked:bg-primary indeterminate:border-primary indeterminate:bg-primary focus:ring-2 focus:ring-primary;
-}
+/* ══════════════════════════════════════════════
+   PRIMENG LAYER ORDER — ensure Tailwind utilities
+   can override PrimeNG component styles
+   ══════════════════════════════════════════════ */
+@layer tailwind-base, primeng, tailwind-utilities;
