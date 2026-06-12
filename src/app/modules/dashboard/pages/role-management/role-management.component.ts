@@ -15,8 +15,9 @@ interface AdminUser {
   id: string;
   username: string;
   email?: string;
+  full_name?: string;
   role: string;
-  login_status: string;
+  is_active: boolean;
 }
 
 @Component({
@@ -34,14 +35,17 @@ interface AdminUser {
   providers: [ConfirmationService],
   template: `
     <div data-page="role-management" class="space-y-6">
-      <app-page-header icon="users" title="Role Management" subtitle="Manage admin and superadmin roles">
+      <app-page-header
+        icon="users"
+        title="Role Management"
+        subtitle="Admin registry (n9_users) — who can log into the Angular admin">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
       @if (isSuperadmin) {
         <div class="bg-card border-border flex flex-wrap items-end gap-3 rounded-lg border p-4">
           <div class="flex flex-col gap-1">
-            <label for="grant-username" class="text-muted-foreground text-xs">Beri akses admin (username)</label>
+            <label for="grant-username" class="text-muted-foreground text-xs">Beri akses admin (username member)</label>
             <input
               id="grant-username"
               [(ngModel)]="grantUsername"
@@ -69,7 +73,7 @@ interface AdminUser {
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Username</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Email</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Current Role</th>
-                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Change Role</th>
+                  <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Actions</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
                 </tr>
               </thead>
@@ -103,17 +107,15 @@ interface AdminUser {
                             </button>
                           }
                           <button
-                            (click)="confirmToggleLogin(u)"
+                            (click)="confirmToggleActive(u)"
                             class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
-                            {{ u.login_status === 'ACTIVE' ? 'Disable' : 'Enable' }}
+                            {{ u.is_active ? 'Disable' : 'Enable' }}
                           </button>
-                          @if (u.role === 'admin') {
-                            <button
-                              (click)="confirmRevoke(u)"
-                              class="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors">
-                              Revoke
-                            </button>
-                          }
+                          <button
+                            (click)="confirmRevoke(u)"
+                            class="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors">
+                            Revoke
+                          </button>
                         </div>
                       } @else {
                         <span class="text-muted-foreground text-[11px]">—</span>
@@ -121,8 +123,8 @@ interface AdminUser {
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       <app-status-badge
-                        [value]="u.login_status"
-                        [severity]="u.login_status === 'ACTIVE' ? 'success' : 'secondary'" />
+                        [value]="u.is_active ? 'ACTIVE' : 'DISABLED'"
+                        [severity]="u.is_active ? 'success' : 'secondary'" />
                     </td>
                   </tr>
                 } @empty {
@@ -152,6 +154,8 @@ export class RoleManagementComponent implements OnInit {
   error: string | null = null;
   isSuperadmin = false;
   currentUsername = '';
+  grantUsername = '';
+  granting = false;
 
   ngOnInit() {
     const user = this.auth.getCurrentUser();
@@ -165,20 +169,20 @@ export class RoleManagementComponent implements OnInit {
     this.error = null;
     this.cdr.markForCheck();
     try {
-      this.users = await this.admin.getAdminUsers();
+      this.users = await this.admin.getAdminRegistry();
     } catch {
-      this.error = 'Tidak bisa memuat data admin.';
-      this.notification.error('Gagal', 'Tidak bisa memuat data admin.');
+      this.error = 'Tidak bisa memuat registry admin.';
+      this.notification.error('Gagal', 'Tidak bisa memuat registry admin (n9_users).');
     }
     this.loading = false;
     this.cdr.markForCheck();
   }
 
-  confirmRoleChange(u: AdminUser, newRole: string) {
-    const oldRole = u.role;
-    if (oldRole === newRole) return;
+  // ── Change role (admin ↔ superadmin) — dual-write n9_users + users anchor ──
+  confirmRoleChange(u: AdminUser, newRole: 'admin' | 'superadmin') {
+    if (u.role === newRole || u.username === this.currentUsername) return;
     this.confirmation.confirm({
-      message: `Ubah role <strong>${u.username}</strong> dari <strong>${oldRole}</strong> menjadi <strong>${newRole}</strong>?`,
+      message: `Ubah role <strong>${u.username}</strong> dari <strong>${u.role}</strong> menjadi <strong>${newRole}</strong>?`,
       header: 'Ubah Role',
       rejectLabel: 'Batal',
       acceptLabel: 'Ubah',
@@ -186,10 +190,10 @@ export class RoleManagementComponent implements OnInit {
     });
   }
 
-  async changeRole(u: AdminUser, newRole: string) {
+  async changeRole(u: AdminUser, newRole: 'admin' | 'superadmin') {
     const oldRole = u.role;
     try {
-      await this.admin.updateUser(u.id, { role: newRole });
+      await this.admin.setAdminRole(u.username, newRole);
       u.role = newRole;
       this.notification.success('Role diubah', `${u.username}: ${oldRole} → ${newRole}`);
     } catch (e: unknown) {
@@ -198,10 +202,10 @@ export class RoleManagementComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  // ── Enable/disable Angular login (auth-login blocks login_status='SUSPENDED') ──
-  confirmToggleLogin(u: AdminUser) {
+  // ── Enable/disable Angular login (n9_users.is_active gate + users anchor) ──
+  confirmToggleActive(u: AdminUser) {
     if (u.username === this.currentUsername) return; // never lock yourself out
-    const disable = u.login_status === 'ACTIVE';
+    const disable = u.is_active;
     this.confirmation.confirm({
       message: disable
         ? `Nonaktifkan login Angular untuk <strong>${u.username}</strong>?`
@@ -209,51 +213,61 @@ export class RoleManagementComponent implements OnInit {
       header: disable ? 'Nonaktifkan Login' : 'Aktifkan Login',
       rejectLabel: 'Batal',
       acceptLabel: disable ? 'Nonaktifkan' : 'Aktifkan',
-      accept: () => this.setLogin(u, disable ? 'SUSPENDED' : 'ACTIVE'),
+      accept: () => this.setActive(u, !disable),
     });
   }
 
-  async setLogin(u: AdminUser, status: 'ACTIVE' | 'SUSPENDED') {
+  async setActive(u: AdminUser, active: boolean) {
     try {
-      await this.admin.updateUser(u.id, { login_status: status });
-      u.login_status = status;
-      this.notification.success('Status login diubah', `${u.username}: ${status}`);
+      await this.admin.setAdminActive(u.username, active);
+      u.is_active = active;
+      this.notification.success('Status login diubah', `${u.username}: ${active ? 'ACTIVE' : 'DISABLED'}`);
     } catch (e: unknown) {
       this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa mengubah status login.');
     }
     this.cdr.markForCheck();
   }
 
-  // ── Revoke admin access (demote to regular 'user' role) ──
+  // ── Revoke admin (remove from registry + demote users anchor to 'user') ──
   confirmRevoke(u: AdminUser) {
     if (u.username === this.currentUsername) return;
     this.confirmation.confirm({
-      message: `Cabut akses admin <strong>${u.username}</strong> (turunkan ke 'user')? Akun ini tidak akan bisa login Angular lagi.`,
+      message: `Cabut akses admin <strong>${u.username}</strong>? Akun ini tidak akan bisa login Angular lagi (turun ke 'user').`,
       header: 'Cabut Akses Admin',
       rejectLabel: 'Batal',
       acceptLabel: 'Cabut',
-      accept: () => this.changeRole(u, 'user'),
+      accept: () => this.revoke(u),
     });
   }
 
-  // ── Grant admin to an existing member account (by username) ──
-  grantUsername = '';
-  granting = false;
+  async revoke(u: AdminUser) {
+    try {
+      await this.admin.revokeAdmin(u.username);
+      this.notification.success('Akses dicabut', `${u.username} bukan admin lagi.`);
+      await this.load();
+    } catch (e: unknown) {
+      this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa mencabut akses admin.');
+      this.cdr.markForCheck();
+    }
+  }
 
+  // ── Grant admin to an existing member account (by username) ──
   async grantAdmin() {
     const name = this.grantUsername.trim();
     if (!name) return;
     this.granting = true;
     this.cdr.markForCheck();
     try {
-      const rows = await this.admin.getUserByUsername(name);
+      const rows = await this.admin.getMemberForGrant(name);
       const target = rows?.[0];
       if (!target) {
         this.notification.error('Tidak ditemukan', `Akun '${name}' tidak ada.`);
       } else if (target.role === 'admin' || target.role === 'superadmin') {
         this.notification.error('Sudah admin', `'${name}' sudah punya akses admin.`);
+      } else if (!target.password_hash) {
+        this.notification.error('Gagal', `'${name}' tidak punya password — tidak bisa dijadikan admin.`);
       } else {
-        await this.admin.updateUser(target.id, { role: 'admin', login_status: 'ACTIVE' });
+        await this.admin.grantAdminFromMember(target);
         this.notification.success('Admin ditambahkan', `${name} sekarang bisa login Angular.`);
         this.grantUsername = '';
         await this.load();

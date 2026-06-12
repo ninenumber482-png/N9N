@@ -461,6 +461,56 @@ export class AdminService {
     );
   }
 
+  // ── ADMIN REGISTRY (n9_users = source of truth for who can log into Angular) ──
+  // Writes are dual: n9_users (registry/gate) + the `users` anchor row (session/MFA
+  // + the users-path auth gate) so both auth-login paths stay consistent.
+  getAdminRegistry() {
+    return this.get<any>('n9_users', 'select=id,username,email,full_name,role,is_active&order=username.asc&limit=200');
+  }
+  /** Member account (with hash) used when promoting a member to admin. */
+  getMemberForGrant(username: string) {
+    return this.get<any>(
+      'users',
+      `username=eq.${encodeURIComponent(username)}&select=id,username,display_name,email,role,password_hash&limit=1`,
+    );
+  }
+  async setAdminRole(username: string, role: 'admin' | 'superadmin') {
+    const u = encodeURIComponent(username);
+    await this.proxy('PATCH', `/n9_users?username=eq.${u}`, { role });
+    await this.proxy('PATCH', `/users?username=eq.${u}`, { role });
+  }
+  async setAdminActive(username: string, active: boolean) {
+    const u = encodeURIComponent(username);
+    await this.proxy('PATCH', `/n9_users?username=eq.${u}`, { is_active: active });
+    await this.proxy('PATCH', `/users?username=eq.${u}`, { login_status: active ? 'ACTIVE' : 'SUSPENDED' });
+  }
+  async revokeAdmin(username: string) {
+    const u = encodeURIComponent(username);
+    await this.proxy('DELETE', `/n9_users?username=eq.${u}`);
+    await this.proxy('PATCH', `/users?username=eq.${u}`, { role: 'user' });
+  }
+  async grantAdminFromMember(member: {
+    id: string;
+    username: string;
+    email?: string;
+    display_name?: string;
+    password_hash: string;
+  }) {
+    await this.proxy('POST', '/n9_users', {
+      id: member.id,
+      username: member.username,
+      email: member.email ?? null,
+      password_hash: member.password_hash,
+      full_name: member.display_name ?? member.username,
+      role: 'admin',
+      is_active: true,
+    });
+    await this.proxy('PATCH', `/users?username=eq.${encodeURIComponent(member.username)}`, {
+      role: 'admin',
+      login_status: 'ACTIVE',
+    });
+  }
+
   // ── MEMBER MANAGEMENT ──
   async resetPassword(userIdentifier: string, adminUsernameOrId: string, newPassword: string) {
     const userId = await this.resolveUserId(userIdentifier);

@@ -110,6 +110,7 @@ export default {
           .select('id, username, password_hash, role')
           .eq('username', dbUsername)
           .in('role', ['admin', 'superadmin'])
+          .eq('is_active', true)
           .maybeSingle(),
       ]);
 
