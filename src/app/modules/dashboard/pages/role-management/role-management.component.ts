@@ -6,7 +6,9 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 import { ConfirmationService } from 'primeng/api';
+import { ADMIN_FEATURES } from 'src/app/core/constants/admin-features';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
@@ -18,6 +20,7 @@ interface AdminUser {
   full_name?: string;
   role: string;
   is_active: boolean;
+  permissions?: string[] | null;
 }
 
 @Component({
@@ -28,6 +31,7 @@ interface AdminUser {
     FormsModule,
     StatusBadgeComponent,
     ConfirmDialogModule,
+    DialogModule,
     PageHeaderComponent,
     LoadingErrorComponent,
     RefreshButtonComponent,
@@ -116,6 +120,13 @@ interface AdminUser {
                             class="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors">
                             Revoke
                           </button>
+                          @if (u.role !== 'superadmin') {
+                            <button
+                              (click)="openPermissions(u)"
+                              class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
+                              Set Akses
+                            </button>
+                          }
                         </div>
                       } @else {
                         <span class="text-muted-foreground text-[11px]">—</span>
@@ -138,6 +149,29 @@ interface AdminUser {
         </div>
       }
       <p-confirmdialog />
+
+      <p-dialog header="Batas Akses Halaman" [(visible)]="permDialogOpen" [modal]="true" [style]="{ width: '32rem' }">
+        @if (permTarget) {
+          <p class="text-muted-foreground mb-3 text-xs">
+            Centang halaman yang boleh diakses <strong>{{ permTarget.username }}</strong>. Overview selalu boleh. Semua
+            dicentang = akses penuh.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            @for (f of FEATURES; track f.key) {
+              <label class="flex items-center gap-2 text-xs">
+                <input type="checkbox" [(ngModel)]="permChecked[f.key]" />
+                {{ f.label }}
+              </label>
+            }
+          </div>
+        }
+        <div class="mt-4 flex justify-end gap-2">
+          <button (click)="permDialogOpen = false" class="border-border rounded border px-3 py-1.5 text-sm">Batal</button>
+          <button (click)="savePermissions()" class="rounded bg-yellow-400 px-3 py-1.5 text-sm font-bold text-black">
+            Simpan
+          </button>
+        </div>
+      </p-dialog>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -276,6 +310,40 @@ export class RoleManagementComponent implements OnInit {
       this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa memberi akses admin.');
     }
     this.granting = false;
+    this.cdr.markForCheck();
+  }
+
+  // ── Per-page access limits (Set Akses) ──
+  readonly FEATURES = ADMIN_FEATURES;
+  permDialogOpen = false;
+  permTarget: AdminUser | null = null;
+  permChecked: Record<string, boolean> = {};
+
+  openPermissions(u: AdminUser) {
+    this.permTarget = u;
+    const set = new Set(u.permissions || []);
+    const full = !u.permissions || u.permissions.length === 0;
+    this.permChecked = {};
+    for (const f of this.FEATURES) this.permChecked[f.key] = full ? true : set.has(f.key);
+    this.permDialogOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  async savePermissions() {
+    if (!this.permTarget) return;
+    const keys = this.FEATURES.filter((f) => this.permChecked[f.key]).map((f) => f.key);
+    const value = keys.length === this.FEATURES.length ? null : keys;
+    try {
+      await this.admin.setAdminPermissions(this.permTarget.username, value);
+      this.permTarget.permissions = value;
+      this.notification.success(
+        'Akses disimpan',
+        `${this.permTarget.username}: ${value ? value.length + ' halaman' : 'penuh'}`,
+      );
+      this.permDialogOpen = false;
+    } catch (e: unknown) {
+      this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa menyimpan akses.');
+    }
     this.cdr.markForCheck();
   }
 }

@@ -465,7 +465,16 @@ export class AdminService {
   // Writes are dual: n9_users (registry/gate) + the `users` anchor row (session/MFA
   // + the users-path auth gate) so both auth-login paths stay consistent.
   getAdminRegistry() {
-    return this.get<any>('n9_users', 'select=id,username,email,full_name,role,is_active&order=username.asc&limit=200');
+    return this.get<any>(
+      'n9_users',
+      'select=id,username,email,full_name,role,is_active,permissions&order=username.asc&limit=200',
+    );
+  }
+  /** Set per-page access limits for an admin (null/[] = full access). */
+  setAdminPermissions(username: string, keys: string[] | null) {
+    return this.proxy('PATCH', `/n9_users?username=eq.${encodeURIComponent(username)}`, {
+      permissions: keys && keys.length ? keys : null,
+    });
   }
   /** Member account (with hash) used when promoting a member to admin. */
   getMemberForGrant(username: string) {
