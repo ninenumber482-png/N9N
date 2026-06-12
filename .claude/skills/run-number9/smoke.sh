@@ -4,6 +4,8 @@
 #   bash .claude/skills/run-number9/smoke.sh            # screenshot + kill servers
 #   bash .claude/skills/run-number9/smoke.sh --keep     # leave servers running after screenshots
 #   bash .claude/skills/run-number9/smoke.sh --api-only # skip dev servers, only test Supabase API
+#   bash .claude/skills/run-number9/smoke.sh --no-api   # local only: skip the live auth-login call
+#                                                       #   (alias: --local) — constraint-safe path
 #
 # Paths relative to repo root. Screenshots land in /tmp/n9-screenshots/
 
@@ -13,10 +15,11 @@ REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 SHOTS_DIR="/tmp/n9-screenshots"
 mkdir -p "$SHOTS_DIR"
 
-KEEP=false; API_ONLY=false
+KEEP=false; API_ONLY=false; NO_API=false
 for arg in "${@}"; do
   [[ "$arg" == "--keep" ]] && KEEP=true
   [[ "$arg" == "--api-only" ]] && API_ONLY=true
+  [[ "$arg" == "--no-api" || "$arg" == "--local" ]] && NO_API=true
 done
 
 NG_PID="" REACT_PID=""
@@ -31,13 +34,17 @@ trap cleanup EXIT
 SUPABASE_URL="https://dqsmpdetiqsqfnidekik.supabase.co"
 ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxc21wZGV0aXFzcWZuaWRla2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjUyOTMsImV4cCI6MjA5NTY0MTI5M30.e429MImfeQcj3_DMbxkYHKD_5GS0ZwYD8QyZTaD0Lv0"
 
-echo "=== API smoke test (auth-login Edge Function) ==="
-API_RESP=$(curl -s -X POST "$SUPABASE_URL/functions/v1/auth-login" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $ANON_KEY" \
-  -d '{"username":"hemo","password":"Admin@9999","email":"hemo@number9.local"}' 2>/dev/null)
-API_OK=$(echo "$API_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print('OK' if d.get('success') else 'FAIL:'+d.get('error','?'))" 2>/dev/null || echo "FAIL:parse_error")
-echo "  auth-login: $API_OK"
+if [[ "$NO_API" == true ]]; then
+  echo "=== API smoke test SKIPPED (--no-api / --local): no live production calls ==="
+else
+  echo "=== API smoke test (auth-login Edge Function) — hits live production ==="
+  API_RESP=$(curl -s -X POST "$SUPABASE_URL/functions/v1/auth-login" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ANON_KEY" \
+    -d '{"username":"hemo","password":"Admin@9999","email":"hemo@number9.local"}' 2>/dev/null)
+  API_OK=$(echo "$API_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print('OK' if d.get('success') else 'FAIL:'+d.get('error','?'))" 2>/dev/null || echo "FAIL:parse_error")
+  echo "  auth-login: $API_OK"
+fi
 
 [[ "$API_ONLY" == true ]] && exit 0
 
@@ -98,4 +105,10 @@ echo ""
 echo "=== Done. Screenshots in $SHOTS_DIR ==="
 ls "$SHOTS_DIR/"
 echo ""
-[[ "$KEEP" == true ]] && echo "Servers kept running: Angular :4201, React :${REACT_PORT:-?}"
+if [[ "$KEEP" == true ]]; then
+  echo "Servers kept running: Angular :4201, React :${REACT_PORT:-?}"
+fi
+
+# Explicit success: without this, the final `[[ ... ]] && echo` above returns 1
+# on every non-keep run and the whole script exits non-zero on success.
+exit 0
