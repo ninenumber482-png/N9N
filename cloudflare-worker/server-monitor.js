@@ -20,6 +20,7 @@ export default {
         headers: {
           'Access-Control-Allow-Origin': 'https://admin.mynumber9.uk',
           'Access-Control-Allow-Methods': 'GET',
+          'Access-Control-Allow-Headers': 'Cache-Control, Accept, Content-Type',
           'Access-Control-Max-Age': '86400',
         },
       });

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestro
 import { CommonModule } from '@angular/common';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
+import { utcMs } from 'src/shared/utils/utc';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -419,7 +420,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
       const r = await this.admin.getLatestKingResult();
       const ts = r?.[0]?.created_at as string | undefined;
       this.lastSettleAt = ts ?? null;
-      this.engineHealthy = !!ts && Date.now() - new Date(ts).getTime() < 390_000;
+      this.engineHealthy = !!ts && Date.now() - utcMs(ts) < 390_000;
     } catch {
       this.engineHealthy = false;
     }

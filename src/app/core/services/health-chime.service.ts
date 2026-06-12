@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AdminService } from 'src/app/core/services/admin.service';
+import { utcMs } from 'src/shared/utils/utc';
 
 const LS_KEY = 'n9_health_chime';
 // Engine is "healthy" if the latest king_results is younger than this (≈ one session + slack).
@@ -107,8 +108,8 @@ export class HealthChimeService {
   private async tick(): Promise<void> {
     let healthy = true;
     try {
-      const res = (await this.admin.getLatestKingResult()) as { created_at?: string } | null;
-      const ts = res?.created_at ? new Date(res.created_at).getTime() : 0;
+      const res = (await this.admin.getLatestKingResult()) as Array<{ created_at?: string }> | null;
+      const ts = utcMs(res?.[0]?.created_at);
       healthy = ts > 0 && Date.now() - ts < SESSION_FRESH_MS;
     } catch {
       healthy = false;

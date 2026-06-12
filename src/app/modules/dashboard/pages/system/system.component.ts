@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { HealthChimeService } from 'src/app/core/services/health-chime.service';
+import { utcMs } from 'src/shared/utils/utc';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { InputTextModule } from 'primeng/inputtext';
 import { environment } from 'src/environments/environment';
@@ -499,7 +500,7 @@ export class SystemComponent implements OnInit, OnDestroy {
       const r = await this.admin.getLatestKingResult();
       const ts = r?.[0]?.created_at as string | undefined;
       this.lastSettleAt = ts ?? null;
-      this.engineHealthy = !!ts && Date.now() - new Date(ts).getTime() < 390_000;
+      this.engineHealthy = !!ts && Date.now() - utcMs(ts) < 390_000;
     } catch {
       this.engineHealthy = false;
     }
