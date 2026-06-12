@@ -162,7 +162,11 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
           </div>
           <div>
             <p class="text-muted-foreground uppercase tracking-wider mb-0.5">Last Result</p>
-            <p class="font-mono text-foreground">{{ lastResult !== null ? lastResult : '-' }}</p>
+            <p
+              class="inline-flex min-w-16 items-center rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 font-mono text-red-400 shadow-[0_0_18px_rgba(239,68,68,0.18)]"
+              [class.animate-pulse]="lastResult !== null">
+              {{ lastResult !== null ? lastResult : '-' }}
+            </p>
           </div>
         </div>
       </div>
@@ -188,9 +192,20 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
             <tbody>
               @for (s of displaySessions; track s.code; let i = $index) {
                 <tr
-                  class="border-b border-border hover:bg-muted/5 transition-colors text-muted-foreground"
+                  class="border-b border-border transition-colors text-muted-foreground"
+                  [class.hover:bg-muted/5]="s.status !== 'NEXT'"
+                  [class.bg-emerald-500/5]="s.status === 'NEXT'"
+                  [class.hover:bg-emerald-500/10]="s.status === 'NEXT'"
+                  [class.outline]="s.status === 'NEXT'"
+                  [class.outline-emerald-500/25]="s.status === 'NEXT'"
+                  [class.outline-offset-[-1px]]="s.status === 'NEXT'"
                   [class.opacity-40]="s.settled">
-                  <td class="px-3 py-2 font-mono text-[11px]">{{ s.index }}</td>
+                  <td
+                    class="px-3 py-2 font-mono text-[11px]"
+                    [class.border-l-2]="s.status === 'NEXT'"
+                    [class.border-emerald-500]="s.status === 'NEXT'">
+                    {{ s.index }}
+                  </td>
                   <td class="px-3 py-2 font-mono text-foreground">{{ s.display }}</td>
                   <td class="px-3 py-2 font-mono text-[11px]">{{ s.wib }}</td>
                   <td class="px-3 py-2">

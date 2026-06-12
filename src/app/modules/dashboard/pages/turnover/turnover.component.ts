@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { PaginatorModule } from 'primeng/paginator';
-import { InputTextModule } from 'primeng/inputtext';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
 import { StatCardComponent } from 'src/app/shared/components/stat-card/stat-card.component';
 import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
+import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
 
 interface WalletData {
   user_id: string;
@@ -25,16 +25,15 @@ interface WalletData {
   selector: 'app-turnover',
   standalone: true,
   imports: [CommonModule, FormsModule,
-    PaginatorModule, InputTextModule,
-    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, StatCardComponent],
+    PaginatorModule,
+    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, StatCardComponent, FilterBarComponent],
   template: `
     <div data-page="turnover" class="space-y-6">
       <app-page-header icon="trending-up" title="Turnover Analytics" subtitle="User transaction volume and financial performance">
-        <div class="flex gap-2">
-          <input pInputText [(ngModel)]="search" placeholder="Search user..." class="!w-40 !text-xs !py-1.5 !px-2.5" />
-          <app-refresh-button [loading]="loading" (clicked)="load()" />
-        </div>
+        <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
+
+      <app-filter-bar [search]="search" (searchChange)="search=$event" placeholder="Search user..." />
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 

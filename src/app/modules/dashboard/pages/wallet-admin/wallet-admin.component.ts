@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
@@ -108,12 +108,12 @@ interface PageEvent {
   providers: [ConfirmationService],
   template: `
     <div data-page="wallet-admin" class="space-y-6">
-      <app-page-header icon="arrow-sm-down" title="Deposits &amp; Withdrawals" subtitle="Approve and manage member transactions" />
+      <app-page-header icon="arrow-sm-down" [title]="pageTitle" [subtitle]="pageSubtitle" />
 
       <div class="flex gap-1 rounded-lg border border-border bg-card p-1">
         @for (tb of tabs; track tb.id) {
           <button
-            (click)="tab = tb.id"
+            (click)="openTab(tb.id)"
             class="flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition text-center"
             [class.bg-foreground]="tab === tb.id"
             [class.text-background]="tab === tb.id"
@@ -132,6 +132,9 @@ interface PageEvent {
       }
       @if (tab === 'turnover') {
         <ng-container *ngTemplateOutlet="turnoverTab" />
+      }
+      @if (tab === 'manual') {
+        <ng-container *ngTemplateOutlet="manualTab" />
       }
     </div>
 
@@ -231,7 +234,9 @@ interface PageEvent {
       <p-dialog
         [(visible)]="depDetailVisible"
         [modal]="true"
-        [style]="{ width: '500px' }"
+        [style]="{ width: '560px', maxWidth: '95vw' }"
+        [contentStyle]="{ 'max-height': '70vh', overflow: 'auto' }"
+        styleClass="dashboard-dialog"
         [draggable]="false"
         [resizable]="false"
         [closable]="true"
@@ -383,7 +388,9 @@ interface PageEvent {
       <p-dialog
         [(visible)]="wdDetailVisible"
         [modal]="true"
-        [style]="{ width: '500px' }"
+        [style]="{ width: '560px', maxWidth: '95vw' }"
+        [contentStyle]="{ 'max-height': '70vh', overflow: 'auto' }"
+        styleClass="dashboard-dialog"
         [draggable]="false"
         [resizable]="false"
         [closable]="true"
@@ -554,7 +561,7 @@ interface PageEvent {
                       (click)="openEditWallet(w)"
                       class="bg-card border-border hover:bg-accent rounded border px-2 py-1 text-[11px] font-medium text-foreground transition-colors"
                     >
-                      Edit Saldo
+                      Atur Saldo
                     </button>
                   </td>
                 </tr>
@@ -573,57 +580,104 @@ interface PageEvent {
     <p-dialog
       [(visible)]="editWalletVisible"
       [modal]="true"
-      [style]="{ width: '420px' }"
+      [style]="{ width: '560px', maxWidth: '95vw' }"
+      [contentStyle]="{ 'max-height': '70vh', overflow: 'auto' }"
+      styleClass="dashboard-dialog"
       [draggable]="false"
       [resizable]="false"
       [closable]="true"
       (onHide)="editWalletVisible = false; editWallet = null;">
       <ng-template pTemplate="header">
-        <span class="text-sm font-bold text-foreground">Edit Saldo</span>
+        <span class="text-sm font-bold text-foreground">Adjustment Saldo</span>
       </ng-template>
       <ng-template pTemplate="content">
         @if (editWallet) {
-          <div class="space-y-4 text-xs">
-            <div>
-              <p class="text-muted-foreground mb-1">User</p>
-              <p class="font-semibold text-foreground">{{ editWallet.displayName }} (&#64;{{ editWallet.username }})</p>
+          <div class="grid gap-4 sm:grid-cols-[1.05fr_0.95fr] text-xs">
+            <div class="space-y-4 rounded-xl border border-border bg-accent/10 p-4">
+              <div>
+                <p class="text-muted-foreground mb-1">User</p>
+                <p class="font-semibold text-foreground">{{ editWallet.displayName }} (&#64;{{ editWallet.username }})</p>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-lg border border-border bg-card p-3">
+                  <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Main</p>
+                  <p class="mt-1 font-mono text-lg font-bold text-foreground">{{ editWallet.main | number: '1.0-0' }}</p>
+                </div>
+                <div class="rounded-lg border border-border bg-card p-3">
+                  <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Bonus</p>
+                  <p class="mt-1 font-mono text-lg font-bold text-foreground">{{ editWallet.bonus | number: '1.0-0' }}</p>
+                </div>
+              </div>
+              <div class="rounded-lg border border-border bg-card p-3">
+                <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Turnover Locked</p>
+                <p class="mt-1 font-mono text-lg font-bold text-foreground">{{ editWallet.locked | number: '1.0-0' }}</p>
+              </div>
             </div>
-            <div>
-              <label class="block text-muted-foreground mb-1">Balance Main (P)</label>
-              <input
-                type="number"
-                [(ngModel)]="editMain"
-                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
-                step="1"
-                min="0"
-              />
-            </div>
-            <div>
-              <label class="block text-muted-foreground mb-1">Balance Bonus (P)</label>
-              <input
-                type="number"
-                [(ngModel)]="editBonus"
-                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
-                step="1"
-                min="0"
-              />
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                (click)="editWalletVisible = false; editWallet = null;"
-                class="bg-card border-border hover:bg-accent rounded border px-3 py-1.5 text-sm font-medium text-foreground transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                (click)="saveEditWallet()"
-                [disabled]="editWalletSaving"
-                class="bg-foreground text-background rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-opacity"
-              >
-                {{ editWalletSaving ? 'Menyimpan…' : 'Simpan' }}
-              </button>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-muted-foreground mb-1">Tipe Adjustment</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    (click)="adjustType = 'add'"
+                    class="rounded-lg border px-3 py-2 text-xs font-bold transition-colors"
+                    [class.border-emerald-500/50]="adjustType === 'add'"
+                    [class.bg-emerald-500/15]="adjustType === 'add'"
+                    [class.text-emerald-400]="adjustType === 'add'"
+                    [class.border-border]="adjustType !== 'add'"
+                    [class.text-muted-foreground]="adjustType !== 'add'">
+                    + Tambah
+                  </button>
+                  <button
+                    type="button"
+                    (click)="adjustType = 'deduct'"
+                    class="rounded-lg border px-3 py-2 text-xs font-bold transition-colors"
+                    [class.border-red-500/50]="adjustType === 'deduct'"
+                    [class.bg-red-500/15]="adjustType === 'deduct'"
+                    [class.text-red-400]="adjustType === 'deduct'"
+                    [class.border-border]="adjustType !== 'deduct'"
+                    [class.text-muted-foreground]="adjustType !== 'deduct'">
+                    - Kurangi
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-muted-foreground mb-1">Jumlah (P)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="adjustAmount"
+                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
+                  step="1000"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label class="block text-muted-foreground mb-1">Alasan</label>
+                <input
+                  type="text"
+                  [(ngModel)]="adjustReason"
+                  placeholder="Alasan adjustment (opsional)"
+                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
+                />
+              </div>
+              <div class="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  (click)="editWalletVisible = false; editWallet = null;"
+                  class="bg-card border-border hover:bg-accent rounded border px-3 py-1.5 text-sm font-medium text-foreground transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  (click)="saveEditWallet()"
+                  [disabled]="editWalletSaving || adjustAmount <= 0"
+                  class="bg-foreground text-background rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-opacity"
+                >
+                  {{ editWalletSaving ? 'Memproses…' : adjustType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo' }}
+                </button>
+              </div>
             </div>
           </div>
         }
@@ -642,6 +696,7 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private confirmation = inject(ConfirmationService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   tab: TabId = 'deposits';
   tabs = [
@@ -698,8 +753,9 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
   editWallet: TurnoverItem | null = null;
   editWalletVisible = false;
   editWalletSaving = false;
-  editMain = 0;
-  editBonus = 0;
+  adjustType: 'add' | 'deduct' = 'add';
+  adjustAmount = 0;
+  adjustReason = '';
 
   manAll: TurnoverItem[] = [];
   manFiltered: TurnoverItem[] = [];
@@ -712,10 +768,14 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
-    const path = this.route.snapshot.url[0]?.path;
-    if (path === 'withdrawals') this.tab = 'withdrawals';
-    else if (path === 'turnover') this.tab = 'turnover';
-    else if (path === 'manual') this.tab = 'manual';
+    this.route.url.pipe(takeUntil(this.destroy$)).subscribe((segments) => {
+      const path = segments[0]?.path;
+      if (path === 'withdrawals') this.tab = 'withdrawals';
+      else if (path === 'turnover') this.tab = 'turnover';
+      else if (path === 'manual') this.tab = 'manual';
+      else this.tab = 'deposits';
+      this.cdr.markForCheck();
+    });
     this.loadDeposits();
     this.loadWithdrawals();
     this.loadTurnover();
@@ -745,35 +805,61 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
 
   openEditWallet(w: TurnoverItem) {
     this.editWallet = w;
-    this.editMain = w.main;
-    this.editBonus = w.bonus;
+    this.adjustType = 'add';
+    this.adjustAmount = 0;
+    this.adjustReason = '';
     this.editWalletVisible = true;
     this.cdr.markForCheck();
   }
 
+  openTab(tab: TabId) {
+    const routes: Record<TabId, string> = {
+      deposits: '/deposits',
+      withdrawals: '/withdrawals',
+      turnover: '/turnover',
+      manual: '/manual',
+    };
+    this.router.navigateByUrl(routes[tab]);
+  }
+
+  get pageTitle() {
+    return this.tabs.find((item) => item.id === this.tab)?.label ?? 'Finance';
+  }
+
+  get pageSubtitle() {
+    const subtitles: Record<TabId, string> = {
+      deposits: 'Approve and manage member deposits',
+      withdrawals: 'Approve and manage member withdrawals',
+      turnover: 'Monitor and adjust member turnover',
+      manual: 'Tambah atau kurangi saldo member dengan audit log',
+    };
+    return subtitles[this.tab];
+  }
+
   async saveEditWallet() {
-    if (!this.editWallet) return;
+    if (!this.editWallet || this.adjustAmount <= 0) return;
     this.editWalletSaving = true;
     this.cdr.markForCheck();
     try {
       const admin = this.auth.getCurrentUser();
       if (!admin?.username) return;
-      await this.admin.updateWalletRow(this.editWallet.userId, {
-        balance_main: this.editMain,
-        balance_bonus: this.editBonus,
-      });
-      await this.admin.logAction(
+      const signedAmount = this.adjustType === 'deduct' ? -this.adjustAmount : this.adjustAmount;
+      const result = await this.admin.adjustBalance(
         admin.username,
-        'EDIT_WALLET',
-        'wallet',
         this.editWallet.userId,
-        `main:${this.editWallet.main},bonus:${this.editWallet.bonus}`,
-        `main:${this.editMain},bonus:${this.editBonus}`,
+        signedAmount,
+        this.adjustReason.trim() || undefined,
       );
-      this.notification.success('Saldo diperbarui', `Saldo ${this.editWallet.displayName} berhasil diubah.`);
+      this.notification.success(
+        'Saldo diperbarui',
+        `${this.editWallet.displayName}: ${signedAmount > 0 ? '+' : ''}${signedAmount} P (saldo ${result.new_balance} P)`,
+      );
       this.editWalletVisible = false;
       this.editWallet = null;
+      this.adjustAmount = 0;
+      this.adjustReason = '';
       this.loadTurnover();
+      this.loadManual();
     } catch (e: unknown) {
       this.notification.error('Gagal', (e instanceof Error ? e.message : '') || 'Gagal memperbarui saldo.');
     } finally {

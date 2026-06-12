@@ -359,7 +359,9 @@ interface PlatformAccountRecord {
       <p-dialog
         [(visible)]="adjustVisible"
         [modal]="true"
-        [style]="{ width: '500px' }"
+        [style]="{ width: '560px', maxWidth: '95vw' }"
+        [contentStyle]="{ 'max-height': '70vh', overflow: 'auto' }"
+        styleClass="dashboard-dialog"
         [draggable]="false"
         [resizable]="false"
         [closable]="true">
@@ -368,96 +370,100 @@ interface PlatformAccountRecord {
         </ng-template>
         <ng-template pTemplate="content">
           @if (adjusting) {
-            <div class="space-y-4">
-              <div class="bg-accent/20 rounded-lg p-3 space-y-1">
-                <p class="text-sm text-foreground font-medium">
-                  {{ adjusting.user?.display_name || adjusting.user?.username }}
-                </p>
-                <p class="text-xs text-muted-foreground">&#64;{{ adjusting.user?.username }}</p>
-                <div class="flex gap-4 pt-1">
-                  <p class="text-xs text-muted-foreground">
-                    Main:
-                    <span class="text-foreground font-mono font-bold">{{
+            <div class="grid gap-4 sm:grid-cols-[1.05fr_0.95fr]">
+              <div class="space-y-3 rounded-xl border border-border bg-accent/10 p-4">
+                <div>
+                  <p class="text-sm font-medium text-foreground">
+                    {{ adjusting.user?.display_name || adjusting.user?.username }}
+                  </p>
+                  <p class="text-xs text-muted-foreground">&#64;{{ adjusting.user?.username }}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-lg border border-border bg-card p-3">
+                    <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Main</p>
+                    <p class="mt-1 font-mono text-lg font-bold text-foreground">{{
                       adjusting.balance_main | number: '1.0-0'
-                    }}</span>
-                  </p>
-                  <p class="text-xs text-muted-foreground">
-                    Bonus:
-                    <span class="text-foreground font-mono font-bold">{{
+                    }}</p>
+                  </div>
+                  <div class="rounded-lg border border-border bg-card p-3">
+                    <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Bonus</p>
+                    <p class="mt-1 font-mono text-lg font-bold text-foreground">{{
                       adjusting.balance_bonus | number: '1.0-0'
-                    }}</span>
-                  </p>
+                    }}</p>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label class="text-xs font-semibold text-muted-foreground block mb-1">Tipe <span class="text-destructive">*</span></label>
-                <div class="flex gap-2">
+              <div class="space-y-4">
+                <div>
+                  <label class="text-xs font-semibold text-muted-foreground block mb-1">Tipe <span class="text-destructive">*</span></label>
+                  <div class="flex gap-2">
+                    <button
+                      (click)="adjType = 'add'"
+                      class="px-4 py-2 text-xs font-medium rounded-lg border transition-colors"
+                      [class.bg-foreground]="adjType === 'add'"
+                      [class.text-background]="adjType === 'add'"
+                      [class.border-foreground]="adjType === 'add'"
+                      [class.bg-card]="adjType !== 'add'"
+                      [class.border-border]="adjType !== 'add'"
+                      [class.text-muted-foreground]="adjType !== 'add'">
+                      + Tambah
+                    </button>
+                    <button
+                      (click)="adjType = 'deduct'"
+                      class="px-4 py-2 text-xs font-medium rounded-lg border transition-colors"
+                      [class.bg-foreground]="adjType === 'deduct'"
+                      [class.text-background]="adjType === 'deduct'"
+                      [class.border-foreground]="adjType === 'deduct'"
+                      [class.bg-card]="adjType !== 'deduct'"
+                      [class.border-border]="adjType !== 'deduct'"
+                      [class.text-muted-foreground]="adjType !== 'deduct'">
+                      - Kurangi
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-muted-foreground block mb-1">Jumlah <span class="text-destructive">*</span></label>
+                  <p-inputNumber
+                    [(ngModel)]="adjAmount"
+                    [min]="0"
+                    [max]="999999999"
+                    mode="decimal"
+                    [minFractionDigits]="0"
+                    [maxFractionDigits]="2"
+                    placeholder="0"
+                    class="w-full"
+                    inputStyleClass="!text-xs !w-full" />
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-muted-foreground block mb-1">Alasan</label>
+                  <input
+                    pInputText
+                    [(ngModel)]="adjNotes"
+                    placeholder="Alasan adjustment (opsional)"
+                    class="!w-full !text-xs" />
+                </div>
+                @if (adjError) {
+                  <p class="text-xs text-muted-foreground">{{ adjError }}</p>
+                }
+                @if (adjSuccess) {
+                  <div class="bg-card border-border rounded-lg border p-3 text-xs text-foreground">
+                    Saldo berhasil diubah. {{ adjResult?.old_balance | number: '1.0-0' }} →
+                    {{ adjResult?.new_balance | number: '1.0-0' }}
+                  </div>
+                }
+                <div class="flex gap-2 pt-2">
                   <button
-                    (click)="adjType = 'add'"
-                    class="px-4 py-2 text-xs font-medium rounded-lg border transition-colors"
-                    [class.bg-foreground]="adjType === 'add'"
-                    [class.text-background]="adjType === 'add'"
-                    [class.border-foreground]="adjType === 'add'"
-                    [class.bg-card]="adjType !== 'add'"
-                    [class.border-border]="adjType !== 'add'"
-                    [class.text-muted-foreground]="adjType !== 'add'">
-                    + Tambah
+                    (click)="saveAdjust(adjusting)"
+                    [disabled]="adjustSubmitting || !adjAmount || adjAmount <= 0"
+                    class="bg-foreground text-background disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-medium">
+                    {{ adjustSubmitting ? 'Memproses...' : adjType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo' }}
                   </button>
                   <button
-                    (click)="adjType = 'deduct'"
-                    class="px-4 py-2 text-xs font-medium rounded-lg border transition-colors"
-                    [class.bg-foreground]="adjType === 'deduct'"
-                    [class.text-background]="adjType === 'deduct'"
-                    [class.border-foreground]="adjType === 'deduct'"
-                    [class.bg-card]="adjType !== 'deduct'"
-                    [class.border-border]="adjType !== 'deduct'"
-                    [class.text-muted-foreground]="adjType !== 'deduct'">
-                    - Kurangi
+                    (click)="adjusting = null; adjustVisible = false"
+                    class="text-muted-foreground rounded-lg px-2.5 py-1.5 text-xs font-medium">
+                    Batal
                   </button>
                 </div>
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-muted-foreground block mb-1">Jumlah <span class="text-destructive">*</span></label>
-                <p-inputNumber
-                  [(ngModel)]="adjAmount"
-                  [min]="0"
-                  [max]="999999999"
-                  mode="decimal"
-                  [minFractionDigits]="0"
-                  [maxFractionDigits]="2"
-                  placeholder="0"
-                  class="w-full"
-                  inputStyleClass="!text-xs !w-full" />
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-muted-foreground block mb-1">Alasan</label>
-                <input
-                  pInputText
-                  [(ngModel)]="adjNotes"
-                  placeholder="Alasan adjustment (opsional)"
-                  class="!w-full !text-xs" />
-              </div>
-              @if (adjError) {
-                <p class="text-xs text-muted-foreground">{{ adjError }}</p>
-              }
-              @if (adjSuccess) {
-                <div class="bg-card border-border rounded-lg border p-3 text-xs text-foreground">
-                  Saldo berhasil diubah. {{ adjResult?.old_balance | number: '1.0-0' }} →
-                  {{ adjResult?.new_balance | number: '1.0-0' }}
-                </div>
-              }
-              <div class="flex gap-2 pt-2">
-                <button
-                  (click)="saveAdjust(adjusting)"
-                  [disabled]="adjustSubmitting || !adjAmount || adjAmount <= 0"
-                  class="bg-foreground text-background disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-medium">
-                  {{ adjustSubmitting ? 'Memproses...' : adjType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo' }}
-                </button>
-                <button
-                  (click)="adjusting = null; adjustVisible = false"
-                  class="text-muted-foreground rounded-lg px-2.5 py-1.5 text-xs font-medium">
-                  Batal
-                </button>
               </div>
             </div>
           }

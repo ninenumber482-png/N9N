@@ -52,7 +52,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.menuService.updateBadges({
         '/kyc': pendingKyc,
         '/bets': pendingBets,
-        '/wallet': pendingDeposits + pendingWithdrawals,
+        '/deposits': pendingDeposits,
+        '/withdrawals': pendingWithdrawals,
       });
       this.cdr.markForCheck();
     } catch (e) {

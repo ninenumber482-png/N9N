@@ -8,18 +8,19 @@ export class Menu {
       separator: false,
       items: [
         { icon: 'assets/icons/heroicons/outline/chart-pie.svg', label: 'Overview', route: '/overview' },
-        { icon: 'assets/icons/heroicons/outline/users.svg', label: 'Members', route: '/users' },
+        { icon: 'assets/icons/heroicons/outline/users.svg', label: 'Management Member', route: '/users' },
       ],
     },
     {
       group: 'Finance',
       separator: true,
       items: [
-        { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposits & Withdrawals', route: '/wallet' },
+        { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposit', route: '/deposits' },
+        { icon: 'assets/icons/heroicons/outline/arrow-sm-up.svg', label: 'Withdraw', route: '/withdrawals' },
+        { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Turnover', route: '/turnover' },
+        { icon: 'assets/icons/heroicons/outline/minus.svg', label: 'Saldo Manual', route: '/manual' },
         { icon: 'assets/icons/heroicons/outline/folder.svg', label: 'Transactions', route: '/transactions' },
         { icon: 'assets/icons/heroicons/outline/currency-dollar.svg', label: 'Wallets', route: '/wallets' },
-        { icon: 'assets/icons/heroicons/outline/minus.svg', label: 'Balance Adjustment', route: '/member-balance' },
-        { icon: 'assets/icons/heroicons/outline/trending-up.svg', label: 'Turnover', route: '/turnover' },
       ],
     },
     {
@@ -38,7 +39,6 @@ export class Menu {
       items: [
         { icon: 'assets/icons/heroicons/outline/identification.svg', label: 'KYC Verification', route: '/kyc' },
         { icon: 'assets/icons/heroicons/outline/gift.svg', label: 'Referrals', route: '/referrals' },
-        { icon: 'assets/icons/heroicons/outline/user-circle.svg', label: 'Password Reset', route: '/member-password' },
       ],
     },
     {

@@ -229,6 +229,8 @@ interface TransactionItem {
         [(visible)]="detailVisible"
         [modal]="true"
         [style]="{ width: '560px', maxWidth: '95vw' }"
+        [contentStyle]="{ 'max-height': '70vh', overflow: 'auto' }"
+        styleClass="dashboard-dialog"
         [draggable]="false"
         [resizable]="false"
         [closable]="true"

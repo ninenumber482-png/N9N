@@ -45,6 +45,8 @@ EOF
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 EOF
 
+  cp "$ROOT_DIR/_worker.js" "$OUT/_worker.js"
+
   echo "=== Deploying Admin to Cloudflare Pages ==="
   npx wrangler pages deploy "$OUT" --project-name number9-admin
 }

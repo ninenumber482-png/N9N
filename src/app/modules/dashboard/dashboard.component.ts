@@ -5,13 +5,14 @@ import { RealtimeService } from 'src/app/core/services/realtime.service';
 const PAGE_ORDER = [
   // Dashboard
   { route: '/overview', label: 'Overview' },
-  { route: '/users', label: 'Members' },
+  { route: '/users', label: 'Management Member' },
   // Finance
-  { route: '/wallet', label: 'Deposits & Withdrawals' },
+  { route: '/deposits', label: 'Deposit' },
+  { route: '/withdrawals', label: 'Withdraw' },
+  { route: '/turnover', label: 'Turnover' },
+  { route: '/manual', label: 'Saldo Manual' },
   { route: '/transactions', label: 'Transactions' },
   { route: '/wallets', label: 'Wallets' },
-  { route: '/member-balance', label: 'Balance Adjustment' },
-  { route: '/turnover', label: 'Turnover' },
   // Marketplace
   { route: '/3dking', label: '3D King Engine' },
   { route: '/bets', label: 'Bet History' },
@@ -20,7 +21,6 @@ const PAGE_ORDER = [
   // Members
   { route: '/kyc', label: 'KYC Verification' },
   { route: '/referrals', label: 'Referrals' },
-  { route: '/member-password', label: 'Password Reset' },
   // Compliance
   { route: '/audit', label: 'Audit Log' },
   { route: '/security-center', label: 'Security Center' },

@@ -697,4 +697,22 @@ export class AdminService {
     ]);
     return { activeUsers, onlineNow, totalBalance, pendingCount: Number(pendingKyc) || 0 };
   }
+
+  async probeConnection(): Promise<{ latencyMs: number; checkedAt: string }> {
+    const startedAt = performance.now();
+    const response = await fetch(`${environment.supabaseUrl}/auth/v1/health?ts=${Date.now()}`, {
+      method: 'GET',
+      headers: { apikey: environment.supabaseKey },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Health endpoint returned HTTP ${response.status}`);
+    }
+
+    return {
+      latencyMs: Math.max(1, Math.round(performance.now() - startedAt)),
+      checkedAt: new Date().toISOString(),
+    };
+  }
 }

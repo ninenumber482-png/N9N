@@ -41,18 +41,19 @@ interface KycDocument {
   template: `
     <div data-page="kyc" class="space-y-6">
       <app-page-header icon="identification" title="KYC Documents" subtitle="Review identity documents">
-        <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari username…">
-          <p-select
-            [(ngModel)]="statusFilter"
-            (ngModelChange)="applyFilter()"
-            [options]="statusOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Semua"
-            class="w-36"
-            styleClass="!text-sm !w-44" />
-        </app-filter-bar>
       </app-page-header>
+
+      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari username…">
+        <p-select
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="applyFilter()"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Semua"
+          class="w-36"
+          styleClass="!text-sm !w-44" />
+      </app-filter-bar>
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 

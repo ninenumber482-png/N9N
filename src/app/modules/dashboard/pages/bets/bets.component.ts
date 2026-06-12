@@ -39,32 +39,33 @@ interface BetData {
   template: `
     <div data-page="bets" class="space-y-6">
       <app-page-header icon="cursor-click" title="Bets" subtitle="All bets across marketplace sessions">
-        <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari user, session, selection…">
-          <p-select
-            [(ngModel)]="statusFilter"
-            (ngModelChange)="applyFilter()"
-            [options]="statusOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="All"
-            class="w-32"
-            styleClass="!text-sm !w-44" />
-          <p-datepicker
-            [(ngModel)]="dateFrom"
-            (ngModelChange)="applyFilter()"
-            dateFormat="yy-mm-dd"
-            placeholder="Dari"
-            class="w-32"
-            inputStyleClass="!text-xs !py-1.5 !px-2.5" />
-          <p-datepicker
-            [(ngModel)]="dateTo"
-            (ngModelChange)="applyFilter()"
-            dateFormat="yy-mm-dd"
-            placeholder="Sampai"
-            class="w-32"
-            inputStyleClass="!text-xs !py-1.5 !px-2.5" />
-        </app-filter-bar>
       </app-page-header>
+
+      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari user, session, selection…">
+        <p-select
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="applyFilter()"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All"
+          class="w-32"
+          styleClass="!text-sm !w-44" />
+        <p-datepicker
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="applyFilter()"
+          dateFormat="yy-mm-dd"
+          placeholder="Dari"
+          class="w-32"
+          inputStyleClass="!text-xs !py-1.5 !px-2.5" />
+        <p-datepicker
+          [(ngModel)]="dateTo"
+          (ngModelChange)="applyFilter()"
+          dateFormat="yy-mm-dd"
+          placeholder="Sampai"
+          class="w-32"
+          inputStyleClass="!text-xs !py-1.5 !px-2.5" />
+      </app-filter-bar>
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 

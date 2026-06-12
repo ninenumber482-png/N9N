@@ -112,7 +112,7 @@ interface BetRow {
   providers: [ConfirmationService],
   template: `
     <div data-page="users" class="space-y-6">
-      <app-page-header icon="users" title="Members" subtitle="Manage all platform members">
+      <app-page-header icon="users" title="Management Member" subtitle="Manage member profiles, access, and credentials">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
@@ -242,7 +242,14 @@ interface BetRow {
                         <button
                           (click)="confirmAction('reset', u)"
                           class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Reset
+                          Reset Access
+                        </button>
+                      }
+                      @if (canManageCredentials) {
+                        <button
+                          (click)="openPasswordTab(u)"
+                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
+                          Reset Password
                         </button>
                       }
                       <button
@@ -628,6 +635,47 @@ interface BetRow {
                     <p class="text-muted-foreground py-8 text-center text-sm">No KYC documents found.</p>
                   }
                 }
+
+                @if (activeTab === 'password') {
+                  <div class="mx-auto max-w-md space-y-4">
+                    <div>
+                      <p class="text-sm font-bold text-foreground">Reset Password Member</p>
+                      <p class="mt-1 text-xs text-muted-foreground">
+                        Password baru diterapkan langsung untuk &#64;{{ selectedUser.username }} dan dicatat di audit log.
+                      </p>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-semibold text-muted-foreground">Password Baru</label>
+                      <input
+                        [(ngModel)]="newMemberPassword"
+                        type="password"
+                        placeholder="Minimal 6 karakter"
+                        class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30" />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-semibold text-muted-foreground">Konfirmasi Password</label>
+                      <input
+                        [(ngModel)]="confirmMemberPassword"
+                        type="password"
+                        placeholder="Ulangi password baru"
+                        class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30" />
+                    </div>
+                    @if (passwordError) {
+                      <p class="text-xs text-red-400">{{ passwordError }}</p>
+                    }
+                    @if (passwordSuccess) {
+                      <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+                        Password member berhasil diperbarui.
+                      </p>
+                    }
+                    <button
+                      (click)="resetMemberPassword()"
+                      [disabled]="passwordSubmitting || !isPasswordFormValid()"
+                      class="rounded-lg bg-foreground px-4 py-2 text-xs font-bold text-background disabled:opacity-50">
+                      {{ passwordSubmitting ? 'Menyimpan...' : 'Reset Password' }}
+                    </button>
+                  </div>
+                }
               }
             </div>
           </div>
@@ -718,6 +766,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   error: string | null = null;
   previewImage: string | null = null;
   isSuperadmin = false;
+  canManageCredentials = false;
   private destroy$ = new Subject<void>();
   private onlineTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -744,6 +793,12 @@ export class UsersComponent implements OnInit, OnDestroy {
     { key: 'sessions', label: 'Sessions' },
     { key: 'kyc', label: 'KYC' },
   ];
+
+  newMemberPassword = '';
+  confirmMemberPassword = '';
+  passwordError = '';
+  passwordSuccess = false;
+  passwordSubmitting = false;
 
   roleOptions = [
     { label: 'All Roles', value: '' },
@@ -783,7 +838,10 @@ export class UsersComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit() {
-    this.isSuperadmin = this.auth.getCurrentUser()?.role === 'superadmin';
+    const role = this.auth.getCurrentUser()?.role;
+    this.isSuperadmin = role === 'superadmin';
+    this.canManageCredentials = role === 'admin' || role === 'superadmin';
+    if (this.canManageCredentials) this.tabs.push({ key: 'password', label: 'Reset Password' });
     this.load();
     this.realtime.subscribeUsers();
     this.realtime.users$.pipe(takeUntil(this.destroy$)).subscribe(() => this.silentRefresh());
@@ -940,6 +998,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.activeTab = 'overview';
     this.modalData = {};
     this.modalLoading = true;
+    this.resetPasswordForm();
     this.cdr.markForCheck();
     this.loadModalData(u.id);
   }
@@ -948,7 +1007,57 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.modalOpen = false;
     this.selectedUser = null;
     this.modalData = {};
+    this.resetPasswordForm();
     this.cdr.markForCheck();
+  }
+
+  openPasswordTab(u: UserRow) {
+    this.openModal(u);
+    this.activeTab = 'password';
+    this.cdr.markForCheck();
+  }
+
+  isPasswordFormValid() {
+    return this.newMemberPassword.length >= 6 && this.newMemberPassword === this.confirmMemberPassword;
+  }
+
+  private resetPasswordForm() {
+    this.newMemberPassword = '';
+    this.confirmMemberPassword = '';
+    this.passwordError = '';
+    this.passwordSuccess = false;
+    this.passwordSubmitting = false;
+  }
+
+  async resetMemberPassword() {
+    if (!this.selectedUser || !this.isPasswordFormValid()) {
+      this.passwordError = 'Password minimal 6 karakter dan konfirmasi harus sama.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const admin = this.auth.getCurrentUser();
+    if (!admin?.username) {
+      this.notification.error('Session expired', 'Silakan login ulang.');
+      return;
+    }
+
+    this.passwordSubmitting = true;
+    this.passwordError = '';
+    this.passwordSuccess = false;
+    this.cdr.markForCheck();
+    try {
+      await this.admin.resetPassword(this.selectedUser.id, admin.username, this.newMemberPassword);
+      this.passwordSuccess = true;
+      this.newMemberPassword = '';
+      this.confirmMemberPassword = '';
+      this.notification.success('Password direset', `Password ${this.selectedUser.username} berhasil diperbarui.`);
+    } catch (e: unknown) {
+      this.passwordError = e instanceof AdminRpcError ? e.message : 'Gagal mereset password.';
+    } finally {
+      this.passwordSubmitting = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async loadModalData(userId: string) {
