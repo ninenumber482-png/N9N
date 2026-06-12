@@ -1,75 +1,26 @@
 /* Landing Page Configuration — Single Source of Truth */
 
-export const LOGOS = [
-  { src: '/assets/img/partners/bca.png', alt: 'BCA' },
-  { src: '/assets/img/partners/citibank.png', alt: 'Citibank' },
-  { src: '/assets/img/partners/hsbc.png', alt: 'HSBC' },
-  { src: '/assets/img/partners/icbc.png', alt: 'ICBC' },
-  { src: '/assets/img/partners/mufg.png', alt: 'MUFG' },
-  { src: '/assets/img/partners/ubs.png', alt: 'UBS' },
+/* Neutral trust badges (SVG icons rendered in LandingPage) — replaces real
+   bank brand logos to avoid trademark/misleading-partnership risk. */
+export const TRUST = [
+  { icon: 'licensed', labelKey: 'landing.trust_licensed' },
+  { icon: 'secure', labelKey: 'landing.trust_secure' },
+  { icon: 'encrypted', labelKey: 'landing.trust_encrypted' },
+  { icon: 'payout', labelKey: 'landing.trust_payout' },
+  { icon: 'support', labelKey: 'landing.trust_support' },
+  { icon: 'fair', labelKey: 'landing.trust_fair' },
 ];
 
 export const VALUES = [
-  {
-    icon: '/assets/img/icons/integrity.png',
-    titleKey: 'landing.value_integrity',
-    descKey: 'landing.value_integrity_desc',
-  },
-  {
-    icon: '/assets/img/icons/collaboration.png',
-    titleKey: 'landing.value_collaboration',
-    descKey: 'landing.value_collaboration_desc',
-  },
-  {
-    icon: '/assets/img/icons/innovation.png',
-    titleKey: 'landing.value_innovation',
-    descKey: 'landing.value_innovation_desc',
-  },
-  {
-    icon: '/assets/img/icons/excellence.png',
-    titleKey: 'landing.value_excellence',
-    descKey: 'landing.value_excellence_desc',
-  },
+  { icon: 'integrity', titleKey: 'landing.value_integrity', descKey: 'landing.value_integrity_desc' },
+  { icon: 'collaboration', titleKey: 'landing.value_collaboration', descKey: 'landing.value_collaboration_desc' },
+  { icon: 'innovation', titleKey: 'landing.value_innovation', descKey: 'landing.value_innovation_desc' },
+  { icon: 'excellence', titleKey: 'landing.value_excellence', descKey: 'landing.value_excellence_desc' },
 ];
 
 export const STATS = [
-  {
-    icon: '/assets/img/stats/countries.png',
-    value: '50+',
-    labelKey: 'landing.stat_countries',
-  },
-  {
-    icon: '/assets/img/stats/partners.png',
-    value: '200+',
-    labelKey: 'landing.stat_partners',
-  },
-  {
-    icon: '/assets/img/stats/years.png',
-    value: '10+',
-    labelKey: 'landing.stat_experience',
-  },
-  {
-    icon: '/assets/img/stats/endless.png',
-    value: '∞',
-    labelKey: 'landing.stat_opportunities',
-  },
+  { icon: 'countries', value: '50+', labelKey: 'landing.stat_countries' },
+  { icon: 'partners', value: '200+', labelKey: 'landing.stat_partners' },
+  { icon: 'years', value: '10+', labelKey: 'landing.stat_experience' },
+  { icon: 'opportunities', value: '∞', labelKey: 'landing.stat_opportunities' },
 ];
-
-export const HERO = {
-  badge: 'GLOBAL PARTNERSHIP. SUSTAINABLE GROWTH.',
-  headline: ['Global Partnerships', 'for Sustainable Growth'],
-  body: [
-    'NUMBER 9 is an international company committed to building strategic cross-border partnerships that drive sustainable and high-value business growth.',
-    'We connect opportunities, strengthen collaborations, and shape a more progressive global business future.',
-  ],
-  cta: { primary: 'Explore Partnership', secondary: 'Learn More' },
-};
-
-export const ABOUT = {
-  badge: 'ABOUT NUMBER 9',
-  headline: ['Building Bridges.', 'Creating Opportunities.', 'Growing Together.'],
-  body: [
-    'With an extensive global network and strategic approach, NUMBER 9 delivers collaborative solutions that help businesses expand, innovate, and thrive in the global market.',
-    'We believe sustainable growth is only possible through strong partnerships, continuous innovation, and trust built over time.',
-  ],
-};

@@ -32,7 +32,7 @@ export default function SupportPage() {
   const [csConfig, setCsConfig] = useState(() => getCsConfig())
   useEffect(() => {
     if (csConfig) return
-    supabase.from('platform_config').select('key, value').then(({ data, error }) => {
+    supabase.rpc('get_public_config').then(({ data, error }) => {
       if (error || !data) return
       const map = {}
       data.forEach(r => map[r.key] = r.value)

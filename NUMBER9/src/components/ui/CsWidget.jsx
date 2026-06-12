@@ -13,11 +13,14 @@ export default function CsWidget() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
       if (!supabaseUrl || !supabaseKey) return
-      fetch(`${supabaseUrl}/rest/v1/platform_config`, {
+      fetch(`${supabaseUrl}/rest/v1/rpc/get_public_config`, {
+        method: 'POST',
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
         },
+        body: '{}',
       }).then(res => {
         if (!alive || !res.ok) return undefined
         return res.json()

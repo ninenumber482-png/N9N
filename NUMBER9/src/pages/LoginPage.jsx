@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.from('platform_config').select('key, value').then(({ data }) => {
+    supabase.rpc('get_public_config').then(({ data }) => {
       if (!data) return;
       const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
       if (cfg.maintenance_mode === 'true') { setMaintenance(true); setMaintenanceMsg(cfg.maintenance_msg || ''); }
