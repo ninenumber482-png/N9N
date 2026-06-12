@@ -9,10 +9,11 @@
  */
 
 const EC2_URL = 'http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status';
-const API_KEY = '362745';
+// API key is provided via a Wrangler secret (MONITOR_API_KEY) — never hardcoded.
+// Set it with: echo "<key>" | npx wrangler secret put MONITOR_API_KEY
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     // CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -30,7 +31,7 @@ export default {
 
     try {
       const upstream = await fetch(EC2_URL, {
-        headers: { 'X-API-KEY': API_KEY },
+        headers: { 'X-API-KEY': env.MONITOR_API_KEY },
         signal: AbortSignal.timeout(5000),
       });
 
