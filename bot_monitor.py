@@ -4,7 +4,12 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import urllib.request, urllib.error, json, urllib3
 
 TOKEN      = os.environ['TELEGRAM_BOT_TOKEN']  # MUST be set in env
-API_KEY    = os.environ.get('MONITOR_API_KEY', '362745')
+# Rotated key — MUST be set in env (same value as platform_config.engine_api_key + worker secret).
+# No hardcoded fallback: a missing var fails closed (engine_settle → ENGINE_UNAUTHORIZED, /status → 401)
+# instead of silently using the dead old key.
+API_KEY    = os.environ.get('MONITOR_API_KEY', '')
+if not API_KEY:
+    print('[WARN] MONITOR_API_KEY not set — backup engine_settle & /status auth will FAIL until exported.', file=sys.stderr)
 ADMIN_IDS  = set(int(x) for x in os.environ.get('ADMIN_IDS', '').split(',') if x.strip())
 GROUP_ID   = -5253285983
 
