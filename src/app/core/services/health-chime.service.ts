@@ -105,6 +105,7 @@ export class HealthChimeService {
 
   /** Manual test — runs one heartbeat now (health probe + chime). */
   async test(): Promise<void> {
+    await this.loadChime();
     await this.tick();
   }
 
