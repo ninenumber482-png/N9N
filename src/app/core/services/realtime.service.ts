@@ -3,6 +3,7 @@ import { createClient, RealtimeChannel, RealtimePostgresChangesPayload } from '@
 import { environment } from 'src/environments/environment';
 import { BehaviorSubject, Subject, interval, Subscription } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { AdminService } from 'src/app/core/services/admin.service';
 
 interface Transaction {
   id: string;
@@ -61,6 +62,7 @@ interface KingResult {
 @Injectable({ providedIn: 'root' })
 export class RealtimeService implements OnDestroy {
   private toastService = inject(ToastService);
+  private admin = inject(AdminService);
 
   private supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
 
@@ -360,19 +362,10 @@ export class RealtimeService implements OnDestroy {
 
   private async _pollKyc() {
     try {
-      const res = await fetch(`${environment.supabaseUrl}/rest/v1/rpc/get_kyc_documents_admin_list`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: environment.supabaseKey,
-          Authorization: `Bearer ${environment.supabaseKey}`,
-        },
-        body: '{}',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        this.kycSubject.next(Array.isArray(data) ? data : []);
-      }
+      // Via admin-proxy (service_role + MFA) — NOT the anon key directly. The RPC is
+      // admin-only (PII); anon execute is revoked, so this must go through the proxy.
+      const data = await this.admin.rpc('get_kyc_documents_admin_list', {});
+      this.kycSubject.next(Array.isArray(data) ? data : []);
     } catch {
       /* silent */
     }
