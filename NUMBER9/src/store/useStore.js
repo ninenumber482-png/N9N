@@ -61,12 +61,8 @@ let _storageHandler = null
             if (typeof window !== 'undefined') {
               ;(async () => {
                 try {
-                  const { data } = await supabase
-                    .from('wallet')
-                    .select('user_id')
-                    .eq('user_id', _auth.id)
-                    .limit(1)
-                  if (!data || data.length === 0) {
+                  const { data } = await supabase.rpc('get_my_wallet')
+                  if (!data || data.error || data.balance_main === undefined) {
                     if (import.meta.env.DEV) console.warn('[AUTH] Session stale. Forcing re-login.')
                     useStore.setState({
                       systemNotification: {
