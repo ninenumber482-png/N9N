@@ -128,7 +128,7 @@ async function addIpToWhitelist(ip, env) {
         apikey: key,
         Authorization: `Bearer ${key}`,
       },
-      body: JSON.stringify({ p_ip: ip, p_label: 'emergency-self-whitelist' }),
+      body: JSON.stringify({ p_ip: ip, p_label: 'emergency-self-whitelist', p_api_key: env.WHITELIST_API_KEY }),
     });
     whitelistCache.delete(ip);
     return res.ok;
