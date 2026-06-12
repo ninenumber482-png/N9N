@@ -26,6 +26,7 @@ export class HealthChimeService {
   private gestureBound = false;
   private chimeBuffer: AudioBuffer | null = null;
   private chimeLoading = false;
+  private greetPending = false;
 
   enabled = true;
   intervalMin = 10;
@@ -66,7 +67,12 @@ export class HealthChimeService {
     const unlock = () => {
       try {
         if (!this.audioCtx) this.audioCtx = new AudioContext();
-        void this.audioCtx.resume();
+        void this.audioCtx.resume().then(() => {
+          if (this.greetPending) {
+            this.greetPending = false;
+            this.playBoardingCall();
+          }
+        });
         void this.loadChime();
       } catch {
         /* ignore */
@@ -107,6 +113,19 @@ export class HealthChimeService {
   async test(): Promise<void> {
     await this.loadChime();
     await this.tick();
+  }
+
+  /** Welcome chime once on entering the dashboard (after login). Respects on/off;
+   * if audio isn't unlocked yet (e.g. after a full reload) it plays on the first gesture. */
+  async greet(): Promise<void> {
+    if (!this.enabled) return;
+    await this.loadChime();
+    await this.ensureRunning();
+    if (this.audioCtx && this.audioCtx.state === 'running') {
+      this.playBoardingCall();
+    } else {
+      this.greetPending = true;
+    }
   }
 
   private async tick(): Promise<void> {

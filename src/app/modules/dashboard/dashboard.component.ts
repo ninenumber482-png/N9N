@@ -98,6 +98,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.realtime.subscribeEngineStatus();
     // Global health-heartbeat chime (boarding-call) — persists across navigation
     this.healthChime.start();
+    // Welcome chime on entering the dashboard (after login)
+    void this.healthChime.greet();
   }
 
   ngOnDestroy() {
