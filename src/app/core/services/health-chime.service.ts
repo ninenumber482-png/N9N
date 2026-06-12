@@ -110,6 +110,7 @@ export class HealthChimeService {
   }
 
   private async tick(): Promise<void> {
+    await this.ensureRunning();
     let healthy = true;
     try {
       const res = (await this.admin.getLatestKingResult()) as Array<{ created_at?: string }> | null;
@@ -131,6 +132,21 @@ export class HealthChimeService {
       return this.audioCtx;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Ensure the AudioContext exists and is actually running before a scheduled
+   * auto-chime. Browsers suspend the context when the tab is backgrounded; without
+   * awaiting resume(), the timer-driven BufferSource would start on a suspended
+   * context and produce no sound. Awaiting here makes the periodic chime reliable.
+   */
+  private async ensureRunning(): Promise<void> {
+    try {
+      if (!this.audioCtx) this.audioCtx = new AudioContext();
+      if (this.audioCtx.state !== 'running') await this.audioCtx.resume();
+    } catch {
+      /* ignore — play methods no-op if the context is unavailable */
     }
   }
 
