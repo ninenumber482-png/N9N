@@ -521,6 +521,55 @@ layer(base);
   z-index: 10000 !important;
 }
 
+/* ── Global branded look for ALL PrimeNG dialogs (match app-confirm-dialog) ──
+   Scoped variants (.n9-logout-dialog, .dashboard-dialog) layer on top. */
+.p-dialog,
+.p-confirmdialog {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  background: #0e1017;
+}
+.p-dialog .p-dialog-header,
+.p-confirmdialog .p-dialog-header {
+  background: #0e1017;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1rem 1.25rem 0.85rem;
+}
+.p-dialog .p-dialog-title,
+.p-confirmdialog .p-dialog-title {
+  color: #f8fafc;
+  font-weight: 800;
+  font-size: 1rem;
+}
+.p-dialog .p-dialog-content,
+.p-confirmdialog .p-dialog-content {
+  background: #0e1017;
+  color: #a1a1aa;
+  padding: 1rem 1.25rem;
+}
+.p-dialog .p-dialog-footer,
+.p-confirmdialog .p-dialog-footer {
+  background: #0e1017;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.85rem 1.25rem 1.1rem;
+}
+.p-dialog .p-dialog-footer .p-button,
+.p-confirmdialog .p-dialog-footer .p-button {
+  border-radius: 0.75rem;
+  font-weight: 700;
+}
+.p-dialog .p-dialog-header-icon,
+.p-confirmdialog .p-dialog-header-icon {
+  color: #a1a1aa;
+}
+.p-dialog .p-dialog-header-icon:hover,
+.p-confirmdialog .p-dialog-header-icon:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .n9-logout-dialog.p-dialog {
   width: min(92vw, 26rem) !important;
   border: 1px solid rgba(239, 68, 68, 0.35);
