@@ -235,6 +235,7 @@ def king_engine_loop():
                     if not supabase_get('king_planned', f'session_code=eq.{pc}&select=session_code,d1'):
                         digits = roll_digits()
                         supabase_rpc('upsert_king_planned', {
+                            'p_api_key': API_KEY,
                             'p_code': pc,
                             'p_d1': digits[0], 'p_d2': digits[1], 'p_d3': digits[2],
                         })
