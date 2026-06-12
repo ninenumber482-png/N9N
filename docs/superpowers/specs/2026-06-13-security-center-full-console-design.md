@@ -38,6 +38,18 @@ getUserNameMap(): Promise<Record<string,string>>  // get('users','select=id,user
 ```
 Notes: `updateRow`/`deleteRow` stay private; new methods call them or `proxy` from inside the service. `new Date().toISOString()` runs in the browser (allowed; the Date restriction is workflow-script-only).
 
+**CRITICAL — cache invalidation.** `admin.service.get()` caches every GET for `CACHE_TTL = 5000` ms keyed by `username:GET:/path`. No existing write busts it (approve-flows mask staleness via RealtimeService, which `security_alerts`/`failed_logins` do NOT have). Without busting, a resolve/clear → reload within 5 s returns the **stale** row (alert still shows OPEN; cleared logins reappear) and the feature looks broken. Fix: add a private helper and call it at the end of every new mutation method **before** the component reloads:
+```ts
+private invalidate(fragment: string) {
+  for (const k of [...this.cache.keys()]) if (k.includes(fragment)) this.cache.delete(k);
+}
+// resolveAlert/resolveAllOpenAlerts → this.invalidate('security_alerts')
+// clearFailedLogins/clearOldFailedLogins → this.invalidate('failed_logins')
+```
+The 25 s poll is unaffected (TTL 5 s already expired by then). PostgREST PATCH/DELETE always carry a filter (`id=eq.`, `resolved_at=is.null`, `username=eq.`, `attempted_at=lt.`) so they are accepted; 204/empty responses are handled by `proxy()`.
+
+**admin-proxy:** `/security_alerts` and `/failed_logins` are already in `ALLOWED_PREFIXES`; the forwarded method is not restricted (path-allowlist only) and MFA is satisfied for the operator. **No edge-function change.** The proxy already inserts an `audit_log` row per call, so each PATCH/DELETE auto-appears in the Audit tab.
+
 ### Component — Security Alerts tab
 - **User column** → `userMap[l.user_id] || l.user_id?.slice(0,10) || '-'`.
 - **Status column** → `<app-status-badge>` OPEN (warn) / RESOLVED (secondary) from `l.resolved_at`.

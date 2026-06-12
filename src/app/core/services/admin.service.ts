@@ -601,7 +601,10 @@ export class AdminService {
   }
   /** Admin-planned draw for a session (manual override readout). */
   getPlannedForSession(code: string) {
-    return this.get<any>('king_planned', `session_code=eq.${encodeURIComponent(code)}&select=session_code,d1,d2,d3&limit=1`);
+    return this.get<any>(
+      'king_planned',
+      `session_code=eq.${encodeURIComponent(code)}&select=session_code,d1,d2,d3&limit=1`,
+    );
   }
   /** Users active in the last 5 min (RPC get_online_users, via service_role). */
   getOnlineUsers() {
@@ -654,6 +657,42 @@ export class AdminService {
   }
   // getTransactionAudit unused — audit_component uses getUserAudit instead
   // getMetrics unused
+
+  // ── SECURITY CENTER ACTIONS (live writes via admin-proxy service_role) ──
+  /** Bust cached GETs whose key contains a table fragment, so the post-action reload is fresh. */
+  private invalidate(fragment: string) {
+    for (const k of [...this.cache.keys()]) {
+      if (k.includes(fragment)) this.cache.delete(k);
+    }
+  }
+
+  async resolveAlert(id: string): Promise<void> {
+    await this.updateRow('security_alerts', id, { resolved_at: new Date().toISOString() });
+    this.invalidate('security_alerts');
+  }
+
+  async resolveAllOpenAlerts(): Promise<void> {
+    await this.proxy('PATCH', '/security_alerts?resolved_at=is.null', { resolved_at: new Date().toISOString() });
+    this.invalidate('security_alerts');
+  }
+
+  async clearFailedLogins(username: string): Promise<void> {
+    await this.proxy('DELETE', `/failed_logins?username=eq.${encodeURIComponent(username)}`);
+    this.invalidate('failed_logins');
+  }
+
+  async clearOldFailedLogins(cutoffISO: string): Promise<void> {
+    await this.proxy('DELETE', `/failed_logins?attempted_at=lt.${encodeURIComponent(cutoffISO)}`);
+    this.invalidate('failed_logins');
+  }
+
+  /** id → username map for display (alerts.user_id, audit.admin_id). */
+  async getUserNameMap(): Promise<Record<string, string>> {
+    const rows = await this.get<any>('users', 'select=id,username,display_name&limit=1000');
+    const map: Record<string, string> = {};
+    for (const r of rows) map[r['id']] = r['username'] || r['display_name'] || r['id'];
+    return map;
+  }
 
   // ── GAME SESSIONS (grouped from bets table by session_code) ──
   async getGameSessions() {
