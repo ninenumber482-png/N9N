@@ -1,6 +1,6 @@
 /* eslint-disable no-empty */
 import { supabase } from '../utils/supabase';
-import { apiRpc, apiInvoke } from '../utils/api';
+import { apiSelect, apiSelectAll, apiRpc, apiInvoke } from '../utils/api';
 import { DEPOSIT_LOCK_MS } from '../constants';
 import { formatNumber } from '../utils/format';
 
@@ -39,10 +39,14 @@ export async function fetchPlatformAccounts() {
 }
 
 /* ---------- wallet balance ---------- */
-export async function fetchWalletBalance() {
+export async function fetchWalletBalance(userId) {
   try {
-    const { data, error } = await supabase.rpc('get_my_wallet');
-    if (!error && data && !data.error) {
+    const { data, error } = await supabase
+      .from('wallet')
+      .select('balance_main, balance_bonus, total_deposited, total_withdrawn, total_turnover')
+      .eq('user_id', userId)
+      .single();
+    if (!error && data) {
       return {
         main: Number(data.balance_main ?? 0),
         bonus: Number(data.balance_bonus ?? 0),
@@ -240,14 +244,18 @@ export async function updateUserBank(userId, bankName, bankAccountNumber, bankAc
   }
 }
 
-export async function fetchUserBank() {
+export async function fetchUserBank(userId) {
   try {
-    const { data, error } = await supabase.rpc('get_my_profile');
-    if (!error && data && !data.error)
+    const { data, error } = await supabase
+      .from('users')
+      .select('bank_name,bank_account_number,bank_account_name')
+      .eq('id', userId)
+      .single();
+    if (!error && data)
       return {
-        bankName: data.bankName || '',
-        bankAccountNumber: data.bankAccountNumber || '',
-        bankAccountName: data.bankAccountName || '',
+        bankName: data.bank_name || '',
+        bankAccountNumber: data.bank_account_number || '',
+        bankAccountName: data.bank_account_name || '',
       };
   } catch (e) {
     _warn('fetchUserBank failed', e);
@@ -289,8 +297,16 @@ function defaultTurnover() {
 
 export async function fetchUserTransactions(userId, limit = 100) {
   try {
-    const { data, error } = await supabase.rpc('get_my_transactions', { p_limit: limit });
-    if (!error && Array.isArray(data))
+    const { data, error } = await supabase
+      .from('transactions')
+      .select(
+        'id,reference_code,type,amount,status,method,bank_name,bank_account_number,bank_account_name,proof_image_url,created_at,processed_at,notes',
+      )
+      .eq('user_id', userId)
+      .in('type', ['DEPOSIT', 'WITHDRAWAL'])
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (!error && data)
       return data
         .map((t) => {
           if (!t?.id) return null;
