@@ -17,6 +17,7 @@ export interface SupabaseLoginResult {
     role: string;
     isNewAccount: boolean;
     unlimited?: boolean;
+    permissions?: string[] | null;
   };
   mfa?: {
     phase: 'setup' | 'verify' | 'complete';

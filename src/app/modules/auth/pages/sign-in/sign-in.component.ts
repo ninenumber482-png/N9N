@@ -117,6 +117,7 @@ export class SignInComponent implements OnInit {
           username,
           isAuthenticated: true,
           role: result.user?.role,
+          permissions: result.user?.permissions ?? null,
           email: result.user?.email,
           unlimited: result.user?.unlimited,
           token: result.token,

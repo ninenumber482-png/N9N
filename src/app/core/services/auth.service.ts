@@ -12,6 +12,7 @@ export interface User {
   timestamp?: number;
   role?: string;
   unlimited?: boolean;
+  permissions?: string[] | null;
   email?: string;
   token?: string;
   sessionId?: string;
