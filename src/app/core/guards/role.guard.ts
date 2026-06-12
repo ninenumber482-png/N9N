@@ -3,6 +3,7 @@ import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/ro
 import { AuthService } from 'src/app/core/services/auth.service';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { AuditService } from 'src/app/core/services/audit.service';
+import { isPageAllowed } from 'src/app/core/constants/admin-features';
 
 @Injectable({ providedIn: 'root' })
 export class RoleGuard {
@@ -51,6 +52,13 @@ export class RoleGuard {
       if (requireUnlimited && !user.unlimited) {
         this.recordFailedAttempt(user.username);
         this.audit.logFailedAccess('ROUTE_GUARD', state.url, 'Unlimited access required');
+        this.router.navigate(['/overview']);
+        return false;
+      }
+
+      // Per-page access limit (superadmin bypasses; null/empty permissions = full)
+      if (user.role !== 'superadmin' && !isPageAllowed(state.url, user.permissions)) {
+        this.audit.logFailedAccess('ROUTE_GUARD', state.url, 'Page not in account permissions');
         this.router.navigate(['/overview']);
         return false;
       }

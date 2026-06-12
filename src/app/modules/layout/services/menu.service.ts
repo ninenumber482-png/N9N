@@ -3,6 +3,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Menu } from 'src/app/core/constants/menu';
 import { MenuItem, SubMenuItem } from 'src/app/core/models/menu.model';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { isPageAllowed } from 'src/app/core/constants/admin-features';
 
 @Injectable({
   providedIn: 'root',
@@ -16,12 +18,19 @@ export class MenuService implements OnDestroy {
   private _subscription = new Subscription();
 
   constructor() {
-    /** Set dynamic menu — Finance & Marketplace always expanded */
+    /** Set dynamic menu — Finance & Marketplace always expanded; filtered by per-page permissions */
+    const user = inject(AuthService).getCurrentUser();
+    const isSuper = user?.role === 'superadmin';
+    const perms = user?.permissions;
+    const visible = (route?: string | null) => !route || isSuper || isPageAllowed(route, perms);
     this._pagesMenu.set(
-      Menu.pages.map((m) => ({
-        ...m,
-        expanded: m.collapsible === false ? true : (m.expanded ?? false),
-      })),
+      Menu.pages
+        .map((m) => ({
+          ...m,
+          expanded: m.collapsible === false ? true : (m.expanded ?? false),
+          items: m.items.filter((it) => visible(it.route)),
+        }))
+        .filter((m) => m.items.length > 0),
     );
 
     const sub = this.router.events.subscribe((event) => {
