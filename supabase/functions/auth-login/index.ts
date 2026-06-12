@@ -107,7 +107,7 @@ export default {
           .maybeSingle(),
         supabase
           .from('n9_users')
-          .select('id, username, password_hash, role')
+          .select('id, username, password_hash, role, permissions')
           .eq('username', dbUsername)
           .in('role', ['admin', 'superadmin'])
           .eq('is_active', true)
@@ -226,6 +226,7 @@ export default {
             email: userRow.email || '',
             username: dbUsername,
             role: userRow.role,
+            permissions: (n9Data as { permissions?: string[] } | null)?.permissions ?? null,
             isNewAccount: false,
           },
           mfa: {
