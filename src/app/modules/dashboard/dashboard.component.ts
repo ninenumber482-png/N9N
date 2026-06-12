@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, Router } from '@angular/router';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
+import { HealthChimeService } from 'src/app/core/services/health-chime.service';
 
 const PAGE_ORDER = [
   // Dashboard
@@ -84,6 +85,7 @@ const PAGE_ORDER = [
 export class DashboardComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private realtime = inject(RealtimeService);
+  private healthChime = inject(HealthChimeService);
 
   pages = PAGE_ORDER;
 
@@ -94,6 +96,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.realtime.subscribeKyc();
     this.realtime.subscribeBets();
     this.realtime.subscribeEngineStatus();
+    // Global health-heartbeat chime (boarding-call) — persists across navigation
+    this.healthChime.start();
   }
 
   ngOnDestroy() {

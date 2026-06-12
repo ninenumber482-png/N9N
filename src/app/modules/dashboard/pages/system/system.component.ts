@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
+import { HealthChimeService } from 'src/app/core/services/health-chime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { InputTextModule } from 'primeng/inputtext';
 import { environment } from 'src/environments/environment';
@@ -294,6 +295,53 @@ interface ConfigEntry {
         </div>
       </div>
 
+      <!-- Health Heartbeat (boarding-call chime) -->
+      <div class="bg-card border-border rounded-lg border p-5">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-foreground text-sm font-medium">🔔 Health Heartbeat</h3>
+            <p class="text-muted-foreground mt-0.5 text-[11px]">
+              Bunyi boarding-call tiap interval — sehat = ding-dong, engine basi = alert. Per-browser.
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="toggleChime()"
+            class="n9-btn text-xs px-3 py-1.5"
+            [ngClass]="chime.enabled ? 'n9-btn-primary' : 'n9-btn-ghost'">
+            {{ chime.enabled ? 'ON' : 'OFF' }}
+          </button>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-muted-foreground text-[11px]">Interval:</span>
+          @for (m of chime.intervalOptions; track m) {
+            <button
+              type="button"
+              (click)="setChimeInterval(m)"
+              class="n9-btn text-xs px-2.5 py-1"
+              [ngClass]="chime.intervalMin === m ? 'n9-btn-primary' : 'n9-btn-ghost'">
+              {{ m }}m
+            </button>
+          }
+          <div class="flex-1"></div>
+          <button type="button" (click)="testChime()" class="n9-btn n9-btn-ghost text-xs px-3 py-1.5">
+            Test bunyi
+          </button>
+        </div>
+        @if (chime.lastChimeAt) {
+          <p class="text-muted-foreground mt-3 text-[11px]">
+            Chime terakhir: {{ chime.lastChimeAt | date: 'HH:mm:ss' }} —
+            <span [class.text-green-500]="chime.lastHealthy" [class.text-red-500]="chime.lastHealthy === false">
+              {{ chime.lastHealthy ? 'sehat ✅' : 'engine basi ⚠️' }}
+            </span>
+          </p>
+        } @else {
+          <p class="text-muted-foreground mt-3 text-[11px]">
+            {{ chime.enabled ? 'Nunggu interval berikutnya…' : 'Heartbeat OFF.' }}
+          </p>
+        }
+      </div>
+
       <p-confirmdialog />
     </div>
   `,
@@ -303,6 +351,7 @@ export class SystemComponent implements OnInit, OnDestroy {
   private admin = inject(AdminService);
   private cdr = inject(ChangeDetectorRef);
   private confirmation = inject(ConfirmationService);
+  chime = inject(HealthChimeService);
 
   configs: ConfigEntry[] = [];
   maintenanceMode = false;
@@ -334,6 +383,21 @@ export class SystemComponent implements OnInit, OnDestroy {
     if (this.serverPollTimer) {
       clearInterval(this.serverPollTimer);
     }
+  }
+
+  toggleChime() {
+    this.chime.setEnabled(!this.chime.enabled);
+    this.cdr.markForCheck();
+  }
+
+  setChimeInterval(m: number) {
+    this.chime.setIntervalMin(m);
+    this.cdr.markForCheck();
+  }
+
+  async testChime() {
+    await this.chime.test();
+    this.cdr.markForCheck();
   }
 
   private async pollServer() {

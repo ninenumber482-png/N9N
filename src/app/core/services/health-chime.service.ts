@@ -1,0 +1,169 @@
+import { Injectable, inject } from '@angular/core';
+import { AdminService } from 'src/app/core/services/admin.service';
+
+const LS_KEY = 'n9_health_chime';
+// Engine is "healthy" if the latest king_results is younger than this (≈ one session + slack).
+const SESSION_FRESH_MS = 390_000;
+
+interface ChimeSettings {
+  enabled: boolean;
+  intervalMin: number;
+}
+
+/**
+ * Periodic "boarding-call" health heartbeat for the admin operator.
+ * Every N minutes it checks engine health and plays an airport-style chime
+ * (pleasant ding-dong when healthy, low alert when stale). Web Audio only,
+ * settings persisted per-browser in localStorage. No DB, no network beyond
+ * the health probe. Start() once globally (DashboardComponent).
+ */
+@Injectable({ providedIn: 'root' })
+export class HealthChimeService {
+  private admin = inject(AdminService);
+  private audioCtx: AudioContext | null = null;
+  private timer?: ReturnType<typeof setInterval>;
+  private gestureBound = false;
+
+  enabled = true;
+  intervalMin = 10;
+  lastChimeAt: number | null = null;
+  lastHealthy: boolean | null = null;
+
+  readonly intervalOptions = [5, 10, 15, 30, 60];
+
+  constructor() {
+    this.load();
+    this.bindGesture();
+  }
+
+  private load(): void {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw) as Partial<ChimeSettings>;
+      if (typeof s.enabled === 'boolean') this.enabled = s.enabled;
+      if (typeof s.intervalMin === 'number' && s.intervalMin > 0) this.intervalMin = s.intervalMin;
+    } catch {
+      /* corrupt/no settings — keep defaults */
+    }
+  }
+
+  private save(): void {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ enabled: this.enabled, intervalMin: this.intervalMin }));
+    } catch {
+      /* storage unavailable — ignore */
+    }
+  }
+
+  /** Unlock/resume AudioContext on the first user gesture (browser autoplay policy). */
+  private bindGesture(): void {
+    if (this.gestureBound || typeof window === 'undefined') return;
+    this.gestureBound = true;
+    const unlock = () => {
+      try {
+        if (!this.audioCtx) this.audioCtx = new AudioContext();
+        void this.audioCtx.resume();
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+  }
+
+  /** Start (or restart) the heartbeat timer. Idempotent — safe to call repeatedly. */
+  start(): void {
+    this.stop();
+    if (!this.enabled) return;
+    const ms = Math.max(1, this.intervalMin) * 60_000;
+    this.timer = setInterval(() => void this.tick(), ms);
+  }
+
+  stop(): void {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = undefined;
+    }
+  }
+
+  setEnabled(v: boolean): void {
+    this.enabled = v;
+    this.save();
+    this.start();
+  }
+
+  setIntervalMin(v: number): void {
+    this.intervalMin = v;
+    this.save();
+    this.start();
+  }
+
+  /** Manual test — runs one heartbeat now (health probe + chime). */
+  async test(): Promise<void> {
+    await this.tick();
+  }
+
+  private async tick(): Promise<void> {
+    let healthy = true;
+    try {
+      const res = (await this.admin.getLatestKingResult()) as { created_at?: string } | null;
+      const ts = res?.created_at ? new Date(res.created_at).getTime() : 0;
+      healthy = ts > 0 && Date.now() - ts < SESSION_FRESH_MS;
+    } catch {
+      healthy = false;
+    }
+    this.lastHealthy = healthy;
+    this.lastChimeAt = Date.now();
+    if (healthy) this.playBoardingCall();
+    else this.playAlert();
+  }
+
+  private ctx(): AudioContext | null {
+    try {
+      if (!this.audioCtx) this.audioCtx = new AudioContext();
+      if (this.audioCtx.state === 'suspended') void this.audioCtx.resume();
+      return this.audioCtx;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Soft bell note with attack + exponential decay. */
+  private note(freq: number, start: number, dur: number, vol = 0.12): void {
+    const ctx = this.audioCtx;
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  }
+
+  /** Airport boarding-call: warm "ding-dong" twice (E5 → C5). */
+  private playBoardingCall(): void {
+    const ctx = this.ctx();
+    if (!ctx) return;
+    const t = ctx.currentTime + 0.02;
+    this.note(659, t, 0.5, 0.12);
+    this.note(523, t + 0.42, 0.7, 0.12);
+    this.note(659, t + 1.15, 0.5, 0.1);
+    this.note(523, t + 1.57, 0.9, 0.12);
+  }
+
+  /** Stale/unhealthy: low triple beep to grab attention. */
+  private playAlert(): void {
+    const ctx = this.ctx();
+    if (!ctx) return;
+    const t = ctx.currentTime + 0.02;
+    this.note(330, t, 0.18, 0.13);
+    this.note(330, t + 0.26, 0.18, 0.13);
+    this.note(294, t + 0.54, 0.42, 0.14);
+  }
+}
