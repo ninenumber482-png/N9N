@@ -147,15 +147,38 @@ export class HealthChimeService {
     osc.stop(start + dur);
   }
 
-  /** Airport boarding-call: warm "ding-dong" twice (E5 → C5). */
+  /** Warm bell: fundamental + soft octave partial + long decay (PA-speaker timbre). */
+  private bell(freq: number, start: number, dur: number, vol = 0.12): void {
+    const ctx = this.audioCtx;
+    if (!ctx) return;
+    for (const [mult, v] of [
+      [1, vol],
+      [2, vol * 0.3],
+      [3, vol * 0.12],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq * mult;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(v, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur);
+    }
+  }
+
+  /** Airport "attention please" announcement chime — 4 warm bells descending C major. */
   private playBoardingCall(): void {
     const ctx = this.ctx();
     if (!ctx) return;
-    const t = ctx.currentTime + 0.02;
-    this.note(659, t, 0.5, 0.12);
-    this.note(523, t + 0.42, 0.7, 0.12);
-    this.note(659, t + 1.15, 0.5, 0.1);
-    this.note(523, t + 1.57, 0.9, 0.12);
+    const t = ctx.currentTime + 0.03;
+    this.bell(1047, t + 0.0, 0.9, 0.12); // C6
+    this.bell(784, t + 0.48, 0.9, 0.12); // G5
+    this.bell(659, t + 0.96, 1.0, 0.12); // E5
+    this.bell(523, t + 1.5, 1.5, 0.13); // C5 (resolve, long)
   }
 
   /** Stale/unhealthy: low triple beep to grab attention. */
