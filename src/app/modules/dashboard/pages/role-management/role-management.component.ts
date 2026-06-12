@@ -162,8 +162,8 @@ interface AdminUser {
         [closable]="true">
         @if (permTarget) {
           <p class="text-muted-foreground mb-3 text-xs">
-            Centang halaman yang boleh diakses <strong>{{ permTarget.username }}</strong>. Overview selalu boleh. Semua
-            dicentang = akses penuh.
+            Centang halaman yang boleh diakses <strong>{{ permTarget.username }}</strong
+            >. Overview selalu boleh. Semua dicentang = akses penuh.
           </p>
           <div class="grid grid-cols-2 gap-2">
             @for (f of FEATURES; track f.key) {
@@ -175,7 +175,9 @@ interface AdminUser {
           </div>
         }
         <div class="mt-4 flex justify-end gap-2">
-          <button (click)="permDialogOpen = false" class="border-border rounded border px-3 py-1.5 text-sm">Batal</button>
+          <button (click)="permDialogOpen = false" class="border-border rounded border px-3 py-1.5 text-sm">
+            Batal
+          </button>
           <button (click)="savePermissions()" class="rounded bg-yellow-400 px-3 py-1.5 text-sm font-bold text-black">
             Simpan
           </button>
