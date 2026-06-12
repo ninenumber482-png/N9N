@@ -623,6 +623,10 @@ export class AdminService {
   getAuditLogs(limit = 50) {
     return this.get<any>(`audit_log?order=created_at.desc&limit=${limit}`);
   }
+  /** Recent audit excluding admin-proxy self-log (every REST call inserts an audit_log row) — surfaces real admin actions. */
+  getRecentAudit(limit = 100) {
+    return this.get<any>(`audit_log?resource_type=neq.admin_proxy&order=created_at.desc&limit=${limit}`);
+  }
   async logAction(
     usernameOrId: string,
     action: string,

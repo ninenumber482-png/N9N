@@ -772,7 +772,7 @@ export class SecurityCenterComponent implements OnInit, OnDestroy {
       const [a, f, au, map] = await Promise.all([
         this.admin.getSecurityAlerts(),
         this.admin.getFailedLogins(),
-        this.admin.getAuditLogs(100),
+        this.admin.getRecentAudit(100),
         this.admin.getUserNameMap(),
       ]);
       this.alerts = a as SecurityItem[];
@@ -789,14 +789,15 @@ export class SecurityCenterComponent implements OnInit, OnDestroy {
   private async poll() {
     if (this.loading || this.tab === '2fa' || (typeof document !== 'undefined' && document.hidden)) return;
     try {
-      const [a, f, au] = await Promise.all([
-        this.admin.getSecurityAlerts(),
-        this.admin.getFailedLogins(),
-        this.admin.getAuditLogs(100),
-      ]);
-      this.alerts = a as SecurityItem[];
-      this.failedLogins = f as SecurityItem[];
-      this.auditLogs = au as SecurityItem[];
+      // Refetch only the active tab — each proxied GET inserts an audit_log row, so polling all
+      // three tabs would flood audit_log (and the Audit tab) with the page's own reads.
+      if (this.tab === 'alerts') {
+        this.alerts = (await this.admin.getSecurityAlerts()) as SecurityItem[];
+      } else if (this.tab === 'failed') {
+        this.failedLogins = (await this.admin.getFailedLogins()) as SecurityItem[];
+      } else if (this.tab === 'audit') {
+        this.auditLogs = (await this.admin.getRecentAudit(100)) as SecurityItem[];
+      }
       this.cdr.markForCheck();
     } catch {
       /* transient polling failure — keep last good data */
