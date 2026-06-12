@@ -150,7 +150,16 @@ interface AdminUser {
       }
       <p-confirmdialog />
 
-      <p-dialog header="Batas Akses Halaman" [(visible)]="permDialogOpen" [modal]="true" [style]="{ width: '32rem' }">
+      <p-dialog
+        header="Batas Akses Halaman"
+        [(visible)]="permDialogOpen"
+        [modal]="true"
+        [style]="{ width: '560px', maxWidth: '95vw' }"
+        [contentStyle]="{ 'max-height': '70vh', overflow: 'auto' }"
+        styleClass="dashboard-dialog"
+        [draggable]="false"
+        [resizable]="false"
+        [closable]="true">
         @if (permTarget) {
           <p class="text-muted-foreground mb-3 text-xs">
             Centang halaman yang boleh diakses <strong>{{ permTarget.username }}</strong>. Overview selalu boleh. Semua
