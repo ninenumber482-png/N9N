@@ -8,6 +8,9 @@ import { environment } from 'src/environments/environment';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 interface ConfigEntry {
   key: string;
@@ -26,7 +29,10 @@ interface ConfigEntry {
     PageHeaderComponent,
     LoadingErrorComponent,
     RefreshButtonComponent,
+    StatusBadgeComponent,
+    ConfirmDialogModule,
   ],
+  providers: [ConfirmationService],
   template: `
     <div data-page="system" class="space-y-6">
       <app-page-header
@@ -55,9 +61,11 @@ interface ConfigEntry {
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <span class="text-[11px] text-muted-foreground">{{ kingStatus === 'OPEN' ? 'Open' : 'Closed' }}</span>
+                <app-status-badge
+                  [value]="kingStatus === 'OPEN' ? 'OPEN' : 'CLOSED'"
+                  [severity]="kingStatus === 'OPEN' ? 'success' : 'secondary'" />
                 <button
-                  (click)="toggleKing()"
+                  (click)="confirmToggleKing()"
                   [disabled]="saving"
                   class="px-3 py-1.5 rounded text-xs text-foreground bg-muted hover:bg-muted/60 transition-colors disabled:opacity-50">
                   {{ saving ? '...' : kingStatus === 'OPEN' ? 'Close' : 'Open' }}
@@ -75,9 +83,11 @@ interface ConfigEntry {
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <span class="text-[11px] text-muted-foreground">{{ maintenanceMode ? 'On' : 'Off' }}</span>
+                <app-status-badge
+                  [value]="maintenanceMode ? 'ON' : 'OFF'"
+                  [severity]="maintenanceMode ? 'warn' : 'secondary'" />
                 <button
-                  (click)="toggleMaintenance()"
+                  (click)="confirmToggleMaintenance()"
                   [disabled]="saving"
                   class="px-3 py-1.5 rounded text-xs text-foreground bg-muted hover:bg-muted/60 transition-colors disabled:opacity-50">
                   {{ saving ? '...' : maintenanceMode ? 'Disable' : 'Enable' }}
@@ -91,6 +101,14 @@ interface ConfigEntry {
         <div class="bg-card border border-border rounded-lg">
           <div class="border-b border-border px-5 py-3.5">
             <h3 class="text-sm font-medium text-foreground">Engine Status</h3>
+            <div class="mt-1.5 flex flex-wrap items-center gap-2">
+              <app-status-badge
+                [value]="engineHealthy ? 'Auto-engine OK' : 'Auto-engine STALE'"
+                [severity]="engineHealthy ? 'success' : 'warn'" />
+              <span class="text-[11px] text-muted-foreground">
+                Last settlement: {{ lastSettleAt ? (lastSettleAt | wibDate: 'short') : '-' }}
+              </span>
+            </div>
           </div>
           <div class="p-5">
             @if (engineData) {
@@ -275,6 +293,8 @@ interface ConfigEntry {
           <p class="text-[11px] text-muted-foreground mt-3">Auto-refresh setiap 5 detik via Cloudflare Worker</p>
         </div>
       </div>
+
+      <p-confirmdialog />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -282,10 +302,13 @@ interface ConfigEntry {
 export class SystemComponent implements OnInit, OnDestroy {
   private admin = inject(AdminService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmation = inject(ConfirmationService);
 
   configs: ConfigEntry[] = [];
   maintenanceMode = false;
   kingStatus = 'OPEN';
+  engineHealthy = true;
+  lastSettleAt: string | null = null;
   engineData: any = null;
   loading = true;
   error: string | null = null;
@@ -302,6 +325,7 @@ export class SystemComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.load();
+    this.loadEngineMeta();
     this.pollServer();
     this.serverPollTimer = setInterval(() => this.pollServer(), 5000);
   }
@@ -404,6 +428,40 @@ export class SystemComponent implements OnInit, OnDestroy {
     }
     this.saving = false;
     this.cdr.markForCheck();
+  }
+
+  private async loadEngineMeta() {
+    try {
+      const r = await this.admin.getLatestKingResult();
+      const ts = r?.[0]?.created_at as string | undefined;
+      this.lastSettleAt = ts ?? null;
+      this.engineHealthy = !!ts && Date.now() - new Date(ts).getTime() < 390_000;
+    } catch {
+      this.engineHealthy = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  confirmToggleMaintenance() {
+    const enabling = !this.maintenanceMode;
+    this.confirmation.confirm({
+      message: enabling
+        ? 'Aktifkan Maintenance? Ini <strong>memblokir SEMUA user</strong> dari platform.'
+        : 'Nonaktifkan Maintenance dan buka kembali akses user?',
+      header: enabling ? 'Aktifkan Maintenance' : 'Nonaktifkan Maintenance',
+      rejectLabel: 'Batal',
+      acceptLabel: enabling ? 'Aktifkan' : 'Nonaktifkan',
+      accept: () => this.toggleMaintenance(),
+    });
+  }
+  confirmToggleKing() {
+    this.confirmation.confirm({
+      message: `Ubah status marketplace 3D King? (sekarang: <strong>${this.kingStatus}</strong>)`,
+      header: 'Marketplace Control',
+      rejectLabel: 'Batal',
+      acceptLabel: 'Ubah',
+      accept: () => this.toggleKing(),
+    });
   }
 
   async toggleKing() {
