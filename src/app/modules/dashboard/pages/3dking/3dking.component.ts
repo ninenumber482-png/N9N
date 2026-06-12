@@ -151,7 +151,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
       <app-page-header icon="cube" title="3D King Engine" subtitle="Draw engine and session control" />
 
       <div class="bg-card border border-border page-accent-card p-5" style="border-top: 3px solid #D946EF;">
-        <div class="grid grid-cols-4 gap-4 text-[11px]">
+        <div class="grid grid-cols-5 gap-4 text-[11px]">
           <div>
             <p class="text-muted-foreground uppercase tracking-wider mb-0.5">Session</p>
             <p class="font-mono text-foreground truncate">{{ currentDisplay || '-' }}</p>
@@ -171,6 +171,12 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
               [class.animate-pulse]="lastResult !== null">
               {{ lastResult !== null ? lastResult : '-' }}
             </p>
+          </div>
+          <div>
+            <p class="text-muted-foreground uppercase tracking-wider mb-0.5">Auto-Engine</p>
+            <app-status-badge
+              [value]="engineHealthy ? 'OK' : 'STALE'"
+              [severity]="engineHealthy ? 'success' : 'warn'" />
           </div>
         </div>
       </div>
@@ -405,6 +411,21 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Auto-engine health (read-only): healthy if a result landed within ~1.3 sessions ──
+  engineHealthy = true;
+  lastSettleAt: string | null = null;
+  private async loadEngineMeta() {
+    try {
+      const r = await this.admin.getLatestKingResult();
+      const ts = r?.[0]?.created_at as string | undefined;
+      this.lastSettleAt = ts ?? null;
+      this.engineHealthy = !!ts && Date.now() - new Date(ts).getTime() < 390_000;
+    } catch {
+      this.engineHealthy = false;
+    }
+    this.cdr.markForCheck();
+  }
+
   sessions: SessionRow[] = [];
   lastResult: number | null = null;
   currentCode = '';
@@ -455,6 +476,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadData();
     this.buildSessions();
+    this.loadEngineMeta();
     // Fast clock: rebuild rows + advance the engine. markForCheck is required
     // because this is a zoneless app — a bare setInterval won't trigger CD, so
     // the table/countdowns would otherwise freeze after first paint.

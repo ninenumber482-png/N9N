@@ -595,6 +595,14 @@ export class AdminService {
   getUserSessions(limit = 50) {
     return this.get<any>(`sessions?order=last_activity.desc&limit=${limit}`);
   }
+  /** Latest settled draw (for auto-engine health + last-settlement readout). */
+  getLatestKingResult() {
+    return this.get<any>('king_results', 'select=session_code,created_at&order=session_code.desc&limit=1');
+  }
+  /** Admin-planned draw for a session (manual override readout). */
+  getPlannedForSession(code: string) {
+    return this.get<any>('king_planned', `session_code=eq.${encodeURIComponent(code)}&select=session_code,d1,d2,d3&limit=1`);
+  }
   /** Users active in the last 5 min (RPC get_online_users, via service_role). */
   getOnlineUsers() {
     return this.proxy<
