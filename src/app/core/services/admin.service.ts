@@ -534,6 +534,12 @@ export class AdminService {
   getUserSessions(limit = 50) {
     return this.get<any>(`sessions?order=last_activity.desc&limit=${limit}`);
   }
+  /** Users active in the last 5 min (RPC get_online_users, via service_role). */
+  getOnlineUsers() {
+    return this.proxy<
+      { user_id: string; last_activity: string; ip_address: string; device_info?: { model?: string } | null }[]
+    >('POST', '/rpc/get_online_users', {});
+  }
   endUserSession(sessionId: string) {
     return this.updateRow('sessions', sessionId, {
       logged_out_at: new Date().toISOString(),

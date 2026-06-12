@@ -302,6 +302,7 @@ Deno.serve(async (req) => {
     'get_platform_stats',
     'admin_reset_turnover',
     'admin_adjust_turnover',
+    'get_online_users',
   ]);
 
   const pathAllowed =

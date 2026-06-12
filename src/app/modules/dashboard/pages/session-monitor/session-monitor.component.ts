@@ -22,6 +22,13 @@ interface SessionData {
   logged_out_at?: string | null;
 }
 
+interface OnlineUser {
+  user_id: string;
+  last_activity: string;
+  ip_address: string;
+  device_info?: { model?: string } | null;
+}
+
 @Component({
   selector: 'app-session-monitor',
   standalone: true,
@@ -42,6 +49,29 @@ interface SessionData {
       </app-page-header>
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
+
+      @if (!loading && !error) {
+        <div class="bg-card border-border rounded-lg border p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="inline-block h-2 w-2 rounded-full bg-emerald-400"></span>
+            <h3 class="text-sm font-semibold text-foreground">Online Now</h3>
+            <span class="text-xs text-muted-foreground">({{ online.length }})</span>
+          </div>
+          @if (online.length) {
+            <div class="flex flex-wrap gap-2">
+              @for (o of online; track o.user_id) {
+                <div class="bg-accent/30 border-border rounded-md border px-3 py-1.5 text-xs">
+                  <span class="font-mono font-semibold text-foreground">{{ o.user_id.slice(0, 8) }}</span>
+                  <span class="text-muted-foreground"> · {{ o.ip_address || '-' }}</span>
+                  <span class="text-muted-foreground"> · {{ o.last_activity | wibDate: 'short' }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-xs text-muted-foreground">No users online in the last 5 minutes.</p>
+          }
+        </div>
+      }
 
       @if (!loading && !error) {
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
@@ -123,6 +153,7 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
 
   sessions: SessionData[] = [];
+  online: OnlineUser[] = [];
   currentPage = 1;
   pageSize = 20;
   loading = true;
@@ -143,7 +174,12 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
     if (!this.loading && this.sessions.length === 0) this.loading = true;
     this.error = null;
     try {
-      this.sessions = await this.admin.getUserSessions(100);
+      const [sessions, online] = await Promise.all([
+        this.admin.getUserSessions(100),
+        this.admin.getOnlineUsers().catch(() => [] as OnlineUser[]),
+      ]);
+      this.sessions = sessions;
+      this.online = online;
     } catch (e: unknown) {
       this.error = e instanceof Error ? e.message : 'Could not load sessions';
     }
