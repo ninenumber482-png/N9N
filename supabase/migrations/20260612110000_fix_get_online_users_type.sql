@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Fix get_online_users() — type mismatch + kunci eksposur data
 --
--- ⚠️ DRAFT: BELUM di-apply ke produksi. Jalankan via `supabase db push --linked`
---    (atau SQL Editor Supabase) HANYA saat Anda siap. Tidak ada perubahan live
---    yang dilakukan otomatis.
+-- ✅ APPLIED ke produksi 2026-06-12 (project dqsmpdetiqsqfnidekik) via
+--    `supabase db query --linked -f <file ini>` — bedah, bukan `db push` borongan.
+--    Pasca-apply ACL = {postgres, service_role}; anon/authenticated/PUBLIC dicabut.
 --
 -- BUG (PostgREST error 42804):
 --   RETURNS TABLE mendeklarasikan `ip_address TEXT`, tapi kolom asli
@@ -42,7 +42,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Kunci akses: data IP+fingerprint hanya boleh lewat service_role (admin-proxy)
+-- Kunci akses: data IP+fingerprint hanya boleh lewat service_role (admin-proxy).
+-- Dikunci penuh — PUBLIC, anon, DAN authenticated semuanya dicabut.
 REVOKE EXECUTE ON FUNCTION get_online_users() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION get_online_users() FROM anon;
+REVOKE EXECUTE ON FUNCTION get_online_users() FROM authenticated;
 GRANT  EXECUTE ON FUNCTION get_online_users() TO service_role;
