@@ -281,6 +281,7 @@ Deno.serve(async (req) => {
     'approve_user',
     'reject_user',
     'admin_reset_password',
+    'verify_password',
     'admin_adjust_balance',
     'settle_session',
     'generate_referral_code',

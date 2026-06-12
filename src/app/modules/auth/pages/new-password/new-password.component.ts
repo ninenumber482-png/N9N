@@ -3,9 +3,9 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
+import { AdminService } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
-import { SecurityService } from 'src/app/core/services/security.service';
 
 @Component({
   selector: 'app-new-password',
@@ -19,8 +19,8 @@ export class NewPasswordComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly adminService = inject(AdminService);
   private readonly notificationService = inject(NotificationService);
-  private readonly securityService = inject(SecurityService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   form!: FormGroup;
@@ -73,9 +73,11 @@ export class NewPasswordComponent implements OnInit {
 
     this.isLoading = true;
     try {
-      // TODO: Wire to backend password change endpoint when available
-      // For now, simulate success after validation
-      await new Promise((r) => setTimeout(r, 800));
+      await this.adminService.changeOwnPassword(
+        user.username,
+        this.f['oldPassword'].value,
+        this.f['newPassword'].value,
+      );
       this.notificationService.success('Password updated successfully');
       this.router.navigate(['/overview']);
     } catch (e: unknown) {

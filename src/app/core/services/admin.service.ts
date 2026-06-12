@@ -466,6 +466,25 @@ export class AdminService {
     return this.rpc('admin_reset_password', { p_admin_id: adminId, p_user_id: userId, p_new_password: newPassword });
   }
 
+  /**
+   * Change the currently-authenticated admin's OWN password.
+   * Verifies the current password first (verify_password), then writes the new
+   * bcrypt hash (admin_reset_password). Both RPCs run through the service-role proxy.
+   * Throws Error('Current password is incorrect') when the old password is wrong.
+   */
+  async changeOwnPassword(username: string, oldPassword: string, newPassword: string) {
+    const userId = await this.resolveUserId(username);
+    const valid = await this.rpc('verify_password', { user_id: userId, password: oldPassword });
+    if (valid !== true) {
+      throw new Error('Current password is incorrect');
+    }
+    return this.rpc('admin_reset_password', {
+      p_admin_id: userId,
+      p_user_id: userId,
+      p_new_password: newPassword,
+    });
+  }
+
   private async resolveUserId(usernameOrId: string): Promise<string> {
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(usernameOrId)) {
       return usernameOrId;
