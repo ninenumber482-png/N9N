@@ -38,6 +38,26 @@ interface AdminUser {
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
+      @if (isSuperadmin) {
+        <div class="bg-card border-border flex flex-wrap items-end gap-3 rounded-lg border p-4">
+          <div class="flex flex-col gap-1">
+            <label for="grant-username" class="text-muted-foreground text-xs">Beri akses admin (username)</label>
+            <input
+              id="grant-username"
+              [(ngModel)]="grantUsername"
+              (keyup.enter)="grantAdmin()"
+              placeholder="username member"
+              class="bg-background border-border text-foreground rounded border px-3 py-1.5 text-sm" />
+          </div>
+          <button
+            (click)="grantAdmin()"
+            [disabled]="granting || !grantUsername.trim()"
+            class="rounded bg-yellow-400 px-3 py-1.5 text-sm font-bold text-black disabled:opacity-50">
+            {{ granting ? '...' : 'Grant Admin' }}
+          </button>
+        </div>
+      }
+
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
       @if (!loading) {
@@ -67,7 +87,7 @@ interface AdminUser {
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       @if (isSuperadmin && u.username !== currentUsername) {
-                        <div class="flex gap-1">
+                        <div class="flex flex-wrap gap-1">
                           @if (u.role !== 'admin') {
                             <button
                               (click)="confirmRoleChange(u, 'admin')"
@@ -80,6 +100,18 @@ interface AdminUser {
                               (click)="confirmRoleChange(u, 'superadmin')"
                               class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
                               → Superadmin
+                            </button>
+                          }
+                          <button
+                            (click)="confirmToggleLogin(u)"
+                            class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
+                            {{ u.login_status === 'ACTIVE' ? 'Disable' : 'Enable' }}
+                          </button>
+                          @if (u.role === 'admin') {
+                            <button
+                              (click)="confirmRevoke(u)"
+                              class="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors">
+                              Revoke
                             </button>
                           }
                         </div>
@@ -163,6 +195,73 @@ export class RoleManagementComponent implements OnInit {
     } catch (e: unknown) {
       this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa mengubah role.');
     }
+    this.cdr.markForCheck();
+  }
+
+  // ── Enable/disable Angular login (auth-login blocks login_status='SUSPENDED') ──
+  confirmToggleLogin(u: AdminUser) {
+    if (u.username === this.currentUsername) return; // never lock yourself out
+    const disable = u.login_status === 'ACTIVE';
+    this.confirmation.confirm({
+      message: disable
+        ? `Nonaktifkan login Angular untuk <strong>${u.username}</strong>?`
+        : `Aktifkan kembali login Angular untuk <strong>${u.username}</strong>?`,
+      header: disable ? 'Nonaktifkan Login' : 'Aktifkan Login',
+      rejectLabel: 'Batal',
+      acceptLabel: disable ? 'Nonaktifkan' : 'Aktifkan',
+      accept: () => this.setLogin(u, disable ? 'SUSPENDED' : 'ACTIVE'),
+    });
+  }
+
+  async setLogin(u: AdminUser, status: 'ACTIVE' | 'SUSPENDED') {
+    try {
+      await this.admin.updateUser(u.id, { login_status: status });
+      u.login_status = status;
+      this.notification.success('Status login diubah', `${u.username}: ${status}`);
+    } catch (e: unknown) {
+      this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa mengubah status login.');
+    }
+    this.cdr.markForCheck();
+  }
+
+  // ── Revoke admin access (demote to regular 'user' role) ──
+  confirmRevoke(u: AdminUser) {
+    if (u.username === this.currentUsername) return;
+    this.confirmation.confirm({
+      message: `Cabut akses admin <strong>${u.username}</strong> (turunkan ke 'user')? Akun ini tidak akan bisa login Angular lagi.`,
+      header: 'Cabut Akses Admin',
+      rejectLabel: 'Batal',
+      acceptLabel: 'Cabut',
+      accept: () => this.changeRole(u, 'user'),
+    });
+  }
+
+  // ── Grant admin to an existing member account (by username) ──
+  grantUsername = '';
+  granting = false;
+
+  async grantAdmin() {
+    const name = this.grantUsername.trim();
+    if (!name) return;
+    this.granting = true;
+    this.cdr.markForCheck();
+    try {
+      const rows = await this.admin.getUserByUsername(name);
+      const target = rows?.[0];
+      if (!target) {
+        this.notification.error('Tidak ditemukan', `Akun '${name}' tidak ada.`);
+      } else if (target.role === 'admin' || target.role === 'superadmin') {
+        this.notification.error('Sudah admin', `'${name}' sudah punya akses admin.`);
+      } else {
+        await this.admin.updateUser(target.id, { role: 'admin', login_status: 'ACTIVE' });
+        this.notification.success('Admin ditambahkan', `${name} sekarang bisa login Angular.`);
+        this.grantUsername = '';
+        await this.load();
+      }
+    } catch (e: unknown) {
+      this.notification.error('Gagal', e instanceof Error ? e.message : 'Tidak bisa memberi akses admin.');
+    }
+    this.granting = false;
     this.cdr.markForCheck();
   }
 }
