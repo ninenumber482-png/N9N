@@ -12,7 +12,9 @@ import { CommonModule } from '@angular/common';
       <div class="text-8xl font-black text-primary/30 mb-4">404</div>
       <h1 class="text-2xl font-bold text-foreground mb-2">Halaman Tidak Ditemukan</h1>
       <p class="text-muted-foreground mb-8 text-sm">Halaman yang Anda cari tidak ada atau telah dipindahkan.</p>
-      <a routerLink="/overview" class="bg-primary text-primary-foreground rounded-lg px-6 py-3 text-sm font-bold transition-opacity hover:opacity-90">
+      <a
+        routerLink="/overview"
+        class="bg-primary text-primary-foreground rounded-lg px-6 py-3 text-sm font-bold transition-opacity hover:opacity-90">
         Kembali ke Dashboard
       </a>
     </div>

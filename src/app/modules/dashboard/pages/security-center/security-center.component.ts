@@ -4,13 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { PaginatorModule } from 'primeng/paginator';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
 import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
 import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
+import { MfaService } from 'src/app/core/services/mfa.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 interface SecurityItem {
   id?: string;
@@ -33,12 +37,27 @@ interface SecurityItem {
 @Component({
   selector: 'app-security-center',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    WibDatePipe, SelectModule, TagModule, PaginatorModule,
-    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, SeverityMapPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WibDatePipe,
+    SelectModule,
+    StatusBadgeComponent,
+    PaginatorModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    SeverityMapPipe,
+    ConfirmDialogModule,
+  ],
+  providers: [ConfirmationService],
   template: `
+    <p-confirmdialog key="reset2fa" appendTo="body" />
     <div data-page="security-center" class="space-y-6">
-      <app-page-header icon="shield-exclamation" title="Security Center" subtitle="Security alerts, failed logins, and audit events">
+      <app-page-header
+        icon="shield-exclamation"
+        title="Security Center"
+        subtitle="Security alerts, failed logins, and audit events">
         <div class="flex gap-2">
           <p-select
             [(ngModel)]="tab"
@@ -59,8 +78,7 @@ interface SecurityItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Type</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Severity</th>
@@ -76,10 +94,10 @@ interface SecurityItem {
                       {{ l.created_at | wibDate: 'short' }}
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="l.alert_type" severity="warn" />
+                      <app-status-badge [value]="l.alert_type" severity="warn" />
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="l.severity" [severity]="l.severity | severityMap" />
+                      <app-status-badge [value]="l.severity" [severity]="l.severity | severityMap" />
                     </td>
                     <td
                       class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
@@ -107,8 +125,7 @@ interface SecurityItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Username</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Reason</th>
@@ -148,8 +165,7 @@ interface SecurityItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Admin</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Action</th>
@@ -190,11 +206,65 @@ interface SecurityItem {
             </table>
           </div>
         }
-        <p-paginator
-          (onPageChange)="onPageChange($event)"
-          [first]="(currentPage - 1) * pageSize"
-          [rows]="pageSize"
-          [totalRecords]="currentTabData.length" />
+        @if (tab === '2fa') {
+          <div class="bg-card border-border rounded-lg border overflow-x-auto">
+            <div class="border-b border-border px-5 py-3.5">
+              <h3 class="text-sm font-medium text-foreground">Admin 2FA (Google Authenticator)</h3>
+              <p class="text-[11px] text-muted-foreground mt-0.5">
+                Hard reset clears TOTP secret, backup codes, and skip status. User must set up 2FA again on next login.
+              </p>
+            </div>
+            <table class="saas-table w-full text-left text-sm">
+              <thead>
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                  <th class="px-5 py-3.5">Username</th>
+                  <th class="px-5 py-3.5">Role</th>
+                  <th class="px-5 py-3.5">2FA Status</th>
+                  <th class="px-5 py-3.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (a of admin2fa; track a.id) {
+                  <tr class="border-border hover:bg-accent/30 border-b">
+                    <td class="px-5 py-3.5 font-semibold text-foreground">{{ a.username }}</td>
+                    <td class="px-5 py-3.5">
+                      <app-status-badge [value]="a.role" severity="info" />
+                    </td>
+                    <td class="px-5 py-3.5">
+                      @if (a.totp_enabled) {
+                        <app-status-badge value="ENABLED" severity="success" />
+                      } @else if (a.totp_skipped_at) {
+                        <app-status-badge value="SKIPPED" severity="warn" />
+                      } @else {
+                        <app-status-badge value="NOT SET" severity="secondary" />
+                      }
+                    </td>
+                    <td class="px-5 py-3.5 text-right">
+                      <button
+                        type="button"
+                        (click)="confirmReset2fa(a)"
+                        [disabled]="resettingId === a.id"
+                        class="n9-btn n9-btn-danger text-xs px-3 py-1.5">
+                        {{ resettingId === a.id ? 'Resetting...' : 'Hard Reset 2FA' }}
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-center py-12 text-muted-foreground">No admin accounts</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        @if (tab !== '2fa') {
+          <p-paginator
+            (onPageChange)="onPageChange($event)"
+            [first]="(currentPage - 1) * pageSize"
+            [rows]="pageSize"
+            [totalRecords]="currentTabData.length" />
+        }
       }
     </div>
   `,
@@ -202,6 +272,9 @@ interface SecurityItem {
 })
 export class SecurityCenterComponent implements OnInit {
   private admin = inject(AdminService);
+  private mfa = inject(MfaService);
+  private notify = inject(NotificationService);
+  private confirm = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
 
   tab = 'alerts';
@@ -210,6 +283,15 @@ export class SecurityCenterComponent implements OnInit {
   alerts: SecurityItem[] = [];
   failedLogins: SecurityItem[] = [];
   auditLogs: SecurityItem[] = [];
+  admin2fa: Array<{
+    id: string;
+    username: string;
+    display_name: string;
+    role: string;
+    totp_enabled: boolean;
+    totp_skipped_at: string | null;
+  }> = [];
+  resettingId: string | null = null;
   loading = true;
   error: string | null = null;
 
@@ -217,6 +299,7 @@ export class SecurityCenterComponent implements OnInit {
     { label: 'Security Alerts', value: 'alerts' },
     { label: 'Failed Logins', value: 'failed' },
     { label: 'Recent Audit', value: 'audit' },
+    { label: 'Admin 2FA', value: '2fa' },
   ];
 
   get currentTabData(): SecurityItem[] {
@@ -247,7 +330,45 @@ export class SecurityCenterComponent implements OnInit {
   onTabChange(t: string) {
     this.tab = t;
     this.currentPage = 1;
+    if (t === '2fa') void this.load2faAdmins();
     this.cdr.markForCheck();
+  }
+
+  async load2faAdmins() {
+    try {
+      const res = await this.mfa.listAdmins();
+      this.admin2fa = res.admins || [];
+    } catch (e) {
+      this.notify.error('2FA list failed', e instanceof Error ? e.message : 'Could not load admins');
+    }
+    this.cdr.markForCheck();
+  }
+
+  confirmReset2fa(admin: { id: string; username: string }) {
+    this.confirm.confirm({
+      key: 'reset2fa',
+      header: 'Hard Reset 2FA',
+      message: `Reset 2FA for "${admin.username}"? They must scan a new QR code on next login.`,
+      acceptLabel: 'Hard Reset',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => void this.hardReset2fa(admin.id),
+    });
+  }
+
+  async hardReset2fa(userId: string) {
+    this.resettingId = userId;
+    this.cdr.markForCheck();
+    try {
+      await this.mfa.reset(userId);
+      this.notify.success('2FA reset', 'Admin must configure 2FA again on next login.');
+      await this.load2faAdmins();
+    } catch (e) {
+      this.notify.error('Reset failed', e instanceof Error ? e.message : 'Could not reset 2FA');
+    } finally {
+      this.resettingId = null;
+      this.cdr.markForCheck();
+    }
   }
 
   ngOnInit() {

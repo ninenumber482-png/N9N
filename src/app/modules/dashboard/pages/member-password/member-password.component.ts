@@ -18,7 +18,7 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
       <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #EC4899;">
         <app-filter-bar
           [search]="searchUsername"
-          (searchChange)="searchUsername=$event"
+          (searchChange)="searchUsername = $event"
           (searchSubmit)="searchUser()"
           placeholder="Cari username member...">
           <button
@@ -50,7 +50,9 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
 
           <div class="space-y-3 max-w-md">
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Password Baru <span class="text-destructive">*</span></label>
+              <label class="text-xs font-semibold text-muted-foreground block mb-1"
+                >Password Baru <span class="text-destructive">*</span></label
+              >
               <input
                 [(ngModel)]="newPassword"
                 type="password"
@@ -58,7 +60,9 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
                 class="bg-card border-border text-foreground rounded-lg border px-3 py-2 text-xs outline-none w-full" />
             </div>
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Konfirmasi Password <span class="text-destructive">*</span></label>
+              <label class="text-xs font-semibold text-muted-foreground block mb-1"
+                >Konfirmasi Password <span class="text-destructive">*</span></label
+              >
               <input
                 [(ngModel)]="confirmPassword"
                 type="password"

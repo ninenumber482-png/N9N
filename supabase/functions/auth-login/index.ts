@@ -1,10 +1,12 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import bcrypt from 'npm:bcryptjs@2.4.3'
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import bcrypt from 'npm:bcryptjs@2.4.3';
 
 async function sha256(msg: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 interface LoginPayload {
@@ -14,32 +16,32 @@ interface LoginPayload {
 }
 
 const SESSION_DAYS = 7;
-const COOKIE_NAME = "n9_session";
+const COOKIE_NAME = 'n9_session';
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 900_000; // 15 minutes
 
 const ALLOWED_ORIGINS = [
-  "https://admin.mynumber9.uk",
-  "https://number9-admin.pages.dev",
-  "https://master.number9-admin.pages.dev",
-  "http://localhost:4200",
-  "http://localhost:4201"
+  'https://admin.mynumber9.uk',
+  'https://number9-admin.pages.dev',
+  'https://master.number9-admin.pages.dev',
+  'http://localhost:4200',
+  'http://localhost:4201',
 ];
 
 function corsOrigin(req: Request): string {
-  const o = req.headers.get("origin") || "";
+  const o = req.headers.get('origin') || '';
   return ALLOWED_ORIGINS.includes(o) ? o : ALLOWED_ORIGINS[0];
 }
 
 const corsHeaders = (req?: Request, extra: Record<string, string> = {}) => {
   const origin = req ? corsOrigin(req) : ALLOWED_ORIGINS[0];
   return {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Credentials": "true",
-    "Vary": "Origin",
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Credentials': 'true',
+    Vary: 'Origin',
     ...extra,
   };
 };
@@ -54,33 +56,33 @@ function setSessionCookie(token: string, maxAgeSec: number): string {
   return `${COOKIE_NAME}=${token}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${maxAgeSec}`;
 }
 
-console.info("NUMBER9 Auth Login Function Started");
+console.info('NUMBER9 Auth Login Function Started');
 
 export default {
   fetch: async (req: Request) => {
-    if (req.method === "OPTIONS") {
+    if (req.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(req) });
     }
-    if (req.method !== "POST") {
-      return json({ error: "Method not allowed" }, 405, {}, req);
+    if (req.method !== 'POST') {
+      return json({ error: 'Method not allowed' }, 405, {}, req);
     }
 
     try {
       const { username, password, email }: LoginPayload = await req.json();
 
       if (!username || !password || !email) {
-        return json({ error: "Missing required fields: username, password, email" }, 400, {}, req);
+        return json({ error: 'Missing required fields: username, password, email' }, 400, {}, req);
       }
 
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')
-      const serviceRoleKey = Deno.env.get('N9_SERVICE_ROLE_KEY')
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const serviceRoleKey = Deno.env.get('N9_SERVICE_ROLE_KEY');
       if (!supabaseUrl || !serviceRoleKey) {
-        return json({ error: 'Server misconfiguration' }, 500, {}, req)
+        return json({ error: 'Server misconfiguration' }, 500, {}, req);
       }
 
-      const supabase = createClient(supabaseUrl, serviceRoleKey)
-      const ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('host') || ''
-      const dbUsername = username.toLowerCase().trim()
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      const ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('host') || '';
+      const dbUsername = username.toLowerCase().trim();
 
       // ── Rate limiting ──
       const cutoff = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
@@ -91,15 +93,24 @@ export default {
         .gte('attempted_at', cutoff);
 
       if ((count || 0) >= RATE_LIMIT_MAX) {
-        return json({ error: 'Too many failed attempts. Try again later.' }, 429, { "Retry-After": "900" }, req);
+        return json({ error: 'Too many failed attempts. Try again later.' }, 429, { 'Retry-After': '900' }, req);
       }
 
       // Query both tables — no account_status filter for admins (they bypass member checks)
       const [uRow, n9Row] = await Promise.all([
-        supabase.from('users').select('id, username, display_name, role, account_status, password_hash, email')
-          .eq('username', dbUsername).eq('role', 'admin').neq('login_status', 'SUSPENDED').maybeSingle(),
-        supabase.from('n9_users').select('id, username, password_hash, role')
-          .eq('username', dbUsername).eq('role', 'admin').maybeSingle(),
+        supabase
+          .from('users')
+          .select('id, username, display_name, role, account_status, password_hash, email')
+          .eq('username', dbUsername)
+          .in('role', ['admin', 'superadmin'])
+          .neq('login_status', 'SUSPENDED')
+          .maybeSingle(),
+        supabase
+          .from('n9_users')
+          .select('id, username, password_hash, role')
+          .eq('username', dbUsername)
+          .in('role', ['admin', 'superadmin'])
+          .maybeSingle(),
       ]);
 
       const uData = uRow.data;
@@ -118,9 +129,11 @@ export default {
       }
 
       if (!matchedHash) {
-        try { await supabase.from('failed_logins').insert({ username: dbUsername, ip_address, reason: 'wrong_password' }) } catch {}
+        try {
+          await supabase.from('failed_logins').insert({ username: dbUsername, ip_address, reason: 'wrong_password' });
+        } catch {}
         console.warn(`[SECURITY] Login attempt with wrong password: ${dbUsername}`);
-        return json({ error: "Invalid username or password" }, 401, {}, req);
+        return json({ error: 'Invalid username or password' }, 401, {}, req);
       }
 
       let userRow: Record<string, any> | null = null;
@@ -129,28 +142,30 @@ export default {
       } else if (n9Data) {
         userRow = { ...n9Data, display_name: n9Data.username, email: '', account_status: 'ACTIVE' };
       } else {
-        return json({ error: "Invalid username or password" }, 401, {}, req);
+        return json({ error: 'Invalid username or password' }, 401, {}, req);
       }
 
       // ── Create session ──
-      const sessionToken = crypto.getRandomValues(new Uint8Array(32))
+      const sessionToken = crypto
+        .getRandomValues(new Uint8Array(32))
         .reduce((a, b) => a + (b < 16 ? '0' : '') + b.toString(16), '');
 
-      const now = new Date().toISOString()
+      const now = new Date().toISOString();
       const maxAgeSec = SESSION_DAYS * 86400;
-      const expiresAt = new Date(Date.now() + maxAgeSec * 1000).toISOString()
+      const expiresAt = new Date(Date.now() + maxAgeSec * 1000).toISOString();
       const tokenHash = await sha256(sessionToken);
 
       // Clear failed logins
-      try { await supabase.from('failed_logins').delete().eq('username', dbUsername).eq('ip_address', ip_address) } catch {}
+      try {
+        await supabase.from('failed_logins').delete().eq('username', dbUsername).eq('ip_address', ip_address);
+      } catch {}
 
       // Step 1: Ensure user exists in users table (upsert handles both cases)
       // This is critical when admin only exists in n9_users — without this,
       // sessions.insert() fails on FK constraint and users.update() silently
       // affects 0 rows (no error), so the token is never stored anywhere.
-      const { error: upsertErr } = await supabase
-        .from('users')
-        .upsert({
+      const { error: upsertErr } = await supabase.from('users').upsert(
+        {
           id: userRow.id,
           username: dbUsername,
           display_name: userRow.display_name || userRow.full_name || dbUsername,
@@ -161,13 +176,30 @@ export default {
           password_hash: userRow.password_hash || '',
           session_token: tokenHash,
           session_expires_at: expiresAt,
-        }, { onConflict: 'id' })
+        },
+        { onConflict: 'id' },
+      );
       if (upsertErr) {
-        console.error('[LOGIN] users upsert failed:', upsertErr.message)
-        return json({ error: 'Failed to create session' }, 500, {}, req)
+        console.error('[LOGIN] users upsert failed:', upsertErr.message);
+        return json({ error: 'Failed to create session' }, 500, {}, req);
       }
 
       // Step 2: Insert session record (FK now satisfied since user exists in users)
+      const { data: totpState } = await supabase
+        .from('users')
+        .select('totp_enabled, totp_skipped_at')
+        .eq('id', userRow.id)
+        .maybeSingle();
+
+      let mfaPhase: 'setup' | 'verify' | 'complete' = 'setup';
+      if (totpState?.totp_enabled) {
+        mfaPhase = 'verify';
+      } else if (totpState?.totp_skipped_at) {
+        mfaPhase = 'complete';
+      }
+
+      const mfaVerifiedAt = mfaPhase === 'complete' ? now : null;
+
       const { error: sessionErr } = await supabase.from('sessions').insert({
         user_id: userRow.id,
         token_hash: tokenHash,
@@ -175,30 +207,39 @@ export default {
         browser_info: req.headers.get('user-agent') || 'admin-dashboard',
         last_activity: now,
         expires_at: expiresAt,
-      })
+        mfa_verified_at: mfaVerifiedAt,
+      });
       if (sessionErr) {
-        console.warn('[LOGIN] sessions insert failed:', sessionErr.message)
+        console.warn('[LOGIN] sessions insert failed:', sessionErr.message);
       }
 
       console.info(`[LOGIN] Session created for ${dbUsername}: ${sessionToken.slice(0, 8)}...`);
 
       const cookie = setSessionCookie(sessionToken, maxAgeSec);
-      return json({
-        success: true,
-        token: sessionToken,
-        user: {
-          id: userRow.id,
-          email: userRow.email || '',
-          username: dbUsername,
-          role: userRow.role,
-          isNewAccount: false,
+      return json(
+        {
+          success: true,
+          token: sessionToken,
+          user: {
+            id: userRow.id,
+            email: userRow.email || '',
+            username: dbUsername,
+            role: userRow.role,
+            isNewAccount: false,
+          },
+          mfa: {
+            phase: mfaPhase,
+            complete: mfaPhase === 'complete',
+          },
+          message: 'Login successful',
         },
-        message: "Login successful",
-      }, 200, { "Set-Cookie": cookie }, req);
-
+        200,
+        { 'Set-Cookie': cookie },
+        req,
+      );
     } catch (error) {
-      console.error("[ERROR] Login exception:", error);
-      return json({ error: "Internal server error" }, 500, {}, req);
+      console.error('[ERROR] Login exception:', error);
+      return json({ error: 'Internal server error' }, 500, {}, req);
     }
   },
 };

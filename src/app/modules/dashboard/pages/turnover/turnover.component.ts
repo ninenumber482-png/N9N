@@ -24,16 +24,26 @@ interface WalletData {
 @Component({
   selector: 'app-turnover',
   standalone: true,
-  imports: [CommonModule, FormsModule,
+  imports: [
+    CommonModule,
+    FormsModule,
     PaginatorModule,
-    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, StatCardComponent, FilterBarComponent],
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    StatCardComponent,
+    FilterBarComponent,
+  ],
   template: `
     <div data-page="turnover" class="space-y-6">
-      <app-page-header icon="trending-up" title="Turnover Analytics" subtitle="User transaction volume and financial performance">
+      <app-page-header
+        icon="trending-up"
+        title="Turnover Analytics"
+        subtitle="User transaction volume and financial performance">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
-      <app-filter-bar [search]="search" (searchChange)="search=$event" placeholder="Search user..." />
+      <app-filter-bar [search]="search" (searchChange)="search = $event" placeholder="Search user..." />
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
@@ -48,8 +58,7 @@ interface WalletData {
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Main</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Bonus</th>
@@ -176,8 +185,7 @@ export class TurnoverComponent implements OnInit {
       this.avgWinRate =
         this.wallets.length > 0
           ? Math.round(
-              (this.wallets.filter((w) => w.total_deposited - w.total_withdrawn > 0).length /
-                this.wallets.length) *
+              (this.wallets.filter((w) => w.total_deposited - w.total_withdrawn > 0).length / this.wallets.length) *
                 100,
             )
           : 0;

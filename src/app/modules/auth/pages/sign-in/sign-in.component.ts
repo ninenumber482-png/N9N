@@ -107,25 +107,32 @@ export class SignInComponent implements OnInit {
     const credentials = { username, password };
 
     try {
-      console.log('[SignIn] Attempting authentication for:', username);
       const result = await this.authService.authenticate(credentials);
-      console.log('[SignIn] Auth result:', result);
 
       if (result?.success) {
-        console.log('[SignIn] Authentication successful, setting user');
-        this.authService.login(
-          {
-            id: result.user?.id,
-            username,
-            isAuthenticated: true,
-            role: result.user?.role,
-            email: result.user?.email,
-            unlimited: result.user?.unlimited,
-            token: result.token,
-          },
-        );
-        this.notificationService.success(`Welcome, ${username}!`, result.message || 'You have successfully logged in.');
-        this._router.navigate(['/']);
+        const mfaComplete = result.mfa?.complete ?? true;
+        const mfaPhase = result.mfa?.phase ?? 'complete';
+        this.authService.login({
+          id: result.user?.id,
+          username,
+          isAuthenticated: true,
+          role: result.user?.role,
+          email: result.user?.email,
+          unlimited: result.user?.unlimited,
+          token: result.token,
+          mfaComplete,
+          mfaPhase,
+        });
+        if (!mfaComplete) {
+          this.notificationService.success('Credentials verified', 'Complete 2FA to continue.');
+          this._router.navigate(['/auth/two-factor']);
+        } else {
+          this.notificationService.success(
+            `Welcome, ${username}!`,
+            result.message || 'You have successfully logged in.',
+          );
+          this._router.navigate(['/']);
+        }
       } else {
         console.error('[SignIn] Authentication failed:', result?.error);
         this.notificationService.error(

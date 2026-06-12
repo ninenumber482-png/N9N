@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
@@ -22,7 +22,15 @@ interface AdminUser {
 @Component({
   selector: 'app-role-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TagModule, ConfirmDialogModule, PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    StatusBadgeComponent,
+    ConfirmDialogModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+  ],
   providers: [ConfirmationService],
   template: `
     <div data-page="role-management" class="space-y-6">
@@ -37,8 +45,7 @@ interface AdminUser {
           <div class="overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Username</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Email</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Current Role</th>
@@ -56,7 +63,7 @@ interface AdminUser {
                       {{ u.email || '-' }}
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="u.role" [severity]="u.role === 'superadmin' ? 'warn' : 'info'" />
+                      <app-status-badge [value]="u.role" [severity]="u.role === 'superadmin' ? 'warn' : 'info'" />
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       @if (isSuperadmin && u.username !== currentUsername) {
@@ -81,7 +88,9 @@ interface AdminUser {
                       }
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="u.login_status" [severity]="u.login_status === 'ACTIVE' ? 'success' : 'secondary'" />
+                      <app-status-badge
+                        [value]="u.login_status"
+                        [severity]="u.login_status === 'ACTIVE' ? 'success' : 'secondary'" />
                     </td>
                   </tr>
                 } @empty {

@@ -45,8 +45,11 @@ export class AdminService {
 
   // Only READ operations may be cached — mutating RPCs must always execute
   private readonly CACHEABLE_RPCS = new Set([
-    'count_kyc_by_status', 'get_platform_stats',
-    'get_kyc_documents_admin_list', 'get_kyc_documents_by_user', 'get_kyc_document_url',
+    'count_kyc_by_status',
+    'get_platform_stats',
+    'get_kyc_documents_admin_list',
+    'get_kyc_documents_by_user',
+    'get_kyc_document_url',
   ]);
 
   private getCacheKey(baseKey: string): string {
@@ -100,8 +103,26 @@ export class AdminService {
       if (!res.ok) {
         const errorText = await res.text();
         if (res.status === 401) return this.handle401();
-        if (res.status === 403) throw new AdminRpcError('Access denied. Insufficient permissions.', 'FORBIDDEN', errorText);
-        if (res.status >= 500) throw new AdminRpcError('Server error. Please try again later.', 'UNKNOWN', `${res.status}: ${errorText}`);
+        if (res.status === 403) {
+          try {
+            const parsed = JSON.parse(errorText) as { code?: string };
+            if (parsed.code === 'MFA_REQUIRED') {
+              this.auth.requireMfa('verify');
+              this.router.navigate(['/auth/two-factor']);
+              throw new AdminRpcError('MFA verification required', 'FORBIDDEN');
+            }
+            if (parsed.code === 'MFA_SETUP_REQUIRED') {
+              this.auth.requireMfa('setup');
+              this.router.navigate(['/auth/two-factor']);
+              throw new AdminRpcError('MFA setup required', 'FORBIDDEN');
+            }
+          } catch (e) {
+            if (e instanceof AdminRpcError) throw e;
+          }
+          throw new AdminRpcError('Access denied. Insufficient permissions.', 'FORBIDDEN', errorText);
+        }
+        if (res.status >= 500)
+          throw new AdminRpcError('Server error. Please try again later.', 'UNKNOWN', `${res.status}: ${errorText}`);
         throw AdminRpcError.fromMessage(errorText.length < 200 ? errorText : `HTTP ${res.status}`);
       }
 
@@ -169,11 +190,14 @@ export class AdminService {
     return { data, total };
   }
 
-  async count(table: string, query = ''): Promise<number> {
+  async count(table: string, query = '', fresh = false): Promise<number> {
     const path = `/${table}?${query}&select=count`;
     const cacheKey = `COUNT:${path}`;
-    const hit = this.cache.get(this.getCacheKey(cacheKey));
-    if (hit && Date.now() - hit.ts < this.CACHE_TTL) return hit.data as number;
+    const scopedKey = this.getCacheKey(cacheKey);
+    if (!fresh) {
+      const hit = this.cache.get(scopedKey);
+      if (hit && Date.now() - hit.ts < this.CACHE_TTL) return hit.data as number;
+    }
 
     const user = this.auth.getCurrentUser();
     const res = await fetch(this.proxyUrl, {
@@ -194,7 +218,7 @@ export class AdminService {
     }
 
     const val = Number(res.headers.get('content-range')?.split('/')[1] || 0);
-    this.cache.set(this.getCacheKey(cacheKey), { data: val, ts: Date.now() });
+    this.cache.set(scopedKey, { data: val, ts: Date.now() });
     return val;
   }
 
@@ -236,7 +260,7 @@ export class AdminService {
   getUsersWithWallets(limit = 100) {
     return this.get<any>(
       'users',
-      `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`,
+      `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,last_login_ip,last_login_geo,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`,
     );
   }
   // getUser unused — queries by UUID
@@ -306,8 +330,14 @@ export class AdminService {
   countTransactions() {
     return this.count('transactions');
   }
-  countPending(type: string) {
-    return this.count('transactions', `type=eq.${type}&status=eq.PENDING`);
+  countPending(type: string, fresh = false) {
+    return this.count('transactions', `type=eq.${type}&status=eq.PENDING`, fresh);
+  }
+  getPendingTransactions(type: 'DEPOSIT' | 'WITHDRAWAL', limit = 20) {
+    return this.get<{ id: string; amount: number; user?: { username?: string; display_name?: string } }>(
+      'transactions',
+      `type=eq.${type}&status=eq.PENDING&order=created_at.desc&limit=${limit}&select=id,amount,user:users!transactions_user_id_fkey(username,display_name)`,
+    );
   }
   // resolveUserId unused (identical to resolveAdminId)
   async approveDeposit(txId: string, usernameOrId: string) {
@@ -544,7 +574,10 @@ export class AdminService {
     return Object.entries(grouped)
       .map(([code, sessionBets]) => {
         const totalStake = (sessionBets as any[]).reduce((s: number, b: any) => s + Number(b.stake || b['stake']), 0);
-        const totalPayout = (sessionBets as any[]).reduce((s: number, b: any) => s + Number(b.actual_payout || b['actual_payout'] || 0), 0);
+        const totalPayout = (sessionBets as any[]).reduce(
+          (s: number, b: any) => s + Number(b.actual_payout || b['actual_payout'] || 0),
+          0,
+        );
         const settled = (sessionBets as any[]).every((b: any) => (b.status || b['status']) === 'SETTLED');
         return {
           session_code: code,
@@ -555,7 +588,10 @@ export class AdminService {
           created_at: (sessionBets as any[])[0]?.created_at || (sessionBets as any[])[0]?.['created_at'],
         };
       })
-      .sort((a: any, b: any) => new Date(b.created_at || b['created_at']).getTime() - new Date(a.created_at || a['created_at']).getTime());
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.created_at || b['created_at']).getTime() - new Date(a.created_at || a['created_at']).getTime(),
+      );
   }
 
   // ── PLATFORM CONFIG (CS Contact, etc.) ──

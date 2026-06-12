@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  inject,
+} from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MenuService } from 'src/app/modules/layout/services/menu.service';
 import { NavbarMenuComponent } from 'src/app/modules/layout/components/navbar/navbar-menu/navbar-menu.component';
@@ -7,6 +15,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ToastService, ToastMessage } from 'src/app/core/services/toast.service';
 import { CommonModule } from '@angular/common';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-navbar',
@@ -21,6 +30,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private themeService = inject(ThemeService);
   authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private confirmation = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
 
   isDarkMode = false;
@@ -84,7 +94,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   public logout(): void {
-    this.authService.logout();
+    this.confirmation.confirm({
+      key: 'logout',
+      header: 'Keluar dari Admin Panel?',
+      message:
+        'Jika Anda keluar, sesi admin berakhir dan Anda akan diarahkan ke halaman login.\n\nPilih "Tetap di Dashboard" untuk membatalkan.',
+      icon: 'pi pi-sign-out',
+      acceptLabel: 'Keluar ke Login',
+      rejectLabel: 'Tetap di Dashboard',
+      acceptButtonStyleClass: 'n9-logout-accept',
+      rejectButtonStyleClass: 'n9-logout-reject',
+      defaultFocus: 'reject',
+      accept: () => {
+        this.authService.logout();
+      },
+    });
   }
 
   public clearNotifications(): void {

@@ -20,8 +20,7 @@ interface BannerData {
 @Component({
   selector: 'app-popup-banner',
   standalone: true,
-  imports: [PageHeaderComponent, CommonModule, FormsModule,
-    RouterModule, WibDatePipe, ConfirmDialogModule],
+  imports: [PageHeaderComponent, CommonModule, FormsModule, RouterModule, WibDatePipe, ConfirmDialogModule],
   providers: [ConfirmationService],
   template: `
     <div data-page="popup-banner" class="space-y-6">

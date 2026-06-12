@@ -9,7 +9,7 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PaginatorModule } from 'primeng/paginator';
@@ -44,6 +44,8 @@ interface UserRow {
   bank_account_name?: string;
   created_at: string;
   approved_at?: string;
+  last_login_ip?: string;
+  last_login_geo?: GeoSnapshot | null;
   wallet?: WalletRow | WalletRow[];
   [other: string]: unknown;
 }
@@ -53,9 +55,18 @@ interface SessionRow {
   user_id: string;
   ip_address?: string;
   browser_info?: string;
-  device_info?: string;
+  device_info?: { geo?: GeoSnapshot } | string | null;
+  geo_info?: GeoSnapshot | null;
   last_activity: string;
   logged_out_at?: string;
+}
+
+interface GeoSnapshot {
+  city?: string;
+  region?: string;
+  country?: string;
+  country_code?: string;
+  isp?: string;
 }
 
 interface AuditLogRow {
@@ -99,7 +110,7 @@ interface BetRow {
     FormsModule,
     WibDatePipe,
     SelectModule,
-    TagModule,
+    StatusBadgeComponent,
     ConfirmDialogModule,
     PaginatorModule,
     InputTextModule,
@@ -112,11 +123,17 @@ interface BetRow {
   providers: [ConfirmationService],
   template: `
     <div data-page="users" class="space-y-6">
-      <app-page-header icon="users" title="Management Member" subtitle="Manage member profiles, access, and credentials">
+      <app-page-header
+        icon="users"
+        title="Management Member"
+        subtitle="Manage member profiles, access, and credentials">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
-      <app-filter-bar [search]="search" (searchChange)="search=$event; onFilterChange()" placeholder="Search username, email, name…">
+      <app-filter-bar
+        [search]="search"
+        (searchChange)="search = $event; onFilterChange()"
+        placeholder="Search username, email, name…">
         <p-select
           [(ngModel)]="roleFilter"
           (ngModelChange)="onFilterChange()"
@@ -152,8 +169,7 @@ interface BetRow {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Role</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Balance</th>
@@ -184,15 +200,22 @@ interface BetRow {
                         <p class="font-semibold text-foreground">{{ u.display_name || u.username }}</p>
                         <p class="text-muted-foreground text-[11px]">&#64;{{ u.username }} &middot; {{ u.email }}</p>
                         <p class="text-muted-foreground text-xs">{{ u.country }} &middot; {{ u.phone }}</p>
+                        @if (sessionMap[u.id] || u.last_login_ip) {
+                          <p class="text-[10px] font-mono text-sky-700 dark:text-sky-400 mt-0.5">
+                            Source IP · {{ sourceIpLine(u) }}
+                            @if (isOnline(u.id)) {
+                              <span class="text-emerald-600 dark:text-emerald-400"> · online</span>
+                            }
+                          </p>
+                        }
                         <p class="text-muted-foreground text-xs font-mono mt-0.5 select-all">{{ u.id }}</p>
                       </div>
                     </div>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
-                    <span
-                      class="bg-card border-border text-foreground rounded border px-2 py-0.5 text-[11px] font-medium"
-                      >{{ u.role }}</span
-                    >
+                    <app-status-badge
+                      [value]="u.role"
+                      [severity]="u.role === 'superadmin' ? 'warn' : u.role === 'admin' ? 'info' : 'secondary'" />
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     <span class="font-mono text-foreground font-semibold">{{
@@ -203,10 +226,12 @@ interface BetRow {
                     <span class="font-mono text-[11px] text-muted-foreground">{{ u.referral_code || '-' }}</span>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                    <p-tag [value]="u.kyc_status" [severity]="u.kyc_status | severityMap" />
+                    <app-status-badge [value]="u.kyc_status" [severity]="u.kyc_status | severityMap" />
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                    <p-tag [value]="u.registration_status" [severity]="u.registration_status | severityMap" />
+                    <app-status-badge
+                      [value]="u.registration_status"
+                      [severity]="u.registration_status | severityMap" />
                   </td>
                   <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-[11px]">
                     {{ u.created_at | wibDate: 'short' }}
@@ -214,60 +239,24 @@ interface BetRow {
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       @if (u.registration_status === 'PENDING' || u.registration_status === 'PENDING_VERIFICATION') {
-                        <button
-                          (click)="confirmAction('approve', u)"
-                          class="bg-foreground text-background rounded px-2 py-1 text-[11px] font-medium">
-                          Approve
-                        </button>
-                        <button
-                          (click)="confirmAction('reject', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Reject
-                        </button>
+                        <button (click)="confirmAction('approve', u)" class="n9-btn n9-btn-solid">Approve</button>
+                        <button (click)="confirmAction('reject', u)" class="n9-btn n9-btn-outline">Reject</button>
                       }
                       @if (u.login_status === 'ACTIVE') {
-                        <button
-                          (click)="confirmAction('lock', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Lock
-                        </button>
+                        <button (click)="confirmAction('lock', u)" class="n9-btn n9-btn-outline">Lock</button>
                       } @else {
-                        <button
-                          (click)="confirmAction('unlock', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Unlock
-                        </button>
+                        <button (click)="confirmAction('unlock', u)" class="n9-btn n9-btn-outline">Unlock</button>
                       }
                       @if (isSuperadmin) {
-                        <button
-                          (click)="confirmAction('reset', u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Reset Access
-                        </button>
+                        <button (click)="confirmAction('reset', u)" class="n9-btn n9-btn-outline">Reset Access</button>
                       }
                       @if (canManageCredentials) {
-                        <button
-                          (click)="openPasswordTab(u)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Reset Password
-                        </button>
+                        <button (click)="openPasswordTab(u)" class="n9-btn n9-btn-outline">Reset Password</button>
                       }
-                      <button
-                        (click)="openEditModal(u)"
-                        class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                        Edit
-                      </button>
+                      <button (click)="openEditModal(u)" class="n9-btn n9-btn-outline">Edit</button>
                       @if (editing[u.id] && changed(u)) {
-                        <button
-                          (click)="saveUser(u)"
-                          class="bg-foreground text-background rounded px-2 py-1 text-[11px] font-medium">
-                          Save
-                        </button>
-                        <button
-                          (click)="editing[u.id] = {}"
-                          class="text-muted-foreground rounded px-2 py-1 text-[11px] font-medium">
-                          X
-                        </button>
+                        <button (click)="saveUser(u)" class="n9-btn n9-btn-solid">Save</button>
+                        <button (click)="editing[u.id] = {}" class="n9-btn n9-btn-outline">X</button>
                       }
                     </div>
                   </td>
@@ -291,14 +280,25 @@ interface BetRow {
       </div>
 
       @if (previewImage) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" (click)="previewImage = null">
+        <div
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Preview gambar">
+          <button
+            type="button"
+            class="absolute inset-0 bg-black/80"
+            aria-label="Tutup preview"
+            (click)="previewImage = null"></button>
           <img
             [src]="previewImage"
-            class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
-            (click)="$event.stopPropagation()" />
+            alt="Preview dokumen"
+            class="relative z-10 max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" />
           <button
+            type="button"
             (click)="previewImage = null"
-            class="absolute top-4 right-4 text-white text-2xl font-bold hover:opacity-70">
+            aria-label="Tutup"
+            class="absolute top-4 right-4 z-20 text-2xl font-bold text-white hover:opacity-70">
             &times;
           </button>
         </div>
@@ -306,11 +306,17 @@ interface BetRow {
 
       @if (modalOpen && selectedUser) {
         <div
-          class="fixed inset-0 z-50 bg-black/60 flex items-start justify-center overflow-y-auto py-4 sm:py-8"
-          (click)="closeModal()">
+          class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detail member">
+          <button
+            type="button"
+            class="fixed inset-0 bg-black/60"
+            aria-label="Tutup modal"
+            (click)="closeModal()"></button>
           <div
-            class="w-full max-w-4xl mx-2 sm:mx-4 bg-card rounded-xl border border-border shadow-2xl overflow-hidden"
-            (click)="$event.stopPropagation()">
+            class="relative z-10 w-full max-w-4xl mx-2 sm:mx-4 bg-card rounded-xl border border-border shadow-2xl overflow-hidden">
             <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border">
               <div class="min-w-0">
                 <h2 class="text-base sm:text-lg font-bold text-foreground truncate">
@@ -452,7 +458,12 @@ interface BetRow {
                         <div class="bg-accent/20 rounded-lg p-4 space-y-2">
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Total Bets</span>
-                            <span class="text-foreground font-medium">{{ modalData.bets.length }} <span class="text-[11px] text-muted-foreground">({{ modalBetsWinCount() + modalBetsLossCount() }} settled)</span></span>
+                            <span class="text-foreground font-medium"
+                              >{{ modalData.bets.length }}
+                              <span class="text-[11px] text-muted-foreground"
+                                >({{ modalBetsWinCount() + modalBetsLossCount() }} settled)</span
+                              ></span
+                            >
                           </div>
                           <div class="flex justify-between">
                             <span class="text-muted-foreground text-sm">Wins / Losses</span>
@@ -474,9 +485,12 @@ interface BetRow {
                           </div>
                           <div class="flex justify-between pt-1 border-t border-border">
                             <span class="text-muted-foreground text-sm font-semibold">Net P&L (settled)</span>
-                            <span class="font-bold font-mono" [class.text-emerald-400]="modalBetsPnL() >= 0" [class.text-red-400]="modalBetsPnL() < 0">{{
-                              modalBetsPnL() | number: '1.0-0'
-                            }}</span>
+                            <span
+                              class="font-bold font-mono"
+                              [class.text-emerald-400]="modalBetsPnL() >= 0"
+                              [class.text-red-400]="modalBetsPnL() < 0"
+                              >{{ modalBetsPnL() | number: '1.0-0' }}</span
+                            >
                           </div>
                         </div>
                       } @else {
@@ -518,7 +532,7 @@ interface BetRow {
                               <td class="px-3 py-2 text-foreground font-medium">{{ tx.type }}</td>
                               <td class="px-3 py-2 font-mono text-foreground">{{ tx.amount | number: '1.0-0' }}</td>
                               <td class="px-3 py-2">
-                                <p-tag [value]="tx.status" [severity]="tx.status | severityMap" />
+                                <app-status-badge [value]="tx.status" [severity]="tx.status | severityMap" />
                               </td>
                               <td class="px-3 py-2 text-muted-foreground">{{ tx.method || '-' }}</td>
                               <td class="px-3 py-2 text-muted-foreground">{{ tx.created_at | wibDate: 'short' }}</td>
@@ -564,7 +578,7 @@ interface BetRow {
                                 >
                               </td>
                               <td class="px-3 py-2">
-                                <p-tag [value]="b.status" [severity]="b.status | severityMap" />
+                                <app-status-badge [value]="b.status" [severity]="b.status | severityMap" />
                               </td>
                               <td class="px-3 py-2 text-muted-foreground">{{ b.created_at | wibDate: 'short' }}</td>
                             </tr>
@@ -584,7 +598,8 @@ interface BetRow {
                         <thead>
                           <tr
                             class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
-                            <th class="px-3 py-2">IP Address</th>
+                            <th class="px-3 py-2">Source IP</th>
+                            <th class="px-3 py-2">Geo Location</th>
                             <th class="px-3 py-2">Device / Browser</th>
                             <th class="px-3 py-2">Last Active</th>
                             <th class="px-3 py-2">Status</th>
@@ -594,7 +609,10 @@ interface BetRow {
                           @for (s of modalData.sessions; track s.id) {
                             <tr class="border-border border-b">
                               <td class="px-3 py-2 font-mono text-[11px] text-foreground">
-                                {{ s.ip_address || 'Unknown IP' }}
+                                {{ s.ip_address || '—' }}
+                              </td>
+                              <td class="px-3 py-2 text-[11px] text-foreground">
+                                {{ geoLabel(s) }}
                               </td>
                               <td class="px-3 py-2 text-foreground">{{ s.browser_info || 'Unknown browser' }}</td>
                               <td class="px-3 py-2 text-muted-foreground">{{ s.last_activity | wibDate: 'short' }}</td>
@@ -619,11 +637,16 @@ interface BetRow {
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       @for (d of modalData.kycDocs; track d.id) {
                         <div class="relative group border border-border rounded-lg overflow-hidden bg-accent/10">
-                          <img
-                            [src]="d.document_url"
+                          <button
+                            type="button"
                             (click)="viewImage(d.document_url)"
-                            class="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            [title]="(d.document_type || 'Doc') + ' (' + d.status + ')'" />
+                            class="block w-full text-left"
+                            [attr.aria-label]="'Lihat ' + (d.document_type || 'dokumen')">
+                            <img
+                              [src]="d.document_url"
+                              [alt]="d.document_type || 'Dokumen KYC'"
+                              class="w-full h-32 object-cover hover:opacity-80 transition-opacity" />
+                          </button>
                           <div class="p-2 text-[11px]">
                             <p class="text-foreground font-medium truncate">{{ d.document_type || 'Document' }}</p>
                             <p class="text-muted-foreground">{{ d.status }}</p>
@@ -641,20 +664,27 @@ interface BetRow {
                     <div>
                       <p class="text-sm font-bold text-foreground">Reset Password Member</p>
                       <p class="mt-1 text-xs text-muted-foreground">
-                        Password baru diterapkan langsung untuk &#64;{{ selectedUser.username }} dan dicatat di audit log.
+                        Password baru diterapkan langsung untuk &#64;{{ selectedUser.username }} dan dicatat di audit
+                        log.
                       </p>
                     </div>
                     <div>
-                      <label class="mb-1 block text-xs font-semibold text-muted-foreground">Password Baru</label>
+                      <label for="newMemberPassword" class="mb-1 block text-xs font-semibold text-muted-foreground"
+                        >Password Baru</label
+                      >
                       <input
+                        id="newMemberPassword"
                         [(ngModel)]="newMemberPassword"
                         type="password"
                         placeholder="Minimal 6 karakter"
                         class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30" />
                     </div>
                     <div>
-                      <label class="mb-1 block text-xs font-semibold text-muted-foreground">Konfirmasi Password</label>
+                      <label for="confirmMemberPassword" class="mb-1 block text-xs font-semibold text-muted-foreground"
+                        >Konfirmasi Password</label
+                      >
                       <input
+                        id="confirmMemberPassword"
                         [(ngModel)]="confirmMemberPassword"
                         type="password"
                         placeholder="Ulangi password baru"
@@ -685,10 +715,17 @@ interface BetRow {
       <p-confirmdialog />
 
       @if (editModal.open) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" (click)="closeEditModal()">
-          <div
-            class="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl"
-            (click)="$event.stopPropagation()">
+        <div
+          class="fixed inset-0 z-50 flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit user">
+          <button
+            type="button"
+            class="absolute inset-0 bg-black/60"
+            aria-label="Tutup edit user"
+            (click)="closeEditModal()"></button>
+          <div class="relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-base font-bold text-foreground">Edit User</h2>
               <button (click)="closeEditModal()" class="text-muted-foreground hover:text-foreground text-lg font-bold">
@@ -697,34 +734,52 @@ interface BetRow {
             </div>
             <div class="space-y-3">
               <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label
+                  for="editBankName"
+                  class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Bank Name</label
                 >
-                <input pInputText [(ngModel)]="editModal.bank_name" class="!w-full !text-xs" />
+                <input pInputText id="editBankName" [(ngModel)]="editModal.bank_name" class="w-full! text-xs!" />
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label
+                  for="editBankAccountNumber"
+                  class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Account Number</label
                 >
-                <input pInputText [(ngModel)]="editModal.bank_account_number" class="!w-full !text-xs" />
+                <input
+                  pInputText
+                  id="editBankAccountNumber"
+                  [(ngModel)]="editModal.bank_account_number"
+                  class="w-full! text-xs!" />
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label
+                  for="editBankAccountName"
+                  class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Account Name</label
                 >
-                <input pInputText [(ngModel)]="editModal.bank_account_name" class="!w-full !text-xs" />
+                <input
+                  pInputText
+                  id="editBankAccountName"
+                  [(ngModel)]="editModal.bank_account_name"
+                  class="w-full! text-xs!" />
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label
+                  for="editEmail"
+                  class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Email</label
                 >
-                <input pInputText [(ngModel)]="editModal.email" class="!w-full !text-xs" />
+                <input pInputText id="editEmail" [(ngModel)]="editModal.email" class="w-full! text-xs!" />
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                <label
+                  for="editPhone"
+                  class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
                   >Phone</label
                 >
-                <input pInputText [(ngModel)]="editModal.phone" class="!w-full !text-xs" />
+                <input pInputText id="editPhone" [(ngModel)]="editModal.phone" class="w-full! text-xs!" />
               </div>
             </div>
             <div class="mt-5 flex gap-2">
@@ -824,7 +879,15 @@ export class UsersComponent implements OnInit, OnDestroy {
   ];
 
   walletMap: Record<string, { balance_main: number; balance_bonus: number }> = {};
-  sessionMap: Record<string, { last_activity: string; device_info?: string; ip_address: string }> = {};
+  sessionMap: Record<
+    string,
+    {
+      last_activity: string;
+      device_info?: SessionRow['device_info'];
+      geo_info?: GeoSnapshot | null;
+      ip_address: string;
+    }
+  > = {};
 
   editModal = {
     open: false,
@@ -900,7 +963,12 @@ export class UsersComponent implements OnInit, OnDestroy {
             !this.sessionMap[s.user_id] ||
             new Date(s.last_activity) > new Date(this.sessionMap[s.user_id].last_activity)
           ) {
-            this.sessionMap[s.user_id] = s;
+            this.sessionMap[s.user_id] = {
+              last_activity: s.last_activity,
+              ip_address: s.ip_address || '',
+              device_info: s.device_info,
+              geo_info: s.geo_info,
+            };
           }
         }
       }
@@ -915,6 +983,32 @@ export class UsersComponent implements OnInit, OnDestroy {
     const lastActive = new Date(session.last_activity).getTime();
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     return lastActive > fiveMinAgo;
+  }
+
+  private extractGeo(source?: {
+    geo_info?: GeoSnapshot | null;
+    device_info?: SessionRow['device_info'];
+  }): GeoSnapshot | null {
+    if (source?.geo_info) return source.geo_info;
+    const di = source?.device_info;
+    if (di && typeof di === 'object' && di.geo) return di.geo;
+    return null;
+  }
+
+  geoLabel(session?: SessionRow | { geo_info?: GeoSnapshot | null; device_info?: SessionRow['device_info'] }): string {
+    const geo = this.extractGeo(session);
+    if (!geo) return '—';
+    const loc = [geo.city, geo.region, geo.country_code || geo.country].filter(Boolean).join(', ');
+    return geo.isp ? `${loc} (${geo.isp})` : loc || '—';
+  }
+
+  sourceIpLine(u: UserRow): string {
+    const session = this.sessionMap[u.id];
+    const ip = session?.ip_address || u.last_login_ip || '—';
+    const geo = session ? this.extractGeo(session) : u.last_login_geo;
+    if (!geo) return ip;
+    const loc = [geo.city, geo.country_code || geo.country].filter(Boolean).join(', ');
+    return loc ? `${loc} · ${ip}` : ip;
   }
 
   private buildWalletMap(data: UserRow[]) {
@@ -1224,7 +1318,8 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.notification.success('User approved', `${u.display_name || u.username} can now log in.`);
     } catch (e: unknown) {
-      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e instanceof Error ? e.message : String(e));
+      const err =
+        e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e instanceof Error ? e.message : String(e));
       this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Approval failed', err.message);
     }
   }
@@ -1249,7 +1344,8 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.applyFilter();
       this.notification.success('User rejected', `${u.display_name || u.username} has been rejected.`);
     } catch (e: unknown) {
-      const err = e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e instanceof Error ? e.message : String(e));
+      const err =
+        e instanceof AdminRpcError ? e : AdminRpcError.fromMessage(e instanceof Error ? e.message : String(e));
       this.notification.error(err.code === 'FORBIDDEN' ? 'Akses Ditolak' : 'Rejection failed', err.message);
     }
   }

@@ -30,7 +30,7 @@ const N9Theme = definePreset(Lara, {
   },
   semantic: {
     primary: {
-      50:  '#eff6ff',
+      50: '#eff6ff',
       100: '#dbeafe',
       200: '#bfdbfe',
       300: '#93c5fd',
@@ -45,14 +45,14 @@ const N9Theme = definePreset(Lara, {
     colorScheme: {
       light: {
         primary: {
-          color:         '#2563eb',
+          color: '#2563eb',
           contrastColor: '#ffffff',
-          hoverColor:    '#1d4ed8',
-          activeColor:   '#1e40af',
+          hoverColor: '#1d4ed8',
+          activeColor: '#1e40af',
         },
         surface: {
-          0:   '#ffffff',
-          50:  '#f8fafc',
+          0: '#ffffff',
+          50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
           300: '#cbd5e1',
@@ -65,25 +65,25 @@ const N9Theme = definePreset(Lara, {
           950: '#020617',
         },
         formField: {
-          background:       '#ffffff',
-          borderColor:      '#e2e8f0',
+          background: '#ffffff',
+          borderColor: '#e2e8f0',
           hoverBorderColor: '#94a3b8',
           focusBorderColor: '#2563eb',
-          paddingX:         '0.75rem',
-          paddingY:         '0.5rem',
-          fontSize:         '0.875rem',
+          paddingX: '0.75rem',
+          paddingY: '0.5rem',
+          fontSize: '0.875rem',
         },
       },
       dark: {
         primary: {
-          color:         '#3b82f6',
+          color: '#3b82f6',
           contrastColor: '#ffffff',
-          hoverColor:    '#2563eb',
-          activeColor:   '#1d4ed8',
+          hoverColor: '#2563eb',
+          activeColor: '#1d4ed8',
         },
         surface: {
-          0:   '#0b1120',
-          50:  '#0f172a',
+          0: '#0b1120',
+          50: '#0f172a',
           100: '#1e293b',
           200: '#334155',
           300: '#475569',
@@ -96,8 +96,8 @@ const N9Theme = definePreset(Lara, {
           950: '#ffffff',
         },
         formField: {
-          background:       '#1e293b',
-          borderColor:      '#334155',
+          background: '#1e293b',
+          borderColor: '#334155',
           hoverBorderColor: '#475569',
           focusBorderColor: '#3b82f6',
         },
@@ -108,30 +108,30 @@ const N9Theme = definePreset(Lara, {
     tag: {
       root: {
         borderRadius: '4px',
-        fontSize:     '0.7rem',
-        fontWeight:   '700',
-        padding:      '0.2rem 0.5rem',
+        fontSize: '0.7rem',
+        fontWeight: '700',
+        padding: '0.2rem 0.5rem',
       },
     },
     button: {
       root: {
         borderRadius: '6px',
-        paddingX:     '0.875rem',
-        paddingY:     '0.5rem',
+        paddingX: '0.875rem',
+        paddingY: '0.5rem',
       },
     },
     select: {
       root: {
         borderRadius: '6px',
-        paddingX:     '0.75rem',
-        paddingY:     '0.45rem',
+        paddingX: '0.75rem',
+        paddingY: '0.45rem',
       },
     },
     inputtext: {
       root: {
         borderRadius: '6px',
-        paddingX:     '0.75rem',
-        paddingY:     '0.45rem',
+        paddingX: '0.75rem',
+        paddingY: '0.45rem',
       },
     },
     dialog: {

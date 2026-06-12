@@ -9,7 +9,8 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
   imports: [FormsModule, InputTextModule, AngularSvgIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex w-full flex-col gap-3 rounded-lg border border-border bg-card p-3 lg:flex-row lg:items-center lg:justify-between">
+    <div
+      class="flex w-full flex-col gap-3 rounded-lg border border-border bg-card p-3 lg:flex-row lg:items-center lg:justify-between">
       @if (showSearch()) {
         <div class="relative w-full lg:max-w-sm">
           <svg-icon

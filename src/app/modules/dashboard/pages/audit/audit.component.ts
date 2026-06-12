@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { PaginatorModule } from 'primeng/paginator';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
@@ -35,9 +35,18 @@ interface AuditItem {
 @Component({
   selector: 'app-audit',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    WibDatePipe, SelectModule, TagModule, PaginatorModule,
-    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, SeverityMapPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WibDatePipe,
+    SelectModule,
+    StatusBadgeComponent,
+    PaginatorModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    SeverityMapPipe,
+  ],
   template: `
     <div data-page="audit" class="space-y-6">
       <app-page-header icon="bookmark" title="Audit Logs" subtitle="Admin action audit trail + security events">
@@ -61,8 +70,7 @@ interface AuditItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Admin</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Action</th>
@@ -118,8 +126,7 @@ interface AuditItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 max-sm:hidden">Admin</th>
@@ -170,8 +177,7 @@ interface AuditItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Type</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Severity</th>
@@ -187,10 +193,10 @@ interface AuditItem {
                       {{ l.created_at | wibDate: 'short' }}
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="l.alert_type" severity="warn" />
+                      <app-status-badge [value]="l.alert_type" severity="warn" />
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="l.severity" [severity]="l.severity | severityMap" />
+                      <app-status-badge [value]="l.severity" [severity]="l.severity | severityMap" />
                     </td>
                     <td
                       class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 font-mono max-sm:hidden">
@@ -219,8 +225,7 @@ interface AuditItem {
           <div class="bg-card border-border rounded-lg border overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Time</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Username</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Reason</th>

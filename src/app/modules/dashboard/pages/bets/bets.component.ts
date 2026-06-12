@@ -7,12 +7,10 @@ import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
-import { TagModule } from 'primeng/tag';
 import { PaginatorModule } from 'primeng/paginator';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
-import { SeverityMapPipe } from 'src/app/shared/pipes/severity-map.pipe';
 import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
 
 interface BetData {
@@ -33,15 +31,46 @@ interface BetData {
 @Component({
   selector: 'app-bets',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    WibDatePipe, SelectModule, DatePickerModule, TagModule, PaginatorModule,
-    PageHeaderComponent, LoadingErrorComponent, FilterBarComponent, SeverityMapPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WibDatePipe,
+    SelectModule,
+    DatePickerModule,
+    PaginatorModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    FilterBarComponent,
+  ],
   template: `
     <div data-page="bets" class="space-y-6">
-      <app-page-header icon="cursor-click" title="Bets" subtitle="All bets across marketplace sessions">
-      </app-page-header>
+      <app-page-header icon="cursor-click" title="Bets" subtitle="All bets across marketplace sessions" />
 
-      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari user, session, selection…">
+      <div
+        class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-muted/20 px-4 py-2.5 text-[11px] text-muted-foreground">
+        <span class="font-semibold uppercase tracking-wider text-foreground/80">Legenda</span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="bet-badge bet-badge-pending">Pending</span>
+          stake terpotong, menunggu draw
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="bet-badge bet-badge-settled">Settled</span>
+          hasil sudah diproses
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="bet-badge bet-badge-win">Win</span>
+          <span class="text-emerald-500/90">nama hijau</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="bet-badge bet-badge-lose">Lose</span>
+          <span class="text-red-400/90">nama merah</span>
+        </span>
+      </div>
+
+      <app-filter-bar
+        [search]="search"
+        (searchChange)="search = $event; applyFilter()"
+        placeholder="Cari user, session, selection…">
         <p-select
           [(ngModel)]="statusFilter"
           (ngModelChange)="applyFilter()"
@@ -74,8 +103,7 @@ interface BetData {
           <div class="overflow-x-auto">
             <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Bet Code</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
                   <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Session</th>
@@ -95,8 +123,22 @@ interface BetData {
                       {{ b.bet_code.slice(0, 12) }}
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p class="font-semibold text-foreground">{{ b.user?.username || b.user_id?.slice(0, 10) }}</p>
-                      <p class="text-muted-foreground text-[11px]">{{ b.user?.display_name }}</p>
+                      <p
+                        class="font-semibold"
+                        [class.text-emerald-400]="b.result === 'WIN'"
+                        [class.text-red-400]="b.result === 'LOSE'"
+                        [class.text-foreground]="b.result !== 'WIN' && b.result !== 'LOSE'">
+                        {{ b.user?.username || b.user_id?.slice(0, 10) }}
+                      </p>
+                      @if (b.user?.display_name) {
+                        <p
+                          class="text-[11px]"
+                          [class.text-emerald-400/70]="b.result === 'WIN'"
+                          [class.text-red-400/70]="b.result === 'LOSE'"
+                          [class.text-muted-foreground]="b.result !== 'WIN' && b.result !== 'LOSE'">
+                          {{ b.user!.display_name }}
+                        </p>
+                      }
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground whitespace-nowrap">
                       {{ sessionDisplay(b.session_code) }}
@@ -114,13 +156,17 @@ interface BetData {
                       {{ b.actual_payout ? (b.actual_payout | number) + ' P' : '-' }}
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                      <p-tag [value]="b.status" [severity]="b.status | severityMap" />
+                      <span class="bet-badge" [ngClass]="statusBadgeClass(b.status)" [title]="statusHint(b.status)">
+                        {{ statusLabel(b.status) }}
+                      </span>
                     </td>
                     <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                       @if (b.result) {
-                        <p-tag [value]="b.result" [severity]="b.result === 'WIN' ? 'success' : 'danger'" />
+                        <span class="bet-badge" [ngClass]="resultBadgeClass(b.result)" [title]="resultHint(b.result)">
+                          {{ resultLabel(b.result) }}
+                        </span>
                       } @else {
-                        <span class="text-muted-foreground">-</span>
+                        <span class="text-muted-foreground text-[11px]">— belum ada</span>
                       }
                     </td>
                     <td class="text-muted-foreground max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
@@ -271,5 +317,52 @@ export class BetsComponent implements OnInit, OnDestroy {
     );
     const p = dt.toLocaleString('en-CA', { timeZone: 'Asia/Jakarta', hour12: false }).split(/[-, :]+/);
     return `N9K-${p[0]}${p[1]}${p[2]}${p[3]}${p[4]}`;
+  }
+
+  statusLabel(status: string): string {
+    const map: Record<string, string> = {
+      PENDING: 'Pending',
+      SETTLED: 'Settled',
+      CANCELLED: 'Cancelled',
+    };
+    return map[status?.toUpperCase()] ?? status ?? '—';
+  }
+
+  statusHint(status: string): string {
+    const map: Record<string, string> = {
+      PENDING: 'Stake sudah dipotong, menunggu hasil session draw',
+      SETTLED: 'Bet sudah diselesaikan — lihat kolom Result (Win/Lose)',
+      CANCELLED: 'Bet dibatalkan, stake dikembalikan',
+    };
+    return map[status?.toUpperCase()] ?? status;
+  }
+
+  statusBadgeClass(status: string): string {
+    const map: Record<string, string> = {
+      PENDING: 'bet-badge-pending',
+      SETTLED: 'bet-badge-settled',
+      CANCELLED: 'bet-badge-cancelled',
+    };
+    return map[status?.toUpperCase()] ?? 'bet-badge-neutral';
+  }
+
+  resultLabel(result: string): string {
+    return result?.toUpperCase() === 'WIN' ? 'Win' : result?.toUpperCase() === 'LOSE' ? 'Lose' : result;
+  }
+
+  resultHint(result: string): string {
+    return result?.toUpperCase() === 'WIN'
+      ? 'Pemain menang — payout dikreditkan'
+      : result?.toUpperCase() === 'LOSE'
+        ? 'Pemain kalah — stake hangus'
+        : result;
+  }
+
+  resultBadgeClass(result: string): string {
+    return result?.toUpperCase() === 'WIN'
+      ? 'bet-badge-win'
+      : result?.toUpperCase() === 'LOSE'
+        ? 'bet-badge-lose'
+        : 'bet-badge-neutral';
   }
 }

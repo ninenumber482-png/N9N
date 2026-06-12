@@ -8,7 +8,7 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PaginatorModule } from 'primeng/paginator';
@@ -34,16 +34,27 @@ interface KycDocument {
 @Component({
   selector: 'app-kyc',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    WibDatePipe, SelectModule, TagModule, ConfirmDialogModule, PaginatorModule, InputTextModule,
-    PageHeaderComponent, LoadingErrorComponent, FilterBarComponent, SeverityMapPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WibDatePipe,
+    SelectModule,
+    StatusBadgeComponent,
+    ConfirmDialogModule,
+    PaginatorModule,
+    InputTextModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    FilterBarComponent,
+    SeverityMapPipe,
+  ],
   providers: [ConfirmationService],
   template: `
     <div data-page="kyc" class="space-y-6">
       <app-page-header icon="identification" title="KYC Documents" subtitle="Review identity documents">
       </app-page-header>
 
-      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari username…">
+      <app-filter-bar [search]="search" (searchChange)="search = $event; applyFilter()" placeholder="Cari username…">
         <p-select
           [(ngModel)]="statusFilter"
           (ngModelChange)="applyFilter()"
@@ -61,8 +72,7 @@ interface KycDocument {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Tipe</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
@@ -86,7 +96,7 @@ interface KycDocument {
                     {{ k.document_type || 'ID' }}
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                    <p-tag [value]="k.status" [severity]="k.status | severityMap" />
+                    <app-status-badge [value]="k.status" [severity]="k.status | severityMap" />
                     @if (k.rejection_reason) {
                       <p class="text-xs text-muted-foreground mt-0.5">{{ k.rejection_reason }}</p>
                     }
@@ -116,13 +126,13 @@ interface KycDocument {
                         <button
                           (click)="confirmApprove(k)"
                           [disabled]="approving.has(k.id)"
-                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[11px] font-medium">
+                          class="n9-btn n9-btn-solid disabled:opacity-50">
                           {{ approving.has(k.id) ? '...' : 'Setujui' }}
                         </button>
                         <button
                           (click)="confirmReject(k)"
                           [disabled]="approving.has(k.id)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
+                          class="n9-btn n9-btn-outline disabled:opacity-50">
                           Tolak
                         </button>
                       </div>
@@ -131,7 +141,7 @@ interface KycDocument {
                       <button
                         (click)="confirmReverify(k)"
                         [disabled]="approving.has(k.id)"
-                        class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
+                        class="n9-btn n9-btn-outline disabled:opacity-50">
                         {{ approving.has(k.id) ? '...' : 'Verifikasi Ulang' }}
                       </button>
                     }
@@ -146,13 +156,13 @@ interface KycDocument {
               }
             </tbody>
           </table>
-        <p-paginator
-          (onPageChange)="onPageChange($event)"
-          [first]="(currentPage - 1) * pageSize"
-          [rows]="pageSize"
-          [totalRecords]="filtered.length"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
+          <p-paginator
+            (onPageChange)="onPageChange($event)"
+            [first]="(currentPage - 1) * pageSize"
+            [rows]="pageSize"
+            [totalRecords]="filtered.length"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Menampilkan {first}–{last} dari {totalRecords}" />
         </div>
       </div>
 
@@ -171,23 +181,35 @@ interface KycDocument {
       }
 
       @if (rejectModal.open && rejectModal.doc) {
-        <div
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-          (click)="closeRejectModal()">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" (click)="closeRejectModal()">
           <div
             class="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-2xl"
             (click)="$event.stopPropagation()">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-bold text-foreground">Tolak KYC</h2>
-              <button (click)="closeRejectModal()" class="text-muted-foreground hover:text-foreground text-lg font-bold">&times;</button>
+              <button
+                (click)="closeRejectModal()"
+                class="text-muted-foreground hover:text-foreground text-lg font-bold">
+                &times;
+              </button>
             </div>
             <p class="text-xs text-muted-foreground mb-3">
-              Tolak KYC <span class="text-foreground font-medium">{{ rejectModal.doc.document_type || 'ID' }}</span>
-              milik <span class="text-foreground font-medium">{{ rejectModal.doc.user_username || rejectModal.doc.user_id?.slice(0, 16) }}</span>?
+              Tolak KYC
+              <span class="text-foreground font-medium">{{ rejectModal.doc.document_type || 'ID' }}</span> milik
+              <span class="text-foreground font-medium">{{
+                rejectModal.doc.user_username || rejectModal.doc.user_id?.slice(0, 16)
+              }}</span
+              >?
             </p>
             <div class="mb-4">
-              <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Alasan Penolakan</label>
-              <input pInputText [(ngModel)]="rejectModal.reason" placeholder="Dokumen tidak lengkap" class="!w-full !text-xs" />
+              <label class="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1"
+                >Alasan Penolakan</label
+              >
+              <input
+                pInputText
+                [(ngModel)]="rejectModal.reason"
+                placeholder="Dokumen tidak lengkap"
+                class="!w-full !text-xs" />
             </div>
             <div class="flex gap-2">
               <button
@@ -195,11 +217,7 @@ interface KycDocument {
                 class="h-9 flex-1 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-accent">
                 Batal
               </button>
-              <button
-                (click)="submitReject()"
-                class="h-9 flex-1 rounded-lg bg-red-500 text-white text-xs font-bold">
-                Tolak KYC
-              </button>
+              <button (click)="submitReject()" class="n9-btn n9-btn-danger h-9 flex-1">Tolak KYC</button>
             </div>
           </div>
         </div>
@@ -263,7 +281,7 @@ export class KycComponent implements OnInit, OnDestroy {
     this.error = null;
     this.cdr.markForCheck();
     try {
-      const d = await this.admin.getKycDocuments() as KycDocument[];
+      const d = (await this.admin.getKycDocuments()) as KycDocument[];
       this.documents = d;
       this.applyFilter();
     } catch (e: unknown) {

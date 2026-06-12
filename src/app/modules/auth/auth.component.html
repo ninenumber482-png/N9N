@@ -1,43 +1,11 @@
-<div class="flex h-screen w-screen flex-col overflow-hidden">
-  <!-- Copyright Bar - Locked at Top -->
-  <footer class="flex-shrink-0 border-b border-border bg-background px-6 py-2">
-    <div class="mx-auto flex items-center justify-between">
-      <p class="text-muted-foreground text-[11px]">
-        &copy; 2026 Number9 System D. All rights reserved.
-      </p>
-      <div class="flex gap-4">
-        <button type="button" class="text-muted-foreground hover:text-foreground text-[11px] transition-colors cursor-pointer">Privacy Policy</button>
-        <button type="button" class="text-muted-foreground hover:text-foreground text-[11px] transition-colors cursor-pointer">Terms of Service</button>
-        <button type="button" class="text-muted-foreground hover:text-foreground text-[11px] transition-colors cursor-pointer">Support</button>
-      </div>
-    </div>
+<div class="auth-shell">
+  <div class="auth-shell-artifacts" aria-hidden="true"></div>
+
+  <main class="auth-shell-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="auth-shell-footer">
+    <p>&copy; 2026 NUMBER9 System D &middot; Admin Gateway</p>
   </footer>
-
-  <!-- Header Banner -->
-  <div class="flex-shrink-0 bg-linear-to-r from-primary to-primary/80 px-6 py-5 text-center">
-    <p class="text-white text-sm font-medium leading-relaxed max-w-3xl mx-auto">
-      Access the central command core built to monitor, control, and dominate every operation with absolute precision.
-    </p>
-  </div>
-
-  <!-- Main Content - Fills remaining space, no scroll -->
-  <div class="flex flex-1 overflow-hidden">
-    <!-- Left Side - Background Design -->
-    <div class="bg-primary hidden flex-1 items-center justify-center bg-cover lg:flex">
-      <div class="max-w-2xl space-y-4 p-8 text-center text-white">
-        <h1 class="text-4xl font-bold">Welcome to Number9</h1>
-        <p class="text-sm font-light">
-          A powerful and intuitive system designed for modern applications.
-          Fast, efficient, and productive.
-        </p>
-      </div>
-    </div>
-
-    <!-- Right Side - Login Form -->
-    <div class="bg-background flex flex-1 items-center justify-center overflow-hidden">
-      <div class="max-w-md px-4 sm:w-[500px]">
-        <router-outlet></router-outlet>
-      </div>
-    </div>
-  </div>
 </div>

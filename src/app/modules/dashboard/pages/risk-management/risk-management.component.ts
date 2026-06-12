@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { PaginatorModule } from 'primeng/paginator';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
@@ -43,12 +43,23 @@ interface RiskProfile {
 @Component({
   selector: 'app-risk-management',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    SelectModule, TagModule, PaginatorModule,
-    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, StatCardComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SelectModule,
+    StatusBadgeComponent,
+    PaginatorModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    StatCardComponent,
+  ],
   template: `
     <div data-page="risk-management" class="space-y-6">
-      <app-page-header icon="exclamation-triangle" title="Risk Management" subtitle="User risk scoring and anomaly detection">
+      <app-page-header
+        icon="exclamation-triangle"
+        title="Risk Management"
+        subtitle="User risk scoring and anomaly detection">
         <div class="flex gap-2">
           <p-select
             [(ngModel)]="filter"
@@ -73,8 +84,7 @@ interface RiskProfile {
         <div class="bg-card border-border rounded-lg border overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">User</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Risk Score</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Level</th>
@@ -99,7 +109,7 @@ interface RiskProfile {
                     </div>
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                    <p-tag
+                    <app-status-badge
                       [value]="r.level"
                       [severity]="r.level === 'HIGH' ? 'danger' : r.level === 'MEDIUM' ? 'warn' : 'success'" />
                   </td>
@@ -179,8 +189,8 @@ export class RiskManagementComponent implements OnInit {
     this.loading = true;
     this.error = null;
     try {
-      const wallets = await this.admin.getWallets() as WalletData[];
-      const bets = await this.admin.getBets(1000) as BetData[];
+      const wallets = (await this.admin.getWallets()) as WalletData[];
+      const bets = (await this.admin.getBets(1000)) as BetData[];
 
       this.riskProfiles = wallets
         .map((w: WalletData) => {

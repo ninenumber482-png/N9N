@@ -33,6 +33,11 @@ export class AuthGuard {
         return false;
       }
 
+      if (user.mfaComplete === false) {
+        this.router.navigate(['/auth/two-factor']);
+        return false;
+      }
+
       return true;
     });
   }

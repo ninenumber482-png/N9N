@@ -2,7 +2,7 @@
   <!-- Sidebar -->
   <app-sidebar></app-sidebar>
 
-  <div class="flex grow flex-col content-start overflow-hidden bg-background">
+  <div class="flex min-h-0 grow flex-col overflow-hidden bg-background">
     <!-- Header -->
     <app-navbar></app-navbar>
     <!-- main content -->
@@ -22,4 +22,10 @@
 
   <!-- Toast notifications -->
   <app-toast-container></app-toast-container>
+
+  <!-- Welcome strip: app version + security stack (once per session) -->
+  <app-dashboard-welcome-strip />
+
+  <!-- Global confirm dialog (logout) — appendTo body agar tetap render saat navigasi -->
+  <p-confirmdialog key="logout" appendTo="body" styleClass="n9-logout-dialog" />
 </div>

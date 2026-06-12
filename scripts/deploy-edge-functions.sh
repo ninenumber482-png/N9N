@@ -9,6 +9,7 @@ FUNCTIONS=(
   auth-login
   auth-logout
   auth-validate
+  auth-2fa
   user-login
   user-register
   admin-proxy

@@ -18,12 +18,21 @@ interface ConfigEntry {
 @Component({
   selector: 'app-system',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    WibDatePipe, InputTextModule,
-    PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WibDatePipe,
+    InputTextModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+  ],
   template: `
     <div data-page="system" class="space-y-6">
-      <app-page-header icon="cog-6-tooth" title="System Control" subtitle="Platform configuration and operational controls">
+      <app-page-header
+        icon="cog-6-tooth"
+        title="System Control"
+        subtitle="Platform configuration and operational controls">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
@@ -129,11 +138,19 @@ interface ConfigEntry {
             <div class="px-5 py-3.5 border-b border-border bg-accent/10 flex flex-wrap gap-2 items-end">
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Config Key</label>
-                <input pInputText [(ngModel)]="addForm.key" placeholder="e.g. max_bet_amount" class="!text-xs !py-1.5 !px-2.5 !w-44" />
+                <input
+                  pInputText
+                  [(ngModel)]="addForm.key"
+                  placeholder="e.g. max_bet_amount"
+                  class="!text-xs !py-1.5 !px-2.5 !w-44" />
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Value</label>
-                <input pInputText [(ngModel)]="addForm.value" placeholder="Value" class="!text-xs !py-1.5 !px-2.5 !w-44" />
+                <input
+                  pInputText
+                  [(ngModel)]="addForm.value"
+                  placeholder="Value"
+                  class="!text-xs !py-1.5 !px-2.5 !w-44" />
               </div>
               <div class="flex gap-1.5">
                 <button
@@ -303,9 +320,9 @@ export class SystemComponent implements OnInit, OnDestroy {
       const res = await fetch(environment.serverMonitorUrl, {
         signal: controller.signal,
         headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
       });
 
       clearTimeout(timeoutId);
@@ -319,7 +336,7 @@ export class SystemComponent implements OnInit, OnDestroy {
       if (typeof data.cpu === 'number' && typeof data.ram === 'number') {
         this.serverData = {
           cpu: Math.max(0, Math.min(100, data.cpu)),
-          ram: Math.max(0, Math.min(100, data.ram))
+          ram: Math.max(0, Math.min(100, data.ram)),
         };
         this.serverStatus = 'online';
         this.consecutiveErrors = 0;
@@ -440,7 +457,7 @@ export class SystemComponent implements OnInit, OnDestroy {
   async submitAddConfig() {
     const key = this.addForm.key.trim();
     if (!key) return;
-    if (this.configs.some(c => c.key === key)) {
+    if (this.configs.some((c) => c.key === key)) {
       this.error = 'Config key already exists';
       this.cdr.markForCheck();
       return;

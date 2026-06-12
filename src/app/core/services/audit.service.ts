@@ -26,7 +26,13 @@ export class AuditService {
   private logQueue: AuditLog[] = [];
   private flushing = false;
 
-  logAdminAction(action: string, resourceType: string, resourceId: string, oldValue?: unknown, newValue?: unknown): void {
+  logAdminAction(
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    oldValue?: unknown,
+    newValue?: unknown,
+  ): void {
     const user = this.auth.getCurrentUser();
     if (!user) return;
 

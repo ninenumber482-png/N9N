@@ -8,7 +8,7 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
@@ -34,9 +34,19 @@ interface ReferralRecord {
 @Component({
   selector: 'app-referrals',
   standalone: true,
-  imports: [CommonModule, FormsModule,
-    WibDatePipe, SelectModule, TagModule, ConfirmDialogModule, InputTextModule, PaginatorModule,
-    PageHeaderComponent, LoadingErrorComponent, FilterBarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WibDatePipe,
+    SelectModule,
+    StatusBadgeComponent,
+    ConfirmDialogModule,
+    InputTextModule,
+    PaginatorModule,
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    FilterBarComponent,
+  ],
   providers: [ConfirmationService],
   template: `
     <div data-page="referrals" class="space-y-6">
@@ -56,7 +66,7 @@ interface ReferralRecord {
         </button>
       </app-page-header>
 
-      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Search code…">
+      <app-filter-bar [search]="search" (searchChange)="search = $event; applyFilter()" placeholder="Search code…">
         <p-select
           [(ngModel)]="statusFilter"
           (ngModelChange)="applyFilter()"
@@ -74,8 +84,7 @@ interface ReferralRecord {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Code</th>
                 <th class="max-sm:hidden sm:px-5 sm:py-3.5">Creator</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
@@ -108,7 +117,7 @@ interface ReferralRecord {
                     }
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                    <p-tag [value]="r.status" [severity]="r.status === 'ACTIVE' ? 'success' : 'secondary'" />
+                    <app-status-badge [value]="r.status" [severity]="r.status === 'ACTIVE' ? 'success' : 'secondary'" />
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     @if (editingId === r.id) {
@@ -138,28 +147,14 @@ interface ReferralRecord {
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
-                      <button
-                        (click)="confirmToggle(r)"
-                        class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium transition-colors">
+                      <button (click)="confirmToggle(r)" class="n9-btn n9-btn-outline">
                         {{ r.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
                       </button>
                       @if (editingId === r.id) {
-                        <button
-                          (click)="saveEdit(r)"
-                          class="bg-foreground text-background rounded px-2 py-1 text-[11px] font-medium">
-                          Save
-                        </button>
-                        <button
-                          (click)="cancelEdit()"
-                          class="text-muted-foreground rounded px-2 py-1 text-[11px] font-medium">
-                          X
-                        </button>
+                        <button (click)="saveEdit(r)" class="n9-btn n9-btn-solid">Save</button>
+                        <button (click)="cancelEdit()" class="n9-btn n9-btn-outline">X</button>
                       } @else {
-                        <button
-                          (click)="startEdit(r)"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground rounded border px-2 py-1 text-[11px] font-medium">
-                          Edit
-                        </button>
+                        <button (click)="startEdit(r)" class="n9-btn n9-btn-outline">Edit</button>
                       }
                     </div>
                   </td>
@@ -319,7 +314,10 @@ export class ReferralsComponent implements OnInit, OnDestroy {
       this.notification.success('Kode dibuat', `Kode referral baru: ${code}`);
       await this.load();
     } catch (e: unknown) {
-      this.notification.error('Gagal membuat kode', e instanceof Error ? e.message : 'Tidak bisa membuat kode referral.');
+      this.notification.error(
+        'Gagal membuat kode',
+        e instanceof Error ? e.message : 'Tidak bisa membuat kode referral.',
+      );
     } finally {
       this.generating = false;
       this.cdr.markForCheck();

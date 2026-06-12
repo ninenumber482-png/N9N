@@ -9,7 +9,7 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -99,7 +99,7 @@ interface PageEvent {
     FormsModule,
     WibDatePipe,
     SelectModule,
-    TagModule,
+    StatusBadgeComponent,
     DialogModule,
     ConfirmDialogModule,
     PaginatorModule,
@@ -139,7 +139,10 @@ interface PageEvent {
     </div>
 
     <ng-template #depositTab>
-      <app-filter-bar [search]="depSearch" (searchChange)="depSearch=$event; applyDepFilter()" placeholder="Cari username, nominal…">
+      <app-filter-bar
+        [search]="depSearch"
+        (searchChange)="depSearch = $event; applyDepFilter()"
+        placeholder="Cari username, nominal…">
         <app-refresh-button [loading]="depLoading" (clicked)="loadDeposits()" />
         <p-select
           [(ngModel)]="depStatusFilter"
@@ -172,8 +175,7 @@ interface PageEvent {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">Ref#</th>
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Nominal</th>
@@ -197,7 +199,9 @@ interface PageEvent {
                   </td>
                   <td class="px-3 py-3 font-bold text-foreground">+{{ tx.amount | number: '1.0-0' }} P</td>
                   <td class="px-3 py-3 text-[11px] text-muted-foreground">{{ tx.method || '-' }}</td>
-                  <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="tx.status | severityMap" /></td>
+                  <td class="px-3 py-3">
+                    <app-status-badge [value]="tx.status" [severity]="tx.status | severityMap" />
+                  </td>
                   <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[11px]">
                     {{ tx.created_at | wibDate: 'short' }}
                   </td>
@@ -207,13 +211,13 @@ interface PageEvent {
                         <button
                           (click)="confirmApproveDep(tx)"
                           [disabled]="depProcessing"
-                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[11px] font-medium">
+                          class="n9-btn n9-btn-solid disabled:opacity-50">
                           Setuju
                         </button>
                         <button
                           (click)="confirmRejectDep(tx)"
                           [disabled]="depProcessing"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
+                          class="n9-btn n9-btn-outline disabled:opacity-50">
                           Tolak
                         </button>
                       </div>
@@ -249,7 +253,9 @@ interface PageEvent {
             <div class="space-y-3 text-xs">
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Ref</span
-                ><span class="font-mono text-foreground">{{ depDetail.reference_code || depDetail.id.slice(0, 8).toUpperCase() }}</span>
+                ><span class="font-mono text-foreground">{{
+                  depDetail.reference_code || depDetail.id.slice(0, 8).toUpperCase()
+                }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">ID</span
@@ -269,7 +275,7 @@ interface PageEvent {
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Status</span
-                ><p-tag [value]="depDetail.status" [severity]="depDetail.status | severityMap" />
+                ><app-status-badge [value]="depDetail.status" [severity]="depDetail.status | severityMap" />
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Tanggal</span
@@ -290,7 +296,10 @@ interface PageEvent {
     </ng-template>
 
     <ng-template #withdrawTab>
-      <app-filter-bar [search]="wdSearch" (searchChange)="wdSearch=$event; applyWdFilter()" placeholder="Cari username, nominal…">
+      <app-filter-bar
+        [search]="wdSearch"
+        (searchChange)="wdSearch = $event; applyWdFilter()"
+        placeholder="Cari username, nominal…">
         <app-refresh-button [loading]="wdLoading" (clicked)="loadWithdrawals()" />
         <p-select
           [(ngModel)]="wdStatusFilter"
@@ -323,8 +332,7 @@ interface PageEvent {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">Ref#</th>
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Nominal</th>
@@ -351,7 +359,9 @@ interface PageEvent {
                     {{ tx.bank_name || '-' }}
                     {{ tx.bank_account_number ? '· ' + tx.bank_account_number.slice(-4) : '' }}
                   </td>
-                  <td class="px-3 py-3"><p-tag [value]="tx.status" [severity]="tx.status | severityMap" /></td>
+                  <td class="px-3 py-3">
+                    <app-status-badge [value]="tx.status" [severity]="tx.status | severityMap" />
+                  </td>
                   <td class="text-muted-foreground px-3 py-3 whitespace-nowrap text-[11px]">
                     {{ tx.created_at | wibDate: 'short' }}
                   </td>
@@ -361,13 +371,13 @@ interface PageEvent {
                         <button
                           (click)="confirmApproveWd(tx)"
                           [disabled]="wdProcessing"
-                          class="bg-foreground text-background disabled:opacity-50 rounded px-2 py-1 text-[11px] font-medium">
+                          class="n9-btn n9-btn-solid disabled:opacity-50">
                           Setuju
                         </button>
                         <button
                           (click)="confirmRejectWd(tx)"
                           [disabled]="wdProcessing"
-                          class="bg-card border-border text-muted-foreground hover:text-foreground disabled:opacity-50 rounded border px-2 py-1 text-[11px] font-medium">
+                          class="n9-btn n9-btn-outline disabled:opacity-50">
                           Tolak
                         </button>
                       </div>
@@ -403,7 +413,9 @@ interface PageEvent {
             <div class="space-y-3 text-xs">
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Ref</span
-                ><span class="font-mono text-foreground">{{ wdDetail.reference_code || wdDetail.id.slice(0, 8).toUpperCase() }}</span>
+                ><span class="font-mono text-foreground">{{
+                  wdDetail.reference_code || wdDetail.id.slice(0, 8).toUpperCase()
+                }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">ID</span
@@ -437,7 +449,7 @@ interface PageEvent {
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Status</span
-                ><p-tag [value]="wdDetail.status" [severity]="wdDetail.status | severityMap" />
+                ><app-status-badge [value]="wdDetail.status" [severity]="wdDetail.status | severityMap" />
               </div>
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Tanggal</span
@@ -469,8 +481,7 @@ interface PageEvent {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-3">User</th>
                 <th class="px-3 py-3">Main</th>
                 <th class="px-3 py-3">Bonus</th>
@@ -497,8 +508,8 @@ interface PageEvent {
                   <td class="px-3 py-3">
                     @if (w.locked > 0) {
                       <span class="text-foreground font-semibold">{{ w.locked | number: '1.0-0' }}</span>
-                      <button (click)="confirmResetTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[11px] font-bold rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/30 transition">Reset</button>
-                      <button (click)="openAdjustTurnover(w)" class="ml-1 px-1.5 py-0.5 text-[11px] font-bold rounded bg-sky-400/20 text-sky-400 hover:bg-sky-400/30 transition">Adjust</button>
+                      <button (click)="confirmResetTurnover(w)" class="n9-btn n9-btn-warn ml-1">Reset</button>
+                      <button (click)="openAdjustTurnover(w)" class="n9-btn n9-btn-info ml-1">Adjust</button>
                     } @else {
                       <span class="text-foreground text-[11px]">Lunas</span>
                     }
@@ -519,7 +530,10 @@ interface PageEvent {
     </ng-template>
 
     <ng-template #manualTab>
-      <app-filter-bar [search]="manSearch" (searchChange)="manSearch=$event; applyManFilter()" placeholder="Cari username, display name…">
+      <app-filter-bar
+        [search]="manSearch"
+        (searchChange)="manSearch = $event; applyManFilter()"
+        placeholder="Cari username, display name…">
         <app-refresh-button [loading]="manLoading" (clicked)="loadManual()" />
       </app-filter-bar>
       <div class="bg-card border-border rounded-lg border overflow-hidden">
@@ -559,8 +573,7 @@ interface PageEvent {
                   <td class="px-3 py-3">
                     <button
                       (click)="openEditWallet(w)"
-                      class="bg-card border-border hover:bg-accent rounded border px-2 py-1 text-[11px] font-medium text-foreground transition-colors"
-                    >
+                      class="bg-card border-border hover:bg-accent rounded border px-2 py-1 text-[11px] font-medium text-foreground transition-colors">
                       Atur Saldo
                     </button>
                   </td>
@@ -586,7 +599,7 @@ interface PageEvent {
       [draggable]="false"
       [resizable]="false"
       [closable]="true"
-      (onHide)="editWalletVisible = false; editWallet = null;">
+      (onHide)="editWalletVisible = false; editWallet = null">
       <ng-template pTemplate="header">
         <span class="text-sm font-bold text-foreground">Adjustment Saldo</span>
       </ng-template>
@@ -596,21 +609,29 @@ interface PageEvent {
             <div class="space-y-4 rounded-xl border border-border bg-accent/10 p-4">
               <div>
                 <p class="text-muted-foreground mb-1">User</p>
-                <p class="font-semibold text-foreground">{{ editWallet.displayName }} (&#64;{{ editWallet.username }})</p>
+                <p class="font-semibold text-foreground">
+                  {{ editWallet.displayName }} (&#64;{{ editWallet.username }})
+                </p>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-lg border border-border bg-card p-3">
                   <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Main</p>
-                  <p class="mt-1 font-mono text-lg font-bold text-foreground">{{ editWallet.main | number: '1.0-0' }}</p>
+                  <p class="mt-1 font-mono text-lg font-bold text-foreground">
+                    {{ editWallet.main | number: '1.0-0' }}
+                  </p>
                 </div>
                 <div class="rounded-lg border border-border bg-card p-3">
                   <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Bonus</p>
-                  <p class="mt-1 font-mono text-lg font-bold text-foreground">{{ editWallet.bonus | number: '1.0-0' }}</p>
+                  <p class="mt-1 font-mono text-lg font-bold text-foreground">
+                    {{ editWallet.bonus | number: '1.0-0' }}
+                  </p>
                 </div>
               </div>
               <div class="rounded-lg border border-border bg-card p-3">
                 <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Turnover Locked</p>
-                <p class="mt-1 font-mono text-lg font-bold text-foreground">{{ editWallet.locked | number: '1.0-0' }}</p>
+                <p class="mt-1 font-mono text-lg font-bold text-foreground">
+                  {{ editWallet.locked | number: '1.0-0' }}
+                </p>
               </div>
             </div>
 
@@ -649,8 +670,7 @@ interface PageEvent {
                   [(ngModel)]="adjustAmount"
                   class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
                   step="1000"
-                  min="0"
-                />
+                  min="0" />
               </div>
               <div>
                 <label class="block text-muted-foreground mb-1">Alasan</label>
@@ -658,23 +678,20 @@ interface PageEvent {
                   type="text"
                   [(ngModel)]="adjustReason"
                   placeholder="Alasan adjustment (opsional)"
-                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30"
-                />
+                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30" />
               </div>
               <div class="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  (click)="editWalletVisible = false; editWallet = null;"
-                  class="bg-card border-border hover:bg-accent rounded border px-3 py-1.5 text-sm font-medium text-foreground transition-colors"
-                >
+                  (click)="editWalletVisible = false; editWallet = null"
+                  class="bg-card border-border hover:bg-accent rounded border px-3 py-1.5 text-sm font-medium text-foreground transition-colors">
                   Batal
                 </button>
                 <button
                   type="button"
                   (click)="saveEditWallet()"
                   [disabled]="editWalletSaving || adjustAmount <= 0"
-                  class="bg-foreground text-background rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-opacity"
-                >
+                  class="bg-foreground text-background rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-opacity">
                   {{ editWalletSaving ? 'Memproses…' : adjustType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo' }}
                 </button>
               </div>
@@ -684,7 +701,7 @@ interface PageEvent {
       </ng-template>
     </p-dialog>
 
-    <p-confirmdialog />
+    <p-confirmdialog key="walletAdmin" appendTo="body" styleClass="n9-wallet-confirm-dialog" />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -870,16 +887,21 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
 
   confirmResetTurnover(w: TurnoverItem) {
     this.confirmation.confirm({
+      key: 'walletAdmin',
       message: `Reset turnover untuk <strong>${w.displayName}</strong>? Semua deposit lock akan dihapus.`,
       header: 'Reset Turnover',
       rejectLabel: 'Batal',
       acceptLabel: 'Reset',
+      acceptButtonStyleClass: 'n9-confirm-danger',
       accept: () => this.resetTurnover(w),
     });
   }
 
   openAdjustTurnover(w: TurnoverItem) {
-    const input = prompt(`Adjust turnover untuk ${w.displayName}\n\nPositif = tambah TO (bantu user)\nNegatif = kurangi TO (hukuman)\n\nContoh: 100000 atau -50000`, '0');
+    const input = prompt(
+      `Adjust turnover untuk ${w.displayName}\n\nPositif = tambah TO (bantu user)\nNegatif = kurangi TO (hukuman)\n\nContoh: 100000 atau -50000`,
+      '0',
+    );
     if (input === null) return;
     const amount = Number(input.replace(/[^0-9\-]/g, ''));
     if (!amount || amount === 0) {
@@ -950,19 +972,25 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
 
   confirmApproveDep(tx: DepositTx) {
     this.confirmation.confirm({
-      message: `Setujui deposit +${tx.amount.toLocaleString()} P dari ${tx.user?.username || 'pengguna'}?`,
-      header: 'Konfirmasi',
+      key: 'walletAdmin',
+      message: `Setujui deposit +${tx.amount.toLocaleString('id-ID')} P dari ${tx.user?.username || 'pengguna'}?`,
+      header: 'Konfirmasi Deposit',
       rejectLabel: 'Batal',
       acceptLabel: 'Setujui',
+      acceptButtonStyleClass: 'n9-confirm-accept',
+      rejectButtonStyleClass: 'n9-confirm-reject',
       accept: () => this.executeDep('approve', tx),
     });
   }
   confirmRejectDep(tx: DepositTx) {
     this.confirmation.confirm({
-      message: `Tolak deposit +${tx.amount.toLocaleString()} P dari ${tx.user?.username || 'pengguna'}?`,
+      key: 'walletAdmin',
+      message: `Tolak deposit +${tx.amount.toLocaleString('id-ID')} P dari ${tx.user?.username || 'pengguna'}?`,
       header: 'Tolak Transaksi',
       rejectLabel: 'Batal',
       acceptLabel: 'Tolak',
+      acceptButtonStyleClass: 'n9-confirm-danger',
+      rejectButtonStyleClass: 'n9-confirm-reject',
       accept: () => this.executeDep('reject', tx),
     });
   }
@@ -1022,19 +1050,25 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
 
   confirmApproveWd(tx: WithdrawTx) {
     this.confirmation.confirm({
-      message: `Setujui penarikan -${tx.amount.toLocaleString()} P dari ${tx.user?.username || 'pengguna'}?`,
-      header: 'Konfirmasi',
+      key: 'walletAdmin',
+      message: `Setujui penarikan -${tx.amount.toLocaleString('id-ID')} P dari ${tx.user?.username || 'pengguna'}?`,
+      header: 'Konfirmasi Penarikan',
       rejectLabel: 'Batal',
       acceptLabel: 'Setujui',
+      acceptButtonStyleClass: 'n9-confirm-accept',
+      rejectButtonStyleClass: 'n9-confirm-reject',
       accept: () => this.executeWd('approve', tx),
     });
   }
   confirmRejectWd(tx: WithdrawTx) {
     this.confirmation.confirm({
-      message: `Tolak penarikan -${tx.amount.toLocaleString()} P dari ${tx.user?.username || 'pengguna'}?`,
+      key: 'walletAdmin',
+      message: `Tolak penarikan -${tx.amount.toLocaleString('id-ID')} P dari ${tx.user?.username || 'pengguna'}?`,
       header: 'Tolak Transaksi',
       rejectLabel: 'Batal',
       acceptLabel: 'Tolak',
+      acceptButtonStyleClass: 'n9-confirm-danger',
+      rejectButtonStyleClass: 'n9-confirm-reject',
       accept: () => this.executeWd('reject', tx),
     });
   }
@@ -1080,7 +1114,8 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
             turnover: Number(w.total_turnover),
             locked: lockMap.get(w.user_id) || 0,
             net: Number(w.total_deposited) - Number(w.total_withdrawn),
-            pnl: Number(w.total_deposited) - Number(w.total_withdrawn) - Number(w.balance_main) - Number(w.balance_bonus),
+            pnl:
+              Number(w.total_deposited) - Number(w.total_withdrawn) - Number(w.balance_main) - Number(w.balance_bonus),
           }));
         this.applyToFilter();
       })
@@ -1135,7 +1170,8 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
             turnover: Number(w.total_turnover),
             locked: lockMap.get(w.user_id) || 0,
             net: Number(w.total_deposited) - Number(w.total_withdrawn),
-            pnl: Number(w.total_deposited) - Number(w.total_withdrawn) - Number(w.balance_main) - Number(w.balance_bonus),
+            pnl:
+              Number(w.total_deposited) - Number(w.total_withdrawn) - Number(w.balance_main) - Number(w.balance_bonus),
           }));
         this.applyManFilter();
       })

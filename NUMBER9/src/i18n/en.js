@@ -63,7 +63,7 @@ export const en = {
     profile: 'Profile',
     logout: 'Logout',
     login: 'Log In',
-    register: 'Become a Partner'
+    register: 'Become a Partner',
   },
 
   /* ─── LANDING ─── */
@@ -71,8 +71,10 @@ export const en = {
     hero_badge: 'GLOBAL PARTNERSHIP. SUSTAINABLE GROWTH.',
     hero_headline_1: 'Global Partnerships',
     hero_headline_2: 'for Sustainable Growth',
-    hero_body_1: 'NUMBER 9 is an international company committed to building strategic cross-border partnerships that drive sustainable and high-value business growth.',
-    hero_body_2: 'We connect opportunities, strengthen collaborations, and shape a more progressive global business future.',
+    hero_body_1:
+      'NUMBER 9 is an international company committed to building strategic cross-border partnerships that drive sustainable and high-value business growth.',
+    hero_body_2:
+      'We connect opportunities, strengthen collaborations, and shape a more progressive global business future.',
     hero_cta_primary: 'Explore Partnership',
     hero_cta_secondary: 'Learn More',
     trusted_by: 'Trusted by Global Leaders',
@@ -93,11 +95,13 @@ export const en = {
     about_headline_1: 'Building Bridges.',
     about_headline_2: 'Creating Opportunities.',
     about_headline_3: 'Growing Together.',
-    about_body_1: 'With an extensive global network and strategic approach, NUMBER 9 delivers collaborative solutions that help businesses expand, innovate, and thrive in the global market.',
-    about_body_2: 'We believe sustainable growth is only possible through strong partnerships, continuous innovation, and trust built over time.',
+    about_body_1:
+      'With an extensive global network and strategic approach, NUMBER 9 delivers collaborative solutions that help businesses expand, innovate, and thrive in the global market.',
+    about_body_2:
+      'We believe sustainable growth is only possible through strong partnerships, continuous innovation, and trust built over time.',
     cta_title: 'Ready to Start?',
     cta_button: 'Join NUMBER9 Today',
-    footer: '© 2012 NUMBER9. All rights reserved.'
+    footer: '© 2012 NUMBER9. All rights reserved.',
   },
 
   /* ─── AUTH / LOGIN ─── */
@@ -181,7 +185,8 @@ export const en = {
     approval_note: 'Account will be reviewed by an admin. Login is locked until approval.',
     step1_complete: 'Step 1 Complete',
     thank_you: 'Thank You!',
-    step1_desc: 'Your account details have been saved. Next, please complete your bank details and identity verification (KYC) so our admin team can verify and activate your account.',
+    step1_desc:
+      'Your account details have been saved. Next, please complete your bank details and identity verification (KYC) so our admin team can verify and activate your account.',
     submitting: 'Submitting…',
     password_hint: 'Min. 6 characters',
     continue_bank: 'Continue to Bank & KYC',
@@ -192,7 +197,8 @@ export const en = {
     login_label: 'Login:',
     upline_label: 'Upline:',
     uuid_label: 'Your UUID:',
-    code_pending: 'Your referral code will be generated and visible in your dashboard once the admin approves your account.',
+    code_pending:
+      'Your referral code will be generated and visible in your dashboard once the admin approves your account.',
     validation_required: 'All account fields are required.',
     validation_username: 'Username must be 3–20 characters (letters, numbers, underscore).',
     validation_email: 'Please enter a valid email address.',
@@ -218,7 +224,8 @@ export const en = {
     deposit_label: 'Deposit · {method}',
     withdraw_label: 'Withdraw · {method}',
     position_label: 'Position · {code} · #{session}',
-    disclaimer: 'All financial data displayed on this dashboard is updated in real time. Your account information is protected by industry-standard security protocols. For any discrepancies or concerns, please contact our support team immediately.'
+    disclaimer:
+      'All financial data displayed on this dashboard is updated in real time. Your account information is protected by industry-standard security protocols. For any discrepancies or concerns, please contact our support team immediately.',
   },
 
   /* ─── WALLET ─── */
@@ -229,7 +236,7 @@ export const en = {
     tabs_withdraw: 'Withdraw',
     tabs_turnover: 'Turnover',
     total_turnover: 'Total Turnover',
-    saldo: 'Saldo'
+    saldo: 'Saldo',
   },
 
   /* ─── DEPOSIT ─── */
@@ -240,8 +247,13 @@ export const en = {
     upload_proof: 'Upload proof of payment',
     deposit_failed: 'Deposit failed',
     processing: 'Submitted · Processing',
-    locked: 'Deposit sedang dikunci',
+    locked: 'Deposit auto-locked',
+    locked_desc:
+      'New deposits are locked for 15 minutes while your transfer is being verified. Please wait for the timer to finish.',
     expired: 'Deposit pending admin confirmation. If you have already transferred, please wait or contact support.',
+    expired_ref: '{amount} P · Ref {ref}',
+    pending_exists: 'You already have a pending deposit. Wait for admin confirmation.',
+    pending_btn: 'Pending deposit — wait for admin',
     select_payment: 'Select Payment Method',
     payment_desc: 'Choose your preferred payment account',
     no_methods: 'No payment methods',
@@ -261,7 +273,7 @@ export const en = {
     history: 'Deposit History',
     placeholder_amount: '0',
     confirm_title: 'Confirm Deposit',
-    confirm_message: 'Deposit {amount} P into your account?'
+    confirm_message: 'Deposit {amount} P into your account?',
   },
 
   /* ─── WITHDRAW ─── */
@@ -294,7 +306,7 @@ export const en = {
     submitted: 'Submitted · Awaiting approval',
     placeholder: '0',
     confirm_title: 'Confirm Withdrawal',
-    confirm_message: 'Withdraw {amount} P from your account?'
+    confirm_message: 'Withdraw {amount} P from your account?',
   },
 
   /* ─── MARKETPLACE ENTRY ─── */
@@ -350,7 +362,8 @@ export const en = {
     status_settled: 'SETTLED',
     status_resetting: 'RESETTING',
     select: 'Select',
-    disclaimer: 'Returns are projections, not guarantees. Positions settle on the published N9K index per round. Trade responsibly — only commit funds you can afford to hold to settlement.',
+    disclaimer:
+      'Returns are projections, not guarantees. Positions settle on the published N9K index per round. Trade responsibly — only commit funds you can afford to hold to settlement.',
     copyright: '© 2012 NUMBER9 · All positions are final at lock time.',
     set_investment: 'Set Investment',
     order_ticket: 'Order Ticket · {code}',
@@ -366,7 +379,7 @@ export const en = {
     projected_return: 'Projected Return',
     est_roi: 'Est. ROI',
     exceeds_buying_power: 'Exceeds buying power.',
-    session_expired: "Session expired. Please login again.",
+    session_expired: 'Session expired. Please login again.',
     position_opened: '✓ Position Opened',
     order_rejected: '✗ Order Rejected',
     positions_opened: '{count} position(s) opened successfully',
@@ -400,7 +413,7 @@ export const en = {
     no_orders: 'No orders yet',
     in_profit: 'In Profit',
     in_loss: 'In Loss',
-    points: 'Points'
+    points: 'Points',
   },
 
   /* ─── TRADING (MEDIA) ─── */
@@ -419,22 +432,28 @@ export const en = {
     ssl_2fa: 'SSL + 2FA',
     demo_account: 'Demo Account',
     demo_available: 'Available',
-    disclaimer: 'Information presented on this page is informational and not investment advice. All trading activities carry risk. Please ensure you understand the risks before trading.',
+    disclaimer:
+      'Information presented on this page is informational and not investment advice. All trading activities carry risk. Please ensure you understand the risks before trading.',
     news_1_date: '01 Jun 2026',
     news_1_title: 'NUMBER9 Platform Update v2.4 — Enhanced Trading Engine',
-    news_1_body: 'Improved order execution speeds and real-time market data streaming for XAU/USD, XAG/USD, and major forex pairs. New risk management tools added.',
+    news_1_body:
+      'Improved order execution speeds and real-time market data streaming for XAU/USD, XAG/USD, and major forex pairs. New risk management tools added.',
     news_2_date: '28 May 2026',
     news_2_title: 'Global Partnership Expansion — Southeast Asia',
-    news_2_body: 'NUMBER9 announces strategic partnerships with leading payment gateways in Indonesia, Singapore, and Malaysia for faster deposit and withdrawal processing.',
+    news_2_body:
+      'NUMBER9 announces strategic partnerships with leading payment gateways in Indonesia, Singapore, and Malaysia for faster deposit and withdrawal processing.',
     news_3_date: '20 May 2026',
     news_3_title: 'Gold Market Outlook Q3 2026',
-    news_3_body: 'Analysts predict continued growth in gold prices driven by central bank purchases and geopolitical uncertainty.',
+    news_3_body:
+      'Analysts predict continued growth in gold prices driven by central bank purchases and geopolitical uncertainty.',
     news_4_date: '15 May 2026',
     news_4_title: 'New Loyalty Program — Referral Bonus Tiers',
-    news_4_body: 'Introducing tiered referral rewards: Bronze, Silver, Gold, and Platinum levels with increasing bonus percentages. Active members earn up to 5% lifetime commission.',
+    news_4_body:
+      'Introducing tiered referral rewards: Bronze, Silver, Gold, and Platinum levels with increasing bonus percentages. Active members earn up to 5% lifetime commission.',
     news_5_date: '10 May 2026',
     news_5_title: 'Security Enhancement — Two-Factor Authentication',
-    news_5_body: '2FA now available for all accounts. Enable via Profile settings to add an extra layer of security to your trading activities and withdrawals.',
+    news_5_body:
+      '2FA now available for all accounts. Enable via Profile settings to add an extra layer of security to your trading activities and withdrawals.',
     news_6_date: '05 May 2026',
     news_6_title: 'Market Analysis: Precious Metals Rally',
     news_6_body: 'Gold and silver see significant upside as global markets react to interest rate decisions.',
@@ -469,7 +488,7 @@ export const en = {
     q3_a: 'Yes. Both winning and losing trades contribute based on notional value.',
     grow: 'Grow Your Turnover',
     trade_now: 'Trade Now',
-    trade_marketplace: 'Trade Marketplace'
+    trade_marketplace: 'Trade Marketplace',
   },
 
   /* ─── REFERRAL ─── */
@@ -521,7 +540,7 @@ export const en = {
     approved_date: 'Approved Date',
     kyc_verified: 'Verified',
     kyc_rejected: 'Rejected',
-    kyc_pending: 'Pending'
+    kyc_pending: 'Pending',
   },
 
   /* ─── SUPPORT ─── */
@@ -550,7 +569,8 @@ export const en = {
     faq_1_q: 'How do I deposit funds?',
     faq_1_a: 'Wallet > Deposit, choose method (USDT, Bank Transfer, E-Wallet), enter amount, follow instructions.',
     faq_2_q: 'What is the turnover requirement?',
-    faq_2_a: 'Trade 1× your deposit volume before withdrawal unlocks. Positions in 3D King and Gold Trading both count.',
+    faq_2_a:
+      'Trade 1× your deposit volume before withdrawal unlocks. Positions in 3D King and Gold Trading both count.',
     faq_3_q: 'How long do withdrawals take?',
     faq_3_a: 'USDT: 15–30 minutes. Bank transfers: 1–2 business days.',
     faq_4_q: 'Is my account secure?',
@@ -584,7 +604,7 @@ export const en = {
     no_results: 'No activity found for selected filters.',
     proof_uploaded: 'Proof uploaded',
     result: 'Result',
-    game_position: 'Position · {code} · {session}'
+    game_position: 'Position · {code} · {session}',
   },
 
   /* ─── ERROR BOUNDARY ─── */
@@ -603,6 +623,6 @@ export const en = {
     empty_default: 'No data',
     empty_action_title: 'Action Required',
     empty_action_label: 'Continue',
-    loading: 'Loading…'
-  }
-}
+    loading: 'Loading…',
+  },
+};

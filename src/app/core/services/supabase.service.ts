@@ -18,6 +18,10 @@ export interface SupabaseLoginResult {
     isNewAccount: boolean;
     unlimited?: boolean;
   };
+  mfa?: {
+    phase: 'setup' | 'verify' | 'complete';
+    complete: boolean;
+  };
   session?: {
     access_token: string;
   };
@@ -38,7 +42,7 @@ export class SupabaseService {
       console.log('[SupabaseService] URL:', url);
       console.log('[SupabaseService] Headers:', {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${environment.supabaseKey?.substring(0, 20)}...`,
+        Authorization: `Bearer ${environment.supabaseKey?.substring(0, 20)}...`,
       });
 
       const controller = new AbortController();
@@ -78,7 +82,7 @@ export class SupabaseService {
         message: msg,
         stack: err instanceof Error ? err.stack : undefined,
         type: typeof err,
-        toString: String(err)
+        toString: String(err),
       });
 
       if (errName === 'AbortError') {

@@ -6,13 +6,25 @@ import { Location } from '@angular/common';
 import { NavbarComponent } from 'src/app/modules/layout/components/navbar/navbar.component';
 import { SidebarComponent } from 'src/app/modules/layout/components/sidebar/sidebar.component';
 import { ToastContainerComponent } from 'src/app/shared/components/toast-container/toast-container.component';
+import { DashboardWelcomeStripComponent } from 'src/app/shared/components/dashboard-welcome-strip/dashboard-welcome-strip.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.css'],
-  imports: [CommonModule, SidebarComponent, NavbarComponent, RouterOutlet, ToastContainerComponent],
+  imports: [
+    CommonModule,
+    SidebarComponent,
+    NavbarComponent,
+    RouterOutlet,
+    ToastContainerComponent,
+    DashboardWelcomeStripComponent,
+    ConfirmDialogModule,
+  ],
+  providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent implements OnInit {
@@ -47,7 +59,9 @@ export class LayoutComponent implements OnInit {
       const res = await fetch('https://api.ipify.org?format=json');
       const data = await res.json();
       this.clientIp = data.ip || '';
-    } catch {}
+    } catch {
+      /* IP lookup optional — non-blocking */
+    }
 
     if (this.clientIp) {
       this.updateUrlIp();

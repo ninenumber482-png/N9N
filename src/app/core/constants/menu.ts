@@ -14,6 +14,9 @@ export class Menu {
     {
       group: 'Finance',
       separator: true,
+      expanded: true,
+      collapsible: false,
+      accent: 'finance',
       items: [
         { icon: 'assets/icons/heroicons/outline/arrow-sm-down.svg', label: 'Deposit', route: '/deposits' },
         { icon: 'assets/icons/heroicons/outline/arrow-sm-up.svg', label: 'Withdraw', route: '/withdrawals' },
@@ -26,6 +29,9 @@ export class Menu {
     {
       group: 'Marketplace',
       separator: true,
+      expanded: true,
+      collapsible: false,
+      accent: 'marketplace',
       items: [
         { icon: 'assets/icons/heroicons/outline/cube.svg', label: '3D King Engine', route: '/3dking' },
         { icon: 'assets/icons/heroicons/outline/cursor-click.svg', label: 'Bet History', route: '/bets' },
@@ -46,8 +52,16 @@ export class Menu {
       separator: true,
       items: [
         { icon: 'assets/icons/heroicons/outline/bookmark.svg', label: 'Audit Log', route: '/audit' },
-        { icon: 'assets/icons/heroicons/outline/shield-check.svg', label: 'Security Center', route: '/security-center' },
-        { icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg', label: 'Risk Management', route: '/risk-management' },
+        {
+          icon: 'assets/icons/heroicons/outline/shield-check.svg',
+          label: 'Security Center',
+          route: '/security-center',
+        },
+        {
+          icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg',
+          label: 'Risk Management',
+          route: '/risk-management',
+        },
         { icon: 'assets/icons/heroicons/outline/lock-closed.svg', label: 'IP Whitelist', route: '/ip-whitelist' },
       ],
     },
@@ -56,7 +70,11 @@ export class Menu {
       separator: true,
       items: [
         { icon: 'assets/icons/heroicons/outline/cog.svg', label: 'Configuration', route: '/system' },
-        { icon: 'assets/icons/heroicons/outline/shield-exclamation.svg', label: 'Role Management', route: '/role-management' },
+        {
+          icon: 'assets/icons/heroicons/outline/shield-exclamation.svg',
+          label: 'Role Management',
+          route: '/role-management',
+        },
         { icon: 'assets/icons/heroicons/outline/bell.svg', label: 'Popup Banners', route: '/popup-banner' },
         { icon: 'assets/icons/heroicons/outline/phone.svg', label: 'CS Contact', route: '/cs-contact' },
       ],

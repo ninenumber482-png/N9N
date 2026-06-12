@@ -7,11 +7,11 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="flex items-center justify-between border-t border-border px-5 py-3.5">
-      <span class="text-xs text-muted-foreground">
-        {{ firstItem() }}–{{ lastItem() }} of {{ totalItems() }}
-      </span>
+      <span class="text-xs text-muted-foreground"> {{ firstItem() }}–{{ lastItem() }} of {{ totalItems() }} </span>
       <div class="flex items-center gap-1">
-        <button (click)="goTo(currentPage() - 1)" [disabled]="currentPage() <= 1"
+        <button
+          (click)="goTo(currentPage() - 1)"
+          [disabled]="currentPage() <= 1"
           class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30
                  bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
           ‹ Prev
@@ -20,7 +20,8 @@ import { CommonModule } from '@angular/common';
           @if (p === -1) {
             <span class="px-1 text-muted-foreground text-xs">…</span>
           } @else {
-            <button (click)="goTo(p)"
+            <button
+              (click)="goTo(p)"
               class="w-7 h-7 rounded text-xs font-medium transition-colors"
               [class.bg-primary]="p === currentPage()"
               [class.text-primary-foreground]="p === currentPage()"
@@ -31,13 +32,16 @@ import { CommonModule } from '@angular/common';
             </button>
           }
         }
-        <button (click)="goTo(currentPage() + 1)" [disabled]="currentPage() >= totalPages()"
+        <button
+          (click)="goTo(currentPage() + 1)"
+          [disabled]="currentPage() >= totalPages()"
           class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-30
                  bg-muted text-foreground hover:bg-muted/80 disabled:cursor-not-allowed">
           Next ›
         </button>
       </div>
-    </div>,
+    </div>
+    ,
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -50,13 +54,9 @@ export class PaginationComponent {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
 
-  firstItem = computed(() =>
-    this.totalItems() === 0 ? 0 : (this.currentPage() - 1) * this.pageSize() + 1
-  );
+  firstItem = computed(() => (this.totalItems() === 0 ? 0 : (this.currentPage() - 1) * this.pageSize() + 1));
 
-  lastItem = computed(() =>
-    Math.min(this.currentPage() * this.pageSize(), this.totalItems())
-  );
+  lastItem = computed(() => Math.min(this.currentPage() * this.pageSize(), this.totalItems()));
 
   pageNumbers = computed(() => {
     const total = this.totalPages();

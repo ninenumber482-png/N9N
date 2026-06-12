@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import { badgeTone } from 'src/app/shared/utils/status-badge.helper';
 
 const SEVERITY: Record<string, string> = {
   // Status positif
@@ -30,12 +31,18 @@ const SEVERITY: Record<string, string> = {
   CANCELLED: 'secondary',
 };
 
-type SeverityType = 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast';
-
 @Pipe({ name: 'severityMap', standalone: true })
 export class SeverityMapPipe implements PipeTransform {
-  transform(value: string | null | undefined): SeverityType {
+  transform(value: string | null | undefined): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' {
     if (!value) return 'secondary';
-    return (SEVERITY[value.toUpperCase()] ?? 'secondary') as SeverityType;
+    const tone = badgeTone(value);
+    const map: Record<string, 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast'> = {
+      success: 'success',
+      warn: 'warn',
+      danger: 'danger',
+      info: 'info',
+      neutral: 'secondary',
+    };
+    return map[tone] ?? (SEVERITY[value.toUpperCase()] as 'success' | 'warn' | 'danger' | 'secondary') ?? 'secondary';
   }
 }

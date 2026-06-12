@@ -4,7 +4,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { RouterLink } from '@angular/router';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { PaginatorModule } from 'primeng/paginator';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
@@ -32,7 +32,18 @@ interface BetData {
 @Component({
   selector: 'app-gaming',
   standalone: true,
-  imports: [PageHeaderComponent, LoadingErrorComponent, RefreshButtonComponent, SeverityMapPipe, CommonModule, AngularSvgIconModule, RouterLink, WibDatePipe, TagModule, PaginatorModule],
+  imports: [
+    PageHeaderComponent,
+    LoadingErrorComponent,
+    RefreshButtonComponent,
+    SeverityMapPipe,
+    CommonModule,
+    AngularSvgIconModule,
+    RouterLink,
+    WibDatePipe,
+    StatusBadgeComponent,
+    PaginatorModule,
+  ],
   template: `
     <div data-page="gaming" class="space-y-6">
       <app-page-header icon="view-grid" title="Gaming Overview" subtitle="Platform gaming activity overview">
@@ -104,8 +115,7 @@ interface BetData {
           </div>
           <table class="saas-table w-full text-left max-sm:text-xs sm:text-sm">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Session</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Status</th>
                 <th class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">Bets</th>
@@ -121,7 +131,7 @@ interface BetData {
                     {{ s.session_code }}
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
-                    <p-tag [value]="s.status" [severity]="s.status | severityMap" />
+                    <app-status-badge [value]="s.status" [severity]="s.status | severityMap" />
                   </td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">{{ s.bet_count }}</td>
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5 text-muted-foreground">
@@ -179,11 +189,11 @@ export class GamingComponent implements OnInit {
     this.loading = true;
     this.error = null;
     try {
-      const sessions = await this.admin.getGameSessions() as GameSession[];
+      const sessions = (await this.admin.getGameSessions()) as GameSession[];
       this.sessions = sessions;
       this.activeSessions = sessions.filter((s: GameSession) => s.status === 'OPEN').length;
 
-      const bets = await this.admin.getBets(500) as BetData[];
+      const bets = (await this.admin.getBets(500)) as BetData[];
       const today = new Date().toISOString().slice(0, 10);
       const todayBets = bets.filter((b: BetData) => b.created_at?.startsWith(today));
       this.totalBetsToday = todayBets.length;

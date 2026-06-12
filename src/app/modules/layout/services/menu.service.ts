@@ -16,29 +16,21 @@ export class MenuService implements OnDestroy {
   private _subscription = new Subscription();
 
   constructor() {
-    /** Set dynamic menu */
-    this._pagesMenu.set(Menu.pages);
+    /** Set dynamic menu — Finance & Marketplace always expanded */
+    this._pagesMenu.set(
+      Menu.pages.map((m) => ({
+        ...m,
+        expanded: m.collapsible === false ? true : (m.expanded ?? false),
+      })),
+    );
 
     const sub = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        /** Expand menu base on active route */
-        this._pagesMenu().forEach((menu) => {
-          let activeGroup = false;
-          menu.items.forEach((subMenu) => {
-            const active = subMenu.route ? this.isActive(subMenu.route) : false;
-            subMenu.expanded = active;
-            subMenu.active = active;
-            if (active) activeGroup = true;
-            if (subMenu.children) {
-              this.expand(subMenu.children);
-            }
-          });
-          menu.active = activeGroup;
-          if (activeGroup) menu.expanded = true;
-        });
+        this.syncActiveRoute();
       }
     });
     this._subscription.add(sub);
+    this.syncActiveRoute();
   }
 
   get showSideBar() {
@@ -63,6 +55,7 @@ export class MenuService implements OnDestroy {
   }
 
   public toggleMenu(menu: SubMenuItem) {
+    if (!menu.children?.length) return;
     this.showSideBar = true;
 
     /** collapse all submenus except the selected one. */
@@ -82,6 +75,7 @@ export class MenuService implements OnDestroy {
   }
 
   public toggleGroup(group: MenuItem) {
+    if (group.collapsible === false) return;
     this.showSideBar = true;
     const updatedMenu = this._pagesMenu().map((menuGroup) => {
       if (menuGroup === group) {
@@ -96,11 +90,36 @@ export class MenuService implements OnDestroy {
     submenu.expanded = !submenu.expanded;
   }
 
-  private expand(items: SubMenuItem[]) {
-    items.forEach((item) => {
-      item.expanded = !!item.route && this.isActive(item.route);
-      if (item.children) this.expand(item.children);
+  private expandItems(items: SubMenuItem[]): SubMenuItem[] {
+    return items.map((item) => {
+      const active = !!item.route && this.isActive(item.route);
+      const children = item.children ? this.expandItems(item.children) : undefined;
+      const childActive = children?.some((c) => c.active || c.expanded) ?? false;
+      return {
+        ...item,
+        active,
+        expanded: item.children?.length ? active || childActive || item.expanded : false,
+        children,
+      };
     });
+  }
+
+  private syncActiveRoute(): void {
+    this._pagesMenu.update((menus) =>
+      menus.map((menu) => {
+        let activeGroup = false;
+        const items = this.expandItems(menu.items);
+        for (const subMenu of items) {
+          if (subMenu.active) activeGroup = true;
+        }
+        return {
+          ...menu,
+          items,
+          active: activeGroup,
+          expanded: activeGroup || menu.collapsible === false ? true : menu.expanded,
+        };
+      }),
+    );
   }
 
   public updateBadges(badges: Record<string, number>) {

@@ -58,8 +58,6 @@ interface KingResult {
   session_code: string;
 }
 
-
-
 @Injectable({ providedIn: 'root' })
 export class RealtimeService implements OnDestroy {
   private toastService = inject(ToastService);
@@ -283,14 +281,18 @@ export class RealtimeService implements OnDestroy {
       if (this.wsEnabled) {
         const channel = this.supabase
           .channel('engine-results')
-          .on<KingResult>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'king_results' }, (payload) => {
-            const result = payload.new;
-            this.engineStatusSubject.next(result);
-            this.toastService.success(
-              '3D King Result',
-              `${result.d1}${result.d2}${result.d3} = ${result.total} (${result.big_small}/${result.odd_even})`,
-            );
-          })
+          .on<KingResult>(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'king_results' },
+            (payload) => {
+              const result = payload.new;
+              this.engineStatusSubject.next(result);
+              this.toastService.success(
+                '3D King Result',
+                `${result.d1}${result.d2}${result.d3} = ${result.total} (${result.big_small}/${result.odd_even})`,
+              );
+            },
+          )
           .subscribe();
         this.channels.set('engine_status', channel);
       } else {
@@ -456,8 +458,7 @@ export class RealtimeService implements OnDestroy {
         } else if (tx.type === 'WITHDRAWAL') {
           if (tx.status === 'COMPLETED')
             this.toastService.success('Withdrawal Disetujui', `${userLabel}: ${tx.amount}P`);
-          else if (tx.status === 'FAILED')
-            this.toastService.error('Withdrawal Ditolak', `${userLabel}: ${tx.amount}P`);
+          else if (tx.status === 'FAILED') this.toastService.error('Withdrawal Ditolak', `${userLabel}: ${tx.amount}P`);
         }
       }
     }

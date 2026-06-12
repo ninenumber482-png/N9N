@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="base" dir="ltr">
   <head>
     <meta charset="utf-8" />
@@ -6,29 +6,40 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <style>
+      @keyframes n9-boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
 
-  <body class="bg-background font-poppins selection:bg-primary selection:text-primary-foreground">
+  <body style="margin: 0; background-color: #05070d; color: #94a3b8">
     <app-root>
-      <div class="flex h-screen">
-        <div class="m-auto">
-          <button
-            type="button"
-            class="bg-primary text-primary-foreground inline-flex cursor-not-allowed items-center rounded-md px-4 py-2 text-sm font-semibold leading-6 shadow-sm transition duration-150 ease-in-out"
-            disabled="">
-            <svg
-              class="-ml-1 mr-3 h-5 w-5 animate-spin"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+      <div
+        style="
+          display: flex;
+          min-height: 100vh;
+          min-height: 100dvh;
+          align-items: center;
+          justify-content: center;
+          background-color: #05070d;
+        ">
+        <div style="text-align: center">
+          <span
+            style="
+              display: inline-block;
+              width: 1.25rem;
+              height: 1.25rem;
+              border: 2px solid #334155;
+              border-right-color: #94a3b8;
+              border-radius: 9999px;
+              animation: n9-boot-spin 0.75s linear infinite;
+            "></span>
+          <p style="margin: 0.5rem 0 0; font-family: system-ui, sans-serif; font-size: 13px; color: #64748b">
             Loading...
-          </button>
+          </p>
         </div>
       </div>
     </app-root>

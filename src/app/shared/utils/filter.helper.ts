@@ -9,7 +9,9 @@ export class FilterHelper {
     return items.filter((item) =>
       fields.some((field) => {
         const val = typeof field === 'function' ? field(item) : (item[field] as unknown as string);
-        return String(val ?? '').toLowerCase().includes(q);
+        return String(val ?? '')
+          .toLowerCase()
+          .includes(q);
       }),
     );
   }

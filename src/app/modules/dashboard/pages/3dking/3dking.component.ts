@@ -193,39 +193,83 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
               @for (s of displaySessions; track s.code; let i = $index) {
                 <tr
                   class="border-b border-border transition-colors text-muted-foreground"
-                  [class.hover:bg-muted/5]="s.status !== 'NEXT'"
-                  [class.bg-emerald-500/5]="s.status === 'NEXT'"
-                  [class.hover:bg-emerald-500/10]="s.status === 'NEXT'"
-                  [class.outline]="s.status === 'NEXT'"
-                  [class.outline-emerald-500/25]="s.status === 'NEXT'"
-                  [class.outline-offset-[-1px]]="s.status === 'NEXT'"
-                  [class.opacity-40]="s.settled">
+                  [class.king-upcoming-row]="s.status === 'NEXT'"
+                  [class.hover:bg-muted/5]="s.status !== 'NEXT' && s.index > 7"
+                  [class.bg-red-500/10]="s.index <= 7 && s.status !== 'NEXT'"
+                  [class.hover:bg-red-500/15]="s.index <= 7 && s.status !== 'NEXT'"
+                  [class.opacity-40]="s.settled && s.index > 7">
                   <td
                     class="px-3 py-2 font-mono text-[11px]"
-                    [class.border-l-2]="s.status === 'NEXT'"
-                    [class.border-emerald-500]="s.status === 'NEXT'">
+                    [class.border-l-2]="s.index <= 7 && s.status !== 'NEXT'"
+                    [class.border-red-500]="s.index <= 7 && s.status !== 'NEXT'"
+                    [class.text-red-400]="s.index <= 7 && s.status !== 'NEXT'"
+                    [class.font-semibold]="s.index <= 7 || s.status === 'NEXT'"
+                    [class.text-emerald-400]="s.status === 'NEXT'">
                     {{ s.index }}
                   </td>
-                  <td class="px-3 py-2 font-mono text-foreground">{{ s.display }}</td>
-                  <td class="px-3 py-2 font-mono text-[11px]">{{ s.wib }}</td>
-                  <td class="px-3 py-2">
-                    <span class="text-[11px]">{{
-                      s.status === 'SETTLED'
-                        ? 'Settled'
-                        : s.status === 'RESULTING'
-                          ? 'Resulting'
-                          : s.status === 'LOCKED'
-                            ? 'Locked'
-                            : s.status === 'OPEN'
-                              ? 'Open'
-                              : 'Next'
-                    }}</span>
+                  <td
+                    class="px-3 py-2 font-mono"
+                    [class.text-red-300]="s.index <= 7 && s.status !== 'NEXT'"
+                    [class.text-emerald-300]="s.status === 'NEXT'"
+                    [class.text-foreground]="s.index > 7 && s.status !== 'NEXT'">
+                    {{ s.display }}
                   </td>
-                  <td class="px-3 py-2 text-right font-mono text-[11px]">{{ fmtTimer(s.countdown) }}</td>
-                  <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d1 : '—' }}</td>
-                  <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d2 : '—' }}</td>
-                  <td class="px-1 py-2 text-center font-mono text-foreground">{{ s.hasResult ? s.d3 : '—' }}</td>
-                  <td class="px-3 py-2 text-right font-mono text-foreground">{{ s.hasResult ? s.total : '—' }}</td>
+                  <td
+                    class="px-3 py-2 font-mono text-[11px]"
+                    [class.text-red-400/80]="s.index <= 7 && s.status !== 'NEXT'"
+                    [class.text-emerald-400/80]="s.status === 'NEXT'">
+                    {{ s.wib }}
+                  </td>
+                  <td class="px-3 py-2">
+                    <span
+                      class="text-[11px]"
+                      [class.text-emerald-400]="s.status === 'NEXT'"
+                      [class.font-semibold]="s.status === 'NEXT'"
+                      [class.animate-pulse]="s.status === 'NEXT'"
+                      >{{
+                        s.status === 'SETTLED'
+                          ? 'Settled'
+                          : s.status === 'RESULTING'
+                            ? 'Resulting'
+                            : s.status === 'LOCKED'
+                              ? 'Locked'
+                              : s.status === 'OPEN'
+                                ? 'Open'
+                                : 'Next'
+                      }}</span
+                    >
+                  </td>
+                  <td
+                    class="px-3 py-2 text-right font-mono text-[11px]"
+                    [class.text-emerald-400]="s.status === 'NEXT'"
+                    [class.font-semibold]="s.status === 'NEXT'"
+                    [class.animate-pulse]="s.status === 'NEXT'">
+                    {{ fmtTimer(s.countdown) }}
+                  </td>
+                  <td
+                    class="px-1 py-2 text-center font-mono"
+                    [class.text-red-300]="s.index <= 7 && s.hasResult"
+                    [class.text-foreground]="s.index > 7 || !s.hasResult">
+                    {{ s.hasResult ? s.d1 : '—' }}
+                  </td>
+                  <td
+                    class="px-1 py-2 text-center font-mono"
+                    [class.text-red-300]="s.index <= 7 && s.hasResult"
+                    [class.text-foreground]="s.index > 7 || !s.hasResult">
+                    {{ s.hasResult ? s.d2 : '—' }}
+                  </td>
+                  <td
+                    class="px-1 py-2 text-center font-mono"
+                    [class.text-red-300]="s.index <= 7 && s.hasResult"
+                    [class.text-foreground]="s.index > 7 || !s.hasResult">
+                    {{ s.hasResult ? s.d3 : '—' }}
+                  </td>
+                  <td
+                    class="px-3 py-2 text-right font-mono font-semibold"
+                    [class.text-red-400]="s.index <= 7 && s.hasResult"
+                    [class.text-foreground]="s.index > 7 || !s.hasResult">
+                    {{ s.hasResult ? s.total : '—' }}
+                  </td>
                   <td class="px-2 py-2 text-center">
                     @if (s.editable) {
                       <div class="inline-flex gap-1">
@@ -594,7 +638,10 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
         // fillPlan failed
         if (!this.fillPlanErrorNotified.has(code)) {
           this.fillPlanErrorNotified.add(code);
-          this.notification.error('Plan save failed', `Session ${code}: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`);
+          this.notification.error(
+            'Plan save failed',
+            `Session ${code}: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`,
+          );
         }
       });
   }
@@ -623,7 +670,10 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
         // overrideCategory failed
         if (!this.overrideErrorNotified.has(code)) {
           this.overrideErrorNotified.add(code);
-          this.notification.error('Override failed', `Session ${code}: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`);
+          this.notification.error(
+            'Override failed',
+            `Session ${code}: ${(err instanceof Error ? err.message : String(err)).slice(0, 60)}`,
+          );
         }
       });
   }
@@ -639,7 +689,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadPlanned() {
     try {
-      const rows = await this.admin.getPlanned() as unknown as PlannedRow[];
+      const rows = (await this.admin.getPlanned()) as unknown as PlannedRow[];
       // Merge DB over local so optimistic writes that haven't landed yet survive.
       // BUT don't overwrite codes that have a write still in-flight.
       const map = new Map(this.planned);
@@ -698,7 +748,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadResults() {
     try {
-      const rows = await this.admin.getKingResults(200) as unknown as KingResultRow[];
+      const rows = (await this.admin.getKingResults(200)) as unknown as KingResultRow[];
       const map = new Map<string, DrawResult>();
       for (const r of rows) {
         map.set(r.session_code, {
@@ -726,7 +776,7 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
 
   private async loadBets() {
     try {
-      const bets = await this.admin.getBets(2000) as unknown as BetRow[];
+      const bets = (await this.admin.getBets(2000)) as unknown as BetRow[];
       const agg = new Map<string, { count: number; stake: number }>();
       for (const b of bets) {
         if (!b.session_code) continue;

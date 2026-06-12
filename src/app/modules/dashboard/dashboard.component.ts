@@ -38,46 +38,44 @@ const PAGE_ORDER = [
   standalone: true,
   imports: [RouterOutlet, RouterLink],
   template: `
-    <div class="min-h-screen bg-background">
+    <div class="bg-background">
       <router-outlet />
-      <div class="px-4 sm:px-6 lg:px-8 pb-6">
-        <div class="mx-auto max-w-7xl">
-          <nav class="flex items-center justify-between pt-6 mt-6 border-t border-border">
-            <div>
-              @if (prev) {
-                <a
-                  [routerLink]="prev.route"
-                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
-                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <div class="text-left">
-                    <p class="text-[11px] text-muted-foreground group-hover:text-primary/70">Previous</p>
-                    <p class="text-xs font-bold">{{ prev.label }}</p>
-                  </div>
-                </a>
-              }
-            </div>
-            <div class="text-muted-foreground text-xs font-semibold uppercase tracking-wider text-center px-2">
-              {{ current.label }}
-            </div>
-            <div>
-              @if (next) {
-                <a
-                  [routerLink]="next.route"
-                  class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
-                  <div class="text-right">
-                    <p class="text-[11px] text-muted-foreground group-hover:text-primary/70">Next</p>
-                    <p class="text-xs font-bold">{{ next.label }}</p>
-                  </div>
-                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </a>
-              }
-            </div>
-          </nav>
-        </div>
+      <div class="mx-auto max-w-7xl px-0 pb-2 pt-6">
+        <nav class="border-border flex items-center justify-between border-t pt-6">
+          <div>
+            @if (prev) {
+              <a
+                [routerLink]="prev.route"
+                class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                <div class="text-left">
+                  <p class="text-[11px] text-muted-foreground group-hover:text-primary/70">Previous</p>
+                  <p class="text-xs font-bold">{{ prev.label }}</p>
+                </div>
+              </a>
+            }
+          </div>
+          <div class="text-muted-foreground text-xs font-semibold uppercase tracking-wider text-center px-2">
+            {{ current.label }}
+          </div>
+          <div>
+            @if (next) {
+              <a
+                [routerLink]="next.route"
+                class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-xs font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors">
+                <div class="text-right">
+                  <p class="text-[11px] text-muted-foreground group-hover:text-primary/70">Next</p>
+                  <p class="text-xs font-bold">{{ next.label }}</p>
+                </div>
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            }
+          </div>
+        </nav>
       </div>
     </div>
   `,

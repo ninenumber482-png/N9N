@@ -5,6 +5,69 @@ const ALLOWED_IPS_DEFAULT = '203.144.92.42,203.144.92.170,203.144.92.253,203.144
 const whitelistCache = new Map();
 const CACHE_TTL = 30_000;
 
+/** ── Source path isolation (no repo / map / traversal leakage) ── */
+function normalizePath(rawPath) {
+  if (!rawPath || typeof rawPath !== 'string') return null;
+  let path = rawPath.split('?')[0].split('#')[0];
+  for (let i = 0; i < 4; i++) {
+    try {
+      const next = decodeURIComponent(path);
+      if (next === path) break;
+      path = next;
+    } catch {
+      return null;
+    }
+  }
+  if (/[\0\\]/.test(path)) return null;
+  const lower = path.toLowerCase();
+  if (lower.includes('..')) return null;
+  return lower.startsWith('/') ? lower : `/${lower}`;
+}
+
+function isBlockedSourcePath(rawPath) {
+  const path = normalizePath(rawPath);
+  if (!path) return true;
+  const blocked = [
+    /\.map$/,
+    /\.ts$/,
+    /\.tsx$/,
+    /\.mts$/,
+    /\.cts$/,
+    /\.sql$/,
+    /\.env$/,
+    /\.env\./,
+    /package-lock\.json$/,
+    /package\.json$/,
+    /tsconfig.*\.json$/,
+    /angular\.json$/,
+    /vite\.config/,
+    /wrangler\.toml$/,
+    /^\/src(\/|$)/,
+    /^\/supabase(\/|$)/,
+    /^\/number9(\/|$)/,
+    /\/node_modules(\/|$)/,
+    /\/\.git(\/|$)/,
+    /\/\.cursor(\/|$)/,
+    /\/\.vscode(\/|$)/,
+    /\/dist\//,
+    /claude\.md$/,
+    /agents\.md$/,
+  ];
+  return blocked.some((re) => re.test(path));
+}
+
+function blockedPathResponse() {
+  return new Response('Not Found', {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Robots-Tag': 'noindex, nofollow',
+    },
+  });
+}
+
 function getSupabaseEnv(env) {
   const url = env.SUPABASE_URL;
   const key = env.SUPABASE_ANON_KEY;
@@ -14,11 +77,20 @@ function getSupabaseEnv(env) {
 
 async function isIpWhitelisted(ip, allowedIps, env) {
   // Cek exact IP
-  if (allowedIps.split(',').map(s => s.trim()).includes(ip)) return true;
+  if (
+    allowedIps
+      .split(',')
+      .map((s) => s.trim())
+      .includes(ip)
+  )
+    return true;
   // Cek subnet prefix (203.144.92.x selalu diizinkan)
-  const subnets = (env.ALLOWED_SUBNETS || '').split(',').map(s => s.trim()).filter(Boolean);
+  const subnets = (env.ALLOWED_SUBNETS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   const allSubnets = [...ALLOWED_SUBNETS_DEFAULT, ...subnets];
-  if (allSubnets.some(prefix => ip.startsWith(prefix))) return true;
+  if (allSubnets.some((prefix) => ip.startsWith(prefix))) return true;
 
   const cached = whitelistCache.get(ip);
   if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.allowed;
@@ -34,7 +106,7 @@ async function isIpWhitelisted(ip, allowedIps, env) {
       },
       body: JSON.stringify({ p_ip: ip }),
     });
-    const allowed = res.ok && await res.json() === true;
+    const allowed = res.ok && (await res.json()) === true;
     whitelistCache.set(ip, { allowed, ts: Date.now() });
     if (whitelistCache.size > 100) {
       const oldest = [...whitelistCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
@@ -133,6 +205,11 @@ ${errorHtml}
 
 async function handleRequest(request, env) {
   const url = new URL(request.url);
+
+  if (isBlockedSourcePath(url.pathname)) {
+    return blockedPathResponse();
+  }
+
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   const allowedIps = env.ALLOWED_IPS || ALLOWED_IPS_DEFAULT;
   const gatewayKey = env.GATEWAY_KEY;
@@ -164,7 +241,7 @@ async function handleRequest(request, env) {
       for (let attempt = 0; attempt < 3; attempt++) {
         added = await addIpToWhitelist(ip, env);
         if (added) break;
-        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
       }
       if (!added) {
         return new Response(blockedHtml(ip, 'Gagal mendaftarkan IP. Coba lagi.'), {

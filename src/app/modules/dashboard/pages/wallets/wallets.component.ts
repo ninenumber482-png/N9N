@@ -8,7 +8,7 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { WibDatePipe } from 'src/app/shared/pipes/wib-date.pipe';
 import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -58,7 +58,7 @@ interface PlatformAccountRecord {
     FormsModule,
     WibDatePipe,
     SelectModule,
-    TagModule,
+    StatusBadgeComponent,
     DialogModule,
     ConfirmDialogModule,
     InputNumberModule,
@@ -68,7 +68,10 @@ interface PlatformAccountRecord {
   providers: [ConfirmationService],
   template: `
     <div data-page="wallets" class="space-y-6">
-      <app-page-header icon="currency-dollar" title="Wallets" subtitle="Manage member wallet balances and bank accounts">
+      <app-page-header
+        icon="currency-dollar"
+        title="Wallets"
+        subtitle="Manage member wallet balances and bank accounts">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
@@ -96,7 +99,10 @@ interface PlatformAccountRecord {
       </div>
 
       @if (tab === 'wallets') {
-        <app-filter-bar [search]="walletSearch" (searchChange)="walletSearch=$event; filterWallets()" placeholder="Cari username…" />
+        <app-filter-bar
+          [search]="walletSearch"
+          (searchChange)="walletSearch = $event; filterWallets()"
+          placeholder="Cari username…" />
 
         <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
@@ -104,8 +110,7 @@ interface PlatformAccountRecord {
           <div class="overflow-x-auto">
             <table class="saas-table w-full text-left text-xs">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="px-3 py-2.5">User</th>
                   <th class="px-3 py-2.5">Balance</th>
                   <th class="px-3 py-2.5">Bonus</th>
@@ -195,11 +200,7 @@ interface PlatformAccountRecord {
       @if (tab === 'accounts') {
         <div class="flex items-center justify-between">
           <p class="text-muted-foreground text-xs">Rekening bank & metode pembayaran platform</p>
-          <button
-            (click)="openNewAccount()"
-            class="bg-foreground text-background rounded-lg px-3 py-1.5 text-xs font-medium">
-            + Tambah Rekening
-          </button>
+          <button (click)="openNewAccount()" class="n9-btn n9-btn-solid">+ Tambah Rekening</button>
         </div>
 
         @if (accountsError) {
@@ -255,7 +256,9 @@ interface PlatformAccountRecord {
                   class="!w-full !text-xs" />
               </div>
               <div class="space-y-1">
-                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tipe <span class="text-destructive">*</span></label>
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+                  >Tipe <span class="text-destructive">*</span></label
+                >
                 <p-select
                   [(ngModel)]="editingAccount.type"
                   [options]="accountTypeOptions"
@@ -265,7 +268,9 @@ interface PlatformAccountRecord {
                   styleClass="!text-sm !w-44" />
               </div>
               <div class="space-y-1">
-                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status <span class="text-destructive">*</span></label>
+                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+                  >Status <span class="text-destructive">*</span></label
+                >
                 <p-select
                   [(ngModel)]="editingAccount.status"
                   [options]="accountStatusOptions"
@@ -286,11 +291,7 @@ interface PlatformAccountRecord {
               </div>
             </div>
             <div class="flex gap-2">
-              <button
-                (click)="saveAccount()"
-                class="bg-foreground text-background rounded-lg px-3 py-1.5 text-xs font-medium">
-                Simpan
-              </button>
+              <button (click)="saveAccount()" class="n9-btn n9-btn-solid">Simpan</button>
               <button
                 (click)="editingAccount = null"
                 class="text-muted-foreground rounded-lg px-2.5 py-1.5 text-xs font-medium">
@@ -304,8 +305,7 @@ interface PlatformAccountRecord {
           <div class="overflow-x-auto">
             <table class="saas-table w-full text-left text-xs">
               <thead>
-                <tr
-                  class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+                <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                   <th class="px-3 py-2.5">Provider</th>
                   <th class="px-3 py-2.5">Pemilik</th>
                   <th class="px-3 py-2.5">No. Rekening</th>
@@ -321,10 +321,12 @@ interface PlatformAccountRecord {
                     <td class="px-3 py-2.5 text-muted-foreground">{{ a.account_holder }}</td>
                     <td class="px-3 py-2.5 font-mono text-foreground">{{ a.account_number }}</td>
                     <td class="px-3 py-2.5">
-                      <p-tag [value]="a.type" [severity]="a.type | severityMap" />
+                      <app-status-badge [value]="a.type" [severity]="a.type | severityMap" />
                     </td>
                     <td class="px-3 py-2.5">
-                      <p-tag [value]="a.status" [severity]="a.status === 'ACTIVE' ? 'success' : 'secondary'" />
+                      <app-status-badge
+                        [value]="a.status"
+                        [severity]="a.status === 'ACTIVE' ? 'success' : 'secondary'" />
                     </td>
                     <td class="px-3 py-2.5">
                       <div class="flex gap-1">
@@ -381,21 +383,23 @@ interface PlatformAccountRecord {
                 <div class="grid grid-cols-2 gap-3">
                   <div class="rounded-lg border border-border bg-card p-3">
                     <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Main</p>
-                    <p class="mt-1 font-mono text-lg font-bold text-foreground">{{
-                      adjusting.balance_main | number: '1.0-0'
-                    }}</p>
+                    <p class="mt-1 font-mono text-lg font-bold text-foreground">
+                      {{ adjusting.balance_main | number: '1.0-0' }}
+                    </p>
                   </div>
                   <div class="rounded-lg border border-border bg-card p-3">
                     <p class="text-[11px] uppercase tracking-wider text-muted-foreground">Bonus</p>
-                    <p class="mt-1 font-mono text-lg font-bold text-foreground">{{
-                      adjusting.balance_bonus | number: '1.0-0'
-                    }}</p>
+                    <p class="mt-1 font-mono text-lg font-bold text-foreground">
+                      {{ adjusting.balance_bonus | number: '1.0-0' }}
+                    </p>
                   </div>
                 </div>
               </div>
               <div class="space-y-4">
                 <div>
-                  <label class="text-xs font-semibold text-muted-foreground block mb-1">Tipe <span class="text-destructive">*</span></label>
+                  <label class="text-xs font-semibold text-muted-foreground block mb-1"
+                    >Tipe <span class="text-destructive">*</span></label
+                  >
                   <div class="flex gap-2">
                     <button
                       (click)="adjType = 'add'"
@@ -422,7 +426,9 @@ interface PlatformAccountRecord {
                   </div>
                 </div>
                 <div>
-                  <label class="text-xs font-semibold text-muted-foreground block mb-1">Jumlah <span class="text-destructive">*</span></label>
+                  <label class="text-xs font-semibold text-muted-foreground block mb-1"
+                    >Jumlah <span class="text-destructive">*</span></label
+                  >
                   <p-inputNumber
                     [(ngModel)]="adjAmount"
                     [min]="0"
@@ -455,7 +461,7 @@ interface PlatformAccountRecord {
                   <button
                     (click)="saveAdjust(adjusting)"
                     [disabled]="adjustSubmitting || !adjAmount || adjAmount <= 0"
-                    class="bg-foreground text-background disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-medium">
+                    class="n9-btn n9-btn-solid disabled:opacity-50">
                     {{ adjustSubmitting ? 'Memproses...' : adjType === 'add' ? 'Tambah Saldo' : 'Kurangi Saldo' }}
                   </button>
                   <button

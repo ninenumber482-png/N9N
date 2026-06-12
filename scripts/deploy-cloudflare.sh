@@ -28,24 +28,14 @@ deploy_admin() {
 
   npm run build
 
-  echo "=== Adding Cloudflare Pages Config ==="
+  echo "=== Verifying Cloudflare Pages Config ==="
   OUT="$ROOT_DIR/dist/number9systemd/browser"
-
-  # SPA fallback (required for Angular standard routing)
-  cat > "$OUT/_redirects" << 'EOF'
-/* /index.html 200
-EOF
-
-  # Security headers
-  cat > "$OUT/_headers" << 'EOF'
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-EOF
-
-  cp "$ROOT_DIR/_worker.js" "$OUT/_worker.js"
+  for f in _redirects _headers _worker.js; do
+    if [ ! -f "$OUT/$f" ]; then
+      echo "Missing $OUT/$f — npm run build should copy it"
+      exit 1
+    fi
+  done
 
   echo "=== Deploying Admin to Cloudflare Pages ==="
   npx wrangler pages deploy "$OUT" --project-name number9-admin
@@ -61,17 +51,14 @@ deploy_user() {
 
   npm run build
 
-  echo "=== Adding Cloudflare Pages Config ==="
+  echo "=== Verifying Cloudflare Pages Config ==="
   OUT="$ROOT_DIR/NUMBER9/dist"
-
-  # Security headers
-  cat > "$OUT/_headers" << 'EOF'
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-EOF
+  for f in _redirects _headers _worker.js; do
+    if [ ! -f "$OUT/$f" ]; then
+      echo "Missing $OUT/$f — public/ assets should be copied by Vite build"
+      exit 1
+    fi
+  done
 
   echo "=== Deploying User App to Cloudflare Pages ==="
   npx wrangler pages deploy "$OUT" --project-name number9-app

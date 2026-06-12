@@ -1,1 +1,19 @@
-/* /index.html 200
+# Block source / repo leakage (must be before SPA fallback)
+/*.map              /index.html   404
+/*.ts               /index.html   404
+/*.tsx              /index.html   404
+/*.sql              /index.html   404
+/.env               /index.html   404
+/.env.*             /index.html   404
+/package.json       /index.html   404
+/package-lock.json  /index.html   404
+/tsconfig.json      /index.html   404
+/angular.json       /index.html   404
+/src/*              /index.html   404
+/supabase/*         /index.html   404
+/NUMBER9/*          /index.html   404
+/node_modules/*     /index.html   404
+/.git/*             /index.html   404
+
+# SPA fallback
+/*    /index.html   200

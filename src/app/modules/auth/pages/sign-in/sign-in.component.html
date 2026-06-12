@@ -1,91 +1,109 @@
-<div class="flex h-screen items-center justify-center bg-background px-4">
-  <div class="w-full max-w-sm">
+<div class="sign-in-portal">
+  <div class="sign-in-frame">
+    <div class="sign-in-frame-corners" aria-hidden="true"></div>
+
     @if (checkingIp) {
-      <div class="text-center">
-        <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-foreground border-r-transparent"></span>
-        <p class="text-muted-foreground text-[13px] mt-2">Verifying access...</p>
+      <div class="sign-in-loading">
+        <span class="sign-in-spinner"></span>
+        <p class="sign-in-loading-text">Verifying access...</p>
       </div>
     } @else if (ipBlocked) {
-      <div class="text-center">
-        <div class="text-4xl mb-3">⛔</div>
-        <h1 class="text-xl font-semibold text-foreground tracking-tight">Akses Ditolak</h1>
-        <p class="text-muted-foreground text-[13px] mt-2 leading-relaxed">
-          IP Anda (<span class="font-mono text-foreground font-semibold">{{ blockedIp }}</span>) tidak terdaftar dalam whitelist.
+      <header class="sign-in-header sign-in-header--center">
+        <div class="sign-in-status-icon" aria-hidden="true">⛔</div>
+        <h1 class="sign-in-title">Akses Ditolak</h1>
+        <p class="sign-in-tagline sign-in-tagline--wrap">
+          IP Anda (<span class="sign-in-mono">{{ blockedIp }}</span
+          >) tidak terdaftar dalam whitelist.
         </p>
+      </header>
 
+      <div class="sign-in-body">
         @if (unlockSuccess) {
-          <div class="mt-4 p-3 rounded-lg bg-card border border-border">
-            <p class="text-foreground text-[13px] font-medium">Berhasil! Memuat ulang...</p>
+          <div class="sign-in-notice sign-in-notice--ok">
+            <p>Berhasil! Memuat ulang...</p>
           </div>
         } @else {
-          <hr class="border-border my-5">
-          <p class="text-[11px] text-muted-foreground uppercase tracking-wider mb-3">Emergency Whitelist</p>
-          <input type="password" [(ngModel)]="unlockKey" [ngModelOptions]="{standalone: true}"
+          <div class="sign-in-divider">
+            <span>Emergency Whitelist</span>
+          </div>
+          <input
+            type="password"
+            [(ngModel)]="unlockKey"
+            [ngModelOptions]="{ standalone: true }"
             placeholder="Gateway Key"
-            class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/50 transition-colors text-center mb-2"
+            class="sign-in-field sign-in-field--center"
             (keyup.enter)="emergencyUnlock()" />
           @if (unlockError) {
-            <p class="text-destructive text-[11px] mb-2">{{ unlockError }}</p>
+            <p class="sign-in-error">{{ unlockError }}</p>
           }
-          <button (click)="emergencyUnlock()" [disabled]="unlocking"
-            class="w-full bg-foreground text-background rounded-lg px-4 py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2">
+          <button type="button" (click)="emergencyUnlock()" [disabled]="unlocking" class="sign-in-btn">
             @if (unlocking) {
-              <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+              <span class="sign-in-spinner sign-in-spinner--sm"></span>
             }
             {{ unlocking ? 'Memproses...' : 'BUKA WHITELIST' }}
           </button>
-          <p class="text-[11px] text-muted-foreground/50 mt-3">Masukkan gateway key untuk mendaftarkan IP Anda secara otomatis</p>
+          <p class="sign-in-hint">Masukkan gateway key untuk mendaftarkan IP Anda secara otomatis</p>
         }
-
-        <p class="text-xs text-muted-foreground/50 mt-6">NUMBER9 Security Gateway — System D</p>
       </div>
+
+      <footer class="sign-in-foot">NUMBER9 Security Gateway</footer>
     } @else {
-      <div class="mb-8">
-        <h1 class="text-xl font-semibold text-foreground tracking-tight">Admin Login</h1>
-        <p class="text-muted-foreground text-[13px] mt-1">Sign in to the control panel</p>
+      <header class="sign-in-header">
+        <h1 class="sign-in-title">OAuth 2.0 &amp; OIDC</h1>
+        <p class="sign-in-tagline">Secure identity · access gateway</p>
+      </header>
+
+      <div class="sign-in-body">
+        <form class="sign-in-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="sign-in-fields">
+            <div class="sign-in-field-group">
+              <label for="username" class="sign-in-label">Username <span class="sign-in-required">*</span></label>
+              <input
+                type="text"
+                id="username"
+                formControlName="username"
+                class="sign-in-field"
+                placeholder="Enter username"
+                autocomplete="username" />
+              @if (submitted && f['username'].errors) {
+                <p class="sign-in-error">Username is required (min 3 characters)</p>
+              }
+            </div>
+
+            <div class="sign-in-field-group">
+              <label for="password" class="sign-in-label">Password <span class="sign-in-required">*</span></label>
+              <div class="sign-in-field-wrap">
+                <input
+                  [type]="passwordVisible ? 'text' : 'password'"
+                  id="password"
+                  formControlName="password"
+                  class="sign-in-field sign-in-field--password"
+                  placeholder="Enter password"
+                  autocomplete="current-password" />
+                <button type="button" (click)="togglePasswordVisibility()" class="sign-in-field-action">
+                  {{ passwordVisible ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+              @if (submitted && f['password'].errors) {
+                <p class="sign-in-error">Password is required</p>
+              }
+            </div>
+          </div>
+
+          <button type="submit" [disabled]="isLoading" class="sign-in-btn sign-in-btn--primary">
+            @if (isLoading) {
+              <span class="sign-in-spinner sign-in-spinner--sm"></span>
+            }
+            {{ isLoading ? 'Signing in...' : 'Sign In' }}
+          </button>
+        </form>
       </div>
 
-      <form class="space-y-5" [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="space-y-4">
-          <div>
-            <label for="username" class="text-[11px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Username <span class="text-destructive">*</span></label>
-            <input type="text" id="username" formControlName="username"
-              class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/30 transition-colors"
-              placeholder="Enter username" />
-            @if (submitted && f['username'].errors) {
-              <p class="text-destructive text-[11px] mt-1">Username is required (min 3 characters)</p>
-            }
-          </div>
-
-          <div>
-            <label for="password" class="text-[11px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Password <span class="text-destructive">*</span></label>
-            <div class="relative">
-              <input [type]="passwordVisible ? 'text' : 'password'" id="password" formControlName="password"
-                class="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:border-foreground/30 transition-colors"
-                placeholder="Enter password" />
-              <button type="button" (click)="togglePasswordVisibility()"
-                class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground text-[11px] transition-colors">
-                {{ passwordVisible ? 'Hide' : 'Show' }}
-              </button>
-            </div>
-            @if (submitted && f['password'].errors) {
-              <p class="text-destructive text-[11px] mt-1">Password is required</p>
-            }
-          </div>
-        </div>
-
-        <button type="submit" [disabled]="isLoading"
-          class="w-full bg-foreground text-background rounded-lg px-4 py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2">
-          @if (isLoading) {
-            <span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
-          }
-          {{ isLoading ? 'Signing in...' : 'Sign In' }}
-        </button>
-
-        <p class="text-center text-xs text-muted-foreground">
-          <a routerLink="/auth/forgot-password" class="text-foreground hover:underline">Forgot Password?</a>
-        </p>
-      </form>
+      <footer class="sign-in-foot">
+        <span>TLS 1.3</span>
+        <span class="sign-in-foot-dot" aria-hidden="true"></span>
+        <span>Session protected</span>
+      </footer>
     }
   </div>
 </div>

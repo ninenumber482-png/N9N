@@ -121,7 +121,7 @@ export class IpWhitelistComponent implements OnInit {
 
   async load() {
     try {
-      this.entries = await this.admin.rpc('get_allowed_ips', {}) as WhitelistEntry[];
+      this.entries = (await this.admin.rpc('get_allowed_ips', {})) as WhitelistEntry[];
     } catch (e) {
       this.error = e instanceof AdminRpcError ? e.message : 'Gagal memuat daftar IP.';
     }

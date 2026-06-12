@@ -18,7 +18,7 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
       <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #84CC16;">
         <app-filter-bar
           [search]="searchUsername"
-          (searchChange)="searchUsername=$event"
+          (searchChange)="searchUsername = $event"
           (searchSubmit)="searchUser()"
           placeholder="Cari username member...">
           <button
@@ -56,7 +56,9 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
 
           <div class="space-y-3 max-w-md">
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Tipe <span class="text-destructive">*</span></label>
+              <label class="text-xs font-semibold text-muted-foreground block mb-1"
+                >Tipe <span class="text-destructive">*</span></label
+              >
               <div class="flex gap-2">
                 <button
                   (click)="adjustType = 'add'"
@@ -83,7 +85,9 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
               </div>
             </div>
             <div>
-              <label class="text-xs font-semibold text-muted-foreground block mb-1">Jumlah <span class="text-destructive">*</span></label>
+              <label class="text-xs font-semibold text-muted-foreground block mb-1"
+                >Jumlah <span class="text-destructive">*</span></label
+              >
               <input
                 [(ngModel)]="amount"
                 type="number"

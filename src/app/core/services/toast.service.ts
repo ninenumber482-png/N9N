@@ -69,14 +69,14 @@ export class ToastService {
       switch (type) {
         case 'success':
           // Pleasant ascending chime: C5 → E5 → G5
-          playNote(523, now, 0.18, 0.10);
-          playNote(659, now + 0.08, 0.18, 0.10);
+          playNote(523, now, 0.18, 0.1);
+          playNote(659, now + 0.08, 0.18, 0.1);
           playNote(784, now + 0.16, 0.25, 0.12);
           break;
         case 'error':
           // Soft descending: E4 → C4
-          playNote(330, now, 0.2, 0.10);
-          playNote(262, now + 0.12, 0.25, 0.10);
+          playNote(330, now, 0.2, 0.1);
+          playNote(262, now + 0.12, 0.25, 0.1);
           break;
         case 'warning':
           // Gentle double tap: A4
@@ -138,5 +138,20 @@ export class ToastService {
   clearHistory(): void {
     this.historySubject.next([]);
     this.unreadSubject.next(0);
+  }
+
+  /** Add to notification panel without toast popup/sound (pending queue seed). */
+  addHistoryEntry(type: ToastMessage['type'], title: string, message?: string, bumpUnread = true): void {
+    const entry: ToastMessage = {
+      id: `hist-${++this.idCounter}-${Date.now()}`,
+      type,
+      title,
+      message,
+      timestamp: Date.now(),
+    };
+    this.addToHistory(entry);
+    if (bumpUnread) {
+      this.unreadSubject.next(this.unreadSubject.value + 1);
+    }
   }
 }

@@ -1,0 +1,52 @@
+.text-sidebar-muted {
+  color: var(--sidebar-muted);
+}
+
+.sidebar-group-finance,
+.sidebar-group-marketplace {
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.25rem 0.5rem;
+  border-radius: 0.625rem;
+  /* Tetap menyatu dengan sidebar — jangan terlihat “mengambang” */
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.sidebar-group-finance {
+  background: linear-gradient(135deg, rgb(16 185 129 / 0.1) 0%, rgb(16 185 129 / 0.03) 100%);
+  border: 1px solid rgb(16 185 129 / 0.22);
+  box-shadow: inset 3px 0 0 rgb(16 185 129 / 0.75);
+}
+
+.sidebar-group-marketplace {
+  background: linear-gradient(135deg, rgb(217 70 239 / 0.12) 0%, rgb(217 70 239 / 0.03) 100%);
+  border: 1px solid rgb(217 70 239 / 0.25);
+  box-shadow: inset 3px 0 0 rgb(217 70 239 / 0.8);
+}
+
+.sidebar-group-label-finance,
+.sidebar-group-label-marketplace {
+  border-radius: 0.375rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.sidebar-group-label-finance {
+  color: rgb(52 211 153);
+  text-shadow: 0 0 12px rgb(16 185 129 / 0.35);
+}
+
+.sidebar-group-label-marketplace {
+  color: rgb(232 121 249);
+  text-shadow: 0 0 12px rgb(217 70 239 / 0.35);
+}
+
+.sidebar-group-label-finance span,
+.sidebar-group-label-marketplace span {
+  color: inherit;
+}
+
+.sidebar-group-items {
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}

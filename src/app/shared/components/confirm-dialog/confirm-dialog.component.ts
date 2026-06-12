@@ -7,11 +7,14 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     @if (open()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        (click)="onBackdropClick()" role="dialog" aria-modal="true">
-        <div class="relative w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-6 text-center shadow-[0_0_60px_rgba(0,0,0,0.6)]"
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        (click)="onBackdropClick()"
+        role="dialog"
+        aria-modal="true">
+        <div
+          class="relative w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-6 text-center shadow-[0_0_60px_rgba(0,0,0,0.6)]"
           (click)="$event.stopPropagation()">
-
           @if (icon()) {
             <div class="mb-4 flex justify-center">
               <div [class]="'rounded-xl p-3 ' + iconBgClass()">
@@ -32,15 +35,16 @@ import { CommonModule } from '@angular/common';
             <button
               (click)="cancel()"
               [disabled]="loading()"
-              class="flex-1 h-11 rounded-xl border border-white/8 bg-white/[0.03] text-sm font-bold text-zinc-400 hover:border-white/20 hover:bg-white/[0.06] hover:text-white transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
-            >
+              class="flex-1 h-11 rounded-xl border border-white/8 bg-white/[0.03] text-sm font-bold text-zinc-400 hover:border-white/20 hover:bg-white/[0.06] hover:text-white transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed">
               {{ cancelText() || 'Cancel' }}
             </button>
             <button
               (click)="confirm()"
               [disabled]="loading()"
-              [class]="'flex-1 h-11 rounded-xl text-sm font-extrabold text-white transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed ' + confirmBgClass()"
-            >
+              [class]="
+                'flex-1 h-11 rounded-xl text-sm font-extrabold text-white transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed ' +
+                confirmBgClass()
+              ">
               @if (loading()) {
                 <span class="inline-flex items-center justify-center gap-2">
                   <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -55,7 +59,8 @@ import { CommonModule } from '@angular/common';
             </button>
           </div>
         </div>
-      </div>,
+      </div>
+      ,
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,8 +97,12 @@ export class ConfirmDialogComponent {
     }
   }
 
-  confirm() { this.onConfirm.emit(); }
-  cancel() { this.onCancel.emit(); }
+  confirm() {
+    this.onConfirm.emit();
+  }
+  cancel() {
+    this.onCancel.emit();
+  }
 
   onBackdropClick() {
     if (!this.loading()) this.cancel();

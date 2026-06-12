@@ -30,7 +30,8 @@ export const id = {
     processing: 'Diproses',
     network_error: 'Kesalahan jaringan. Coba lagi.',
     connection_error: 'Koneksi error. Silakan coba lagi.',
-    request_timeout: 'Permintaan kehabisan waktu. Permintaan Anda mungkin sedang diproses — periksa riwayat sebentar lagi.',
+    request_timeout:
+      'Permintaan kehabisan waktu. Permintaan Anda mungkin sedang diproses — periksa riwayat sebentar lagi.',
     attached: 'Terlampir',
     file_selected: 'File dipilih',
     click_to_upload: 'Klik untuk unggah',
@@ -63,7 +64,7 @@ export const id = {
     profile: 'Profil',
     logout: 'Keluar',
     login: 'Masuk',
-    register: 'Jadi Mitra'
+    register: 'Jadi Mitra',
   },
 
   /* ─── LANDING ─── */
@@ -71,8 +72,10 @@ export const id = {
     hero_badge: 'KEMITRAAN GLOBAL. PERTUMBUHAN BERKELANJUTAN.',
     hero_headline_1: 'Kemitraan Global',
     hero_headline_2: 'untuk Pertumbuhan Berkelanjutan',
-    hero_body_1: 'NUMBER 9 adalah perusahaan internasional yang berkomitmen membangun kemitraan lintas batas strategis untuk mendorong pertumbuhan bisnis yang berkelanjutan dan bernilai tinggi.',
-    hero_body_2: 'Kami menghubungkan peluang, memperkuat kolaborasi, dan membentuk masa depan bisnis global yang lebih progresif.',
+    hero_body_1:
+      'NUMBER 9 adalah perusahaan internasional yang berkomitmen membangun kemitraan lintas batas strategis untuk mendorong pertumbuhan bisnis yang berkelanjutan dan bernilai tinggi.',
+    hero_body_2:
+      'Kami menghubungkan peluang, memperkuat kolaborasi, dan membentuk masa depan bisnis global yang lebih progresif.',
     hero_cta_primary: 'Jelajahi Kemitraan',
     hero_cta_secondary: 'Pelajari Lebih',
     trusted_by: 'Dipercaya oleh Pemimpin Global',
@@ -93,11 +96,13 @@ export const id = {
     about_headline_1: 'Membangun Jembatan.',
     about_headline_2: 'Menciptakan Peluang.',
     about_headline_3: 'Tumbuh Bersama.',
-    about_body_1: 'Dengan jaringan global yang luas dan pendekatan strategis, NUMBER 9 menghadirkan solusi kolaboratif yang membantu bisnis berkembang, berinovasi, dan maju di pasar global.',
-    about_body_2: 'Kami percaya pertumbuhan berkelanjutan hanya mungkin melalui kemitraan kuat, inovasi berkelanjutan, dan kepercayaan yang dibangun seiring waktu.',
+    about_body_1:
+      'Dengan jaringan global yang luas dan pendekatan strategis, NUMBER 9 menghadirkan solusi kolaboratif yang membantu bisnis berkembang, berinovasi, dan maju di pasar global.',
+    about_body_2:
+      'Kami percaya pertumbuhan berkelanjutan hanya mungkin melalui kemitraan kuat, inovasi berkelanjutan, dan kepercayaan yang dibangun seiring waktu.',
     cta_title: 'Siap Memulai?',
     cta_button: 'Bergabung dengan NUMBER9',
-    footer: '© 2012 NUMBER9. Hak cipta dilindungi.'
+    footer: '© 2012 NUMBER9. Hak cipta dilindungi.',
   },
 
   /* ─── AUTH / LOGIN ─── */
@@ -181,7 +186,8 @@ export const id = {
     approval_note: 'Akun akan direview oleh admin. Login terkunci sampai disetujui.',
     step1_complete: 'Langkah 1 Selesai',
     thank_you: 'Terima Kasih!',
-    step1_desc: 'Data akun Anda telah disimpan. Selanjutnya, lengkapi detail bank dan verifikasi identitas (KYC) agar tim admin dapat memverifikasi dan mengaktifkan akun Anda.',
+    step1_desc:
+      'Data akun Anda telah disimpan. Selanjutnya, lengkapi detail bank dan verifikasi identitas (KYC) agar tim admin dapat memverifikasi dan mengaktifkan akun Anda.',
     submitting: 'Mengirim…',
     password_hint: 'Min. 6 karakter',
     continue_bank: 'Lanjut ke Bank & KYC',
@@ -218,7 +224,8 @@ export const id = {
     deposit_label: 'Deposit · {method}',
     withdraw_label: 'Tarik · {method}',
     position_label: 'Posisi · {code} · #{session}',
-    disclaimer: 'Semua data keuangan yang ditampilkan di dashboard ini diperbarui secara real-time. Informasi akun Anda dilindungi oleh protokol keamanan standar industri. Untuk ketidaksesuaian atau pertanyaan, hubungi tim dukungan kami segera.'
+    disclaimer:
+      'Semua data keuangan yang ditampilkan di dashboard ini diperbarui secara real-time. Informasi akun Anda dilindungi oleh protokol keamanan standar industri. Untuk ketidaksesuaian atau pertanyaan, hubungi tim dukungan kami segera.',
   },
 
   /* ─── WALLET ─── */
@@ -229,7 +236,7 @@ export const id = {
     tabs_withdraw: 'Tarik Dana',
     tabs_turnover: 'Omzet',
     total_turnover: 'Total Omzet',
-    saldo: 'Saldo'
+    saldo: 'Saldo',
   },
 
   /* ─── DEPOSIT ─── */
@@ -240,8 +247,12 @@ export const id = {
     upload_proof: 'Unggah bukti pembayaran',
     deposit_failed: 'Deposit gagal',
     processing: 'Terkirim · Diproses',
-    locked: 'Deposit sedang dikunci',
+    locked: 'Deposit terkunci otomatis',
+    locked_desc: 'Deposit baru dikunci 15 menit untuk verifikasi transfer Anda. Tunggu hitungan mundur selesai.',
     expired: 'Deposit belum dikonfirmasi admin. Jika sudah transfer, tunggu konfirmasi atau hubungi dukungan.',
+    expired_ref: '{amount} P · Ref {ref}',
+    pending_exists: 'Anda masih punya deposit pending. Tunggu konfirmasi admin.',
+    pending_btn: 'Deposit pending — tunggu admin',
     select_payment: 'Pilih Metode Pembayaran',
     payment_desc: 'Pilih akun pembayaran pilihan Anda',
     no_methods: 'Tidak ada metode pembayaran',
@@ -261,7 +272,7 @@ export const id = {
     history: 'Riwayat Deposit',
     placeholder_amount: '0',
     confirm_title: 'Konfirmasi Deposit',
-    confirm_message: 'Deposit {amount} P ke akun Anda?'
+    confirm_message: 'Deposit {amount} P ke akun Anda?',
   },
 
   /* ─── WITHDRAW ─── */
@@ -294,7 +305,7 @@ export const id = {
     submitted: 'Terkirim · Menunggu persetujuan',
     placeholder: '0',
     confirm_title: 'Konfirmasi Penarikan',
-    confirm_message: 'Tarik {amount} P dari akun Anda?'
+    confirm_message: 'Tarik {amount} P dari akun Anda?',
   },
 
   /* ─── MARKETPLACE ENTRY ─── */
@@ -350,7 +361,8 @@ export const id = {
     status_settled: 'SETEL',
     status_resetting: 'RESET',
     select: 'Pilih',
-    disclaimer: 'Hasil adalah proyeksi, bukan jaminan. Posisi diselesaikan pada indeks N9K yang dipublikasikan per ronde. Bertanggung jawablah — hanya gunakan dana yang Anda mampu.',
+    disclaimer:
+      'Hasil adalah proyeksi, bukan jaminan. Posisi diselesaikan pada indeks N9K yang dipublikasikan per ronde. Bertanggung jawablah — hanya gunakan dana yang Anda mampu.',
     copyright: '© 2012 NUMBER9 · Semua posisi final saat waktu penguncian.',
     set_investment: 'Atur Investasi',
     order_ticket: 'Tiket Pesanan · {code}',
@@ -366,7 +378,7 @@ export const id = {
     projected_return: 'Proyeksi Hasil',
     est_roi: 'Est. ROI',
     exceeds_buying_power: 'Melebihi daya beli.',
-    session_expired: "Sesi berakhir. Silakan login kembali.",
+    session_expired: 'Sesi berakhir. Silakan login kembali.',
     position_opened: '✓ Posisi Dibuka',
     order_rejected: '✗ Pesanan Ditolak',
     positions_opened: '{count} posisi berhasil dibuka',
@@ -400,7 +412,7 @@ export const id = {
     no_orders: 'Belum ada pesanan',
     in_profit: 'Dalam Profit',
     in_loss: 'Dalam Rugi',
-    points: 'Poin'
+    points: 'Poin',
   },
 
   /* ─── TRADING (MEDIA) ─── */
@@ -419,22 +431,28 @@ export const id = {
     ssl_2fa: 'SSL + 2FA',
     demo_account: 'Akun Demo',
     demo_available: 'Tersedia',
-    disclaimer: 'Informasi yang disajikan di halaman ini bersifat informatif dan tidak merupakan saran investasi. Seluruh aktivitas trading mengandung risiko. Pastikan Anda memahami risiko sebelum bertransaksi.',
+    disclaimer:
+      'Informasi yang disajikan di halaman ini bersifat informatif dan tidak merupakan saran investasi. Seluruh aktivitas trading mengandung risiko. Pastikan Anda memahami risiko sebelum bertransaksi.',
     news_1_date: '01 Jun 2026',
     news_1_title: 'Pembaruan Platform NUMBER9 v2.4 — Mesin Trading Ditingkatkan',
-    news_1_body: 'Kecepatan eksekusi pesanan ditingkatkan dan streaming data pasar real-time untuk XAU/USD, XAG/USD, dan pasangan forex utama. Alat manajemen risiko baru ditambahkan.',
+    news_1_body:
+      'Kecepatan eksekusi pesanan ditingkatkan dan streaming data pasar real-time untuk XAU/USD, XAG/USD, dan pasangan forex utama. Alat manajemen risiko baru ditambahkan.',
     news_2_date: '28 Mei 2026',
     news_2_title: 'Ekspansi Kemitraan Global — Asia Tenggara',
-    news_2_body: 'NUMBER9 mengumumkan kemitraan strategis dengan gerbang pembayaran terkemuka di Indonesia, Singapura, dan Malaysia untuk pemrosesan deposit dan penarikan yang lebih cepat.',
+    news_2_body:
+      'NUMBER9 mengumumkan kemitraan strategis dengan gerbang pembayaran terkemuka di Indonesia, Singapura, dan Malaysia untuk pemrosesan deposit dan penarikan yang lebih cepat.',
     news_3_date: '20 Mei 2026',
     news_3_title: 'Prospek Pasar Emas Q3 2026',
-    news_3_body: 'Analis memperkirakan pertumbuhan berkelanjutan harga emas didorong oleh pembelian bank sentral dan ketidakpastian geopolitik.',
+    news_3_body:
+      'Analis memperkirakan pertumbuhan berkelanjutan harga emas didorong oleh pembelian bank sentral dan ketidakpastian geopolitik.',
     news_4_date: '15 Mei 2026',
     news_4_title: 'Program Loyalitas Baru — Tingkat Bonus Referral',
-    news_4_body: 'Memperkenalkan hadiah referral bertingkat: Bronze, Silver, Gold, dan Platinum dengan persentase bonus meningkat. Member aktif dapatkan hingga 5% komisi seumur hidup.',
+    news_4_body:
+      'Memperkenalkan hadiah referral bertingkat: Bronze, Silver, Gold, dan Platinum dengan persentase bonus meningkat. Member aktif dapatkan hingga 5% komisi seumur hidup.',
     news_5_date: '10 Mei 2026',
     news_5_title: 'Peningkatan Keamanan — Autentikasi Dua Faktor',
-    news_5_body: '2FA sekarang tersedia untuk semua akun. Aktifkan melalui Pengaturan Profil untuk menambah lapisan keamanan pada aktivitas trading dan penarikan Anda.',
+    news_5_body:
+      '2FA sekarang tersedia untuk semua akun. Aktifkan melalui Pengaturan Profil untuk menambah lapisan keamanan pada aktivitas trading dan penarikan Anda.',
     news_6_date: '05 Mei 2026',
     news_6_title: 'Analisis Pasar: Logam Mulia Menguat',
     news_6_body: 'Emas dan perak melihat kenaikan signifikan saat pasar global bereaksi terhadap keputusan suku bunga.',
@@ -469,7 +487,7 @@ export const id = {
     q3_a: 'Ya. Baik trading menang maupun kalah berkontribusi berdasarkan nilai nosional.',
     grow: 'Tingkatkan Omzet Anda',
     trade_now: 'Trading Sekarang',
-    trade_marketplace: 'Market Trading'
+    trade_marketplace: 'Market Trading',
   },
 
   /* ─── REFERRAL ─── */
@@ -521,7 +539,7 @@ export const id = {
     approved_date: 'Tanggal Disetujui',
     kyc_verified: 'Terverifikasi',
     kyc_rejected: 'Ditolak',
-    kyc_pending: 'Menunggu'
+    kyc_pending: 'Menunggu',
   },
 
   /* ─── SUPPORT ─── */
@@ -584,7 +602,7 @@ export const id = {
     no_results: 'Tidak ada aktivitas untuk filter yang dipilih.',
     proof_uploaded: 'Bukti terunggah',
     result: 'Hasil',
-    game_position: 'Posisi · {code} · {session}'
+    game_position: 'Posisi · {code} · {session}',
   },
 
   /* ─── ERROR BOUNDARY ─── */
@@ -603,6 +621,6 @@ export const id = {
     empty_default: 'Tidak ada data',
     empty_action_title: 'Tindakan Diperlukan',
     empty_action_label: 'Lanjut',
-    loading: 'Memuat…'
-  }
-}
+    loading: 'Memuat…',
+  },
+};

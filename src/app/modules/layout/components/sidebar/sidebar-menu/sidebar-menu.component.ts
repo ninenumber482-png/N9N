@@ -1,4 +1,4 @@
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -12,7 +12,7 @@ import { SidebarSubmenuComponent } from 'src/app/modules/layout/components/sideb
   templateUrl: './sidebar-menu.component.html',
   styleUrls: ['./sidebar-menu.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, AngularSvgIconModule, NgTemplateOutlet, RouterLink, RouterLinkActive, SidebarSubmenuComponent],
+  imports: [NgClass, AngularSvgIconModule, RouterLink, RouterLinkActive, SidebarSubmenuComponent],
 })
 export class SidebarMenuComponent implements OnInit {
   menuService = inject(MenuService);

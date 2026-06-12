@@ -15,6 +15,9 @@ export interface User {
   email?: string;
   token?: string;
   sessionId?: string;
+  /** false until TOTP setup/verify/skip completes */
+  mfaComplete?: boolean;
+  mfaPhase?: 'setup' | 'verify' | 'complete';
 }
 
 export interface Credentials {
@@ -47,9 +50,7 @@ export class AuthService {
 
     const sanitizedUsername = credentials.username.toLowerCase().trim();
     // Use the real email from database for admin users
-    const email = sanitizedUsername === 'admin' 
-      ? 'admin@mynumber9.uk' 
-      : `${sanitizedUsername}@number9.local`;
+    const email = sanitizedUsername === 'admin' ? 'admin@mynumber9.uk' : `${sanitizedUsername}@number9.local`;
 
     return this.supabaseService.login({
       username: sanitizedUsername,
@@ -61,11 +62,28 @@ export class AuthService {
   login(user: User): void {
     const userWithTimestamp: User = {
       ...user,
+      mfaComplete: user.mfaComplete ?? true,
       timestamp: Date.now(),
     };
 
     localStorage.setItem('auth_user', JSON.stringify(userWithTimestamp));
     this.userSubject.next(userWithTimestamp);
+  }
+
+  completeMfa(): void {
+    const user = this.getStoredUser();
+    if (!user) return;
+    const updated: User = { ...user, mfaComplete: true, mfaPhase: 'complete' };
+    localStorage.setItem('auth_user', JSON.stringify(updated));
+    this.userSubject.next(updated);
+  }
+
+  requireMfa(phase: 'setup' | 'verify'): void {
+    const user = this.getStoredUser();
+    if (!user) return;
+    const updated: User = { ...user, mfaComplete: false, mfaPhase: phase };
+    localStorage.setItem('auth_user', JSON.stringify(updated));
+    this.userSubject.next(updated);
   }
 
   logout(): void {

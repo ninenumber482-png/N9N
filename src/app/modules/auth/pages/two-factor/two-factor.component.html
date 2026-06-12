@@ -1,0 +1,124 @@
+<div class="sign-in-portal">
+  <div class="sign-in-frame">
+    <div class="sign-in-frame-corners" aria-hidden="true"></div>
+
+    @if (step === 'loading') {
+      <div class="sign-in-loading">
+        <span class="sign-in-spinner"></span>
+        <p class="sign-in-loading-text">Preparing 2FA session...</p>
+      </div>
+    } @else {
+      <header class="sign-in-header sign-in-header--center">
+        <h1 class="sign-in-title">Two-Factor Authentication</h1>
+        <p class="sign-in-tagline">
+          @if (step === 'setup') {
+            Scan with Google Authenticator
+          } @else if (step === 'backup') {
+            Save your backup codes
+          } @else {
+            Enter your authenticator code
+          }
+        </p>
+      </header>
+
+      <div class="sign-in-body tfa-body">
+        @if (error) {
+          <p class="sign-in-error tfa-error">{{ error }}</p>
+        }
+
+        @if (step === 'setup') {
+          <div class="tfa-qr-wrap">
+            @if (qrUrl) {
+              <img [src]="qrUrl" width="180" height="180" alt="2FA QR code" class="tfa-qr" />
+            } @else if (busy) {
+              <span class="sign-in-spinner"></span>
+            }
+          </div>
+          @if (secret) {
+            <p class="tfa-secret-label">Manual key</p>
+            <code class="tfa-secret">{{ secret }}</code>
+          }
+          <label class="sign-in-label" for="setup-code">Verification code</label>
+          <input
+            id="setup-code"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            [(ngModel)]="code"
+            class="sign-in-field sign-in-field--center tfa-code"
+            placeholder="000000"
+            (keyup.enter)="confirmSetup()" />
+          <button type="button" class="sign-in-btn sign-in-btn--primary" [disabled]="busy" (click)="confirmSetup()">
+            @if (busy) {
+              <span class="sign-in-spinner sign-in-spinner--sm"></span>
+            }
+            Enable 2FA
+          </button>
+          <button type="button" class="tfa-link-btn" [disabled]="busy" (click)="skipSetup()">Skip for now</button>
+        }
+
+        @if (step === 'backup') {
+          <p class="tfa-hint">Store these codes securely. Each code works once if you lose your device.</p>
+          <ul class="tfa-backup-list">
+            @for (c of backupCodes; track c) {
+              <li>
+                <code>{{ c }}</code>
+              </li>
+            }
+          </ul>
+          <button type="button" class="sign-in-btn" (click)="copyBackupCodes()">Copy codes</button>
+          <label class="tfa-check">
+            <input type="checkbox" [(ngModel)]="backupSaved" />
+            I have saved these backup codes
+          </label>
+          <button
+            type="button"
+            class="sign-in-btn sign-in-btn--primary"
+            [disabled]="!backupSaved"
+            (click)="finishBackup()">
+            Continue to dashboard
+          </button>
+        }
+
+        @if (step === 'verify') {
+          @if (!useBackup) {
+            <label class="sign-in-label" for="verify-code">Authenticator code</label>
+            <input
+              id="verify-code"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              [(ngModel)]="code"
+              class="sign-in-field sign-in-field--center tfa-code"
+              placeholder="000000"
+              (keyup.enter)="verifyLogin()" />
+          } @else {
+            <label class="sign-in-label" for="backup-code">Backup code</label>
+            <input
+              id="backup-code"
+              type="text"
+              [(ngModel)]="backupCode"
+              class="sign-in-field sign-in-field--center"
+              placeholder="XXXX-XXXX"
+              (keyup.enter)="verifyLogin()" />
+          }
+          <button type="button" class="sign-in-btn sign-in-btn--primary" [disabled]="busy" (click)="verifyLogin()">
+            @if (busy) {
+              <span class="sign-in-spinner sign-in-spinner--sm"></span>
+            }
+            Verify
+          </button>
+          <button type="button" class="tfa-link-btn" (click)="toggleBackupMode()">
+            {{ useBackup ? 'Use authenticator app' : 'Use backup code instead' }}
+          </button>
+        }
+      </div>
+
+      <footer class="sign-in-foot">
+        <span>Google Authenticator</span>
+        <span class="sign-in-foot-dot" aria-hidden="true"></span>
+        <span>TOTP · RFC 6238</span>
+      </footer>
+    }
+  </div>
+</div>

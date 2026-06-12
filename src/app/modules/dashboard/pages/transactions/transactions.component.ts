@@ -15,7 +15,7 @@ import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button
 import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-bar.component';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
-import { TagModule } from 'primeng/tag';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -55,18 +55,24 @@ interface TransactionItem {
     WibDatePipe,
     SelectModule,
     DatePickerModule,
-    TagModule,
+    StatusBadgeComponent,
     DialogModule,
     ConfirmDialogModule,
   ],
   providers: [ConfirmationService],
   template: `
     <div data-page="transactions" class="space-y-6">
-      <app-page-header icon="currency-dollar" title="Transactions" subtitle="Review and manage all platform transactions">
+      <app-page-header
+        icon="currency-dollar"
+        title="Transactions"
+        subtitle="Review and manage all platform transactions">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
-      <app-filter-bar [search]="search" (searchChange)="search=$event; applyFilter()" placeholder="Cari ref, username…">
+      <app-filter-bar
+        [search]="search"
+        (searchChange)="search = $event; applyFilter()"
+        placeholder="Cari ref, username…">
         <p-select
           [(ngModel)]="typeFilter"
           (ngModelChange)="applyFilter()"
@@ -110,8 +116,7 @@ interface TransactionItem {
         <div class="overflow-x-auto">
           <table class="saas-table w-full text-left text-xs">
             <thead>
-              <tr
-                class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
+              <tr class="border-border text-muted-foreground border-b text-xs font-semibold uppercase tracking-wider">
                 <th class="px-3 py-2.5">Ref#</th>
                 <th class="px-3 py-2.5">User</th>
                 <th class="px-3 py-2.5">Tipe</th>
@@ -137,7 +142,7 @@ interface TransactionItem {
                     </p>
                   </td>
                   <td class="px-3 py-2.5">
-                    <p-tag [value]="tx.type" [severity]="typeSeverity(tx.type)" />
+                    <app-status-badge [value]="tx.type" [severity]="typeSeverity(tx.type)" />
                   </td>
                   <td class="px-3 py-2.5 font-bold text-foreground whitespace-nowrap">
                     {{ tx.amount | number: '1.0-0' }}
@@ -149,7 +154,7 @@ interface TransactionItem {
                   </td>
                   <td class="px-3 py-2.5 text-[11px] text-muted-foreground">{{ tx.method || tx.bank_name || '-' }}</td>
                   <td class="px-3 py-2.5">
-                    <p-tag [value]="tx.status" [severity]="tx.status | severityMap" />
+                    <app-status-badge [value]="tx.status" [severity]="tx.status | severityMap" />
                   </td>
                   <td class="text-muted-foreground px-3 py-2.5 whitespace-nowrap text-[11px]">
                     {{ tx.created_at | wibDate: 'short' }}
@@ -157,24 +162,11 @@ interface TransactionItem {
                   <td class="px-3 py-2.5" (click)="$event.stopPropagation()">
                     <div class="flex flex-wrap gap-1">
                       @if (tx.status === 'PENDING') {
-                        <button
-                          (click)="confirmAction('approve', tx)"
-                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors">
-                          Approve
-                        </button>
-                        <button
-                          (click)="confirmAction('reject', tx)"
-                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors">
-                          Reject
-                        </button>
+                        <button (click)="confirmAction('approve', tx)" class="n9-btn n9-btn-success">Approve</button>
+                        <button (click)="confirmAction('reject', tx)" class="n9-btn n9-btn-danger">Reject</button>
                       }
                       @if (tx.proof_image_url) {
-                        <a
-                          [href]="tx.proof_image_url"
-                          target="_blank"
-                          class="bg-card border-border hover:bg-accent rounded border px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors"
-                          >Bukti</a
-                        >
+                        <a [href]="tx.proof_image_url" target="_blank" class="n9-btn n9-btn-success">Bukti</a>
                       }
                     </div>
                   </td>
@@ -243,17 +235,43 @@ interface TransactionItem {
             <div class="space-y-4 text-xs">
               <!-- Info utama -->
               <div class="grid grid-cols-2 gap-x-6 gap-y-2">
-                <p><span class="text-muted-foreground">Ref: </span><span class="font-mono text-[11px] text-foreground">{{ selectedTx.reference_code || selectedTx.id.slice(0, 8).toUpperCase() }}</span></p>
-                <p><span class="text-muted-foreground">ID: </span><span class="font-mono text-[11px] text-foreground break-all">{{ selectedTx.id }}</span></p>
-                <p><span class="text-muted-foreground">Tipe: </span><span class="text-foreground font-medium">{{ selectedTx.type }}</span></p>
-                <p><span class="text-muted-foreground">Nominal: </span><span class="font-bold text-foreground">{{ selectedTx.amount | number: '1.0-0' }} P</span></p>
-                <p><span class="text-muted-foreground">Status: </span><span class="text-foreground font-medium">{{ selectedTx.status }}</span></p>
+                <p>
+                  <span class="text-muted-foreground">Ref: </span
+                  ><span class="font-mono text-[11px] text-foreground">{{
+                    selectedTx.reference_code || selectedTx.id.slice(0, 8).toUpperCase()
+                  }}</span>
+                </p>
+                <p>
+                  <span class="text-muted-foreground">ID: </span
+                  ><span class="font-mono text-[11px] text-foreground break-all">{{ selectedTx.id }}</span>
+                </p>
+                <p>
+                  <span class="text-muted-foreground">Tipe: </span
+                  ><span class="text-foreground font-medium">{{ selectedTx.type }}</span>
+                </p>
+                <p>
+                  <span class="text-muted-foreground">Nominal: </span
+                  ><span class="font-bold text-foreground">{{ selectedTx.amount | number: '1.0-0' }} P</span>
+                </p>
+                <p>
+                  <span class="text-muted-foreground">Status: </span
+                  ><span class="text-foreground font-medium">{{ selectedTx.status }}</span>
+                </p>
                 @if (selectedTx.method) {
-                  <p><span class="text-muted-foreground">Metode: </span><span class="text-foreground font-medium">{{ selectedTx.method }}</span></p>
+                  <p>
+                    <span class="text-muted-foreground">Metode: </span
+                    ><span class="text-foreground font-medium">{{ selectedTx.method }}</span>
+                  </p>
                 }
-                <p><span class="text-muted-foreground">Diminta: </span><span class="text-foreground">{{ selectedTx.created_at | wibDate: 'medium' }}</span></p>
+                <p>
+                  <span class="text-muted-foreground">Diminta: </span
+                  ><span class="text-foreground">{{ selectedTx.created_at | wibDate: 'medium' }}</span>
+                </p>
                 @if (selectedTx.processed_at) {
-                  <p class="col-span-2"><span class="text-muted-foreground">Diproses: </span><span class="text-foreground">{{ selectedTx.processed_at | wibDate: 'medium' }}</span></p>
+                  <p class="col-span-2">
+                    <span class="text-muted-foreground">Diproses: </span
+                    ><span class="text-foreground">{{ selectedTx.processed_at | wibDate: 'medium' }}</span>
+                  </p>
                 }
               </div>
 
@@ -262,9 +280,18 @@ interface TransactionItem {
                 <div class="bg-accent/20 rounded-lg p-3 space-y-1.5">
                   <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Info Rekening</p>
                   <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-                    <p><span class="text-muted-foreground">Bank: </span><span class="text-foreground font-medium">{{ selectedTx.bank_name }}</span></p>
-                    <p><span class="text-muted-foreground">A/n: </span><span class="text-foreground font-medium">{{ selectedTx.bank_account_name || '-' }}</span></p>
-                    <p class="col-span-2"><span class="text-muted-foreground">No. Rek: </span><span class="font-mono text-foreground">{{ selectedTx.bank_account_number || '-' }}</span></p>
+                    <p>
+                      <span class="text-muted-foreground">Bank: </span
+                      ><span class="text-foreground font-medium">{{ selectedTx.bank_name }}</span>
+                    </p>
+                    <p>
+                      <span class="text-muted-foreground">A/n: </span
+                      ><span class="text-foreground font-medium">{{ selectedTx.bank_account_name || '-' }}</span>
+                    </p>
+                    <p class="col-span-2">
+                      <span class="text-muted-foreground">No. Rek: </span
+                      ><span class="font-mono text-foreground">{{ selectedTx.bank_account_number || '-' }}</span>
+                    </p>
                   </div>
                 </div>
               }
@@ -273,12 +300,21 @@ interface TransactionItem {
               @if (selectedTx.bet_code) {
                 <div class="bg-accent/20 rounded-lg p-3 space-y-1.5">
                   <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Info Bet</p>
-                  <p><span class="text-muted-foreground">Kode: </span><span class="font-mono text-foreground">{{ selectedTx.bet_code }}</span></p>
+                  <p>
+                    <span class="text-muted-foreground">Kode: </span
+                    ><span class="font-mono text-foreground">{{ selectedTx.bet_code }}</span>
+                  </p>
                   @if (selectedTx.result) {
-                    <p><span class="text-muted-foreground">Hasil: </span><span class="font-medium text-foreground">{{ selectedTx.result }}</span></p>
+                    <p>
+                      <span class="text-muted-foreground">Hasil: </span
+                      ><span class="font-medium text-foreground">{{ selectedTx.result }}</span>
+                    </p>
                   }
                   @if (selectedTx.payout) {
-                    <p><span class="text-muted-foreground">Payout: </span><span class="font-medium text-foreground">{{ selectedTx.payout | number: '1.0-0' }} P</span></p>
+                    <p>
+                      <span class="text-muted-foreground">Payout: </span
+                      ><span class="font-medium text-foreground">{{ selectedTx.payout | number: '1.0-0' }} P</span>
+                    </p>
                   }
                 </div>
               }
@@ -286,9 +322,14 @@ interface TransactionItem {
               <!-- Bukti pembayaran jika ada -->
               @if (selectedTx.proof_image_url) {
                 <div>
-                  <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Bukti Pembayaran</p>
+                  <p class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                    Bukti Pembayaran
+                  </p>
                   <a [href]="selectedTx.proof_image_url" target="_blank">
-                    <img [src]="selectedTx.proof_image_url" alt="Bukti" class="rounded-lg border border-border max-h-48 object-contain w-full" />
+                    <img
+                      [src]="selectedTx.proof_image_url"
+                      alt="Bukti"
+                      class="rounded-lg border border-border max-h-48 object-contain w-full" />
                   </a>
                 </div>
               }
@@ -305,7 +346,7 @@ interface TransactionItem {
                   <button
                     (click)="saveNotes(selectedTx)"
                     [disabled]="savingNotes[selectedTx.id]"
-                    class="bg-foreground text-background rounded px-2.5 py-1 text-[11px] font-medium disabled:opacity-50 transition-opacity">
+                    class="n9-btn n9-btn-solid disabled:opacity-50">
                     {{ savingNotes[selectedTx.id] ? 'Menyimpan…' : 'Simpan Catatan' }}
                   </button>
                   @if (savedNotes[selectedTx.id]) {
@@ -579,7 +620,11 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   }
 
   typeSeverity(t: string): 'info' | 'warn' | 'contrast' | 'secondary' {
-    const m: Record<string, 'info' | 'warn' | 'contrast' | 'secondary'> = { DEPOSIT: 'info', WITHDRAWAL: 'warn', BET: 'contrast' };
+    const m: Record<string, 'info' | 'warn' | 'contrast' | 'secondary'> = {
+      DEPOSIT: 'info',
+      WITHDRAWAL: 'warn',
+      BET: 'contrast',
+    };
     return m[t] || 'secondary';
   }
 }

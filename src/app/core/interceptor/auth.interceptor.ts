@@ -1,11 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  HttpInterceptor,
-  HttpRequest,
-  HttpHandler,
-  HttpEvent,
-  HttpErrorResponse,
-} from '@angular/common/http';
+import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Router } from '@angular/router';
@@ -22,19 +16,17 @@ export class AuthInterceptor implements HttpInterceptor {
     const pathname = this.getPathname(req.url);
 
     const isStaticAsset =
-      pathname.startsWith('/assets/') ||
-      /\.(svg|woff|woff2|ttf|eot|png|jpg|jpeg|gif|webp|ico)$/i.test(pathname);
+      pathname.startsWith('/assets/') || /\.(svg|woff|woff2|ttf|eot|png|jpg|jpeg|gif|webp|ico)$/i.test(pathname);
 
     if (isStaticAsset) return next.handle(req);
 
     const user = this.auth.getCurrentUser();
-    const authReq =
-      user?.token
-        ? req.clone({
-            setHeaders: { 'x-session-token': user.token },
-            withCredentials: true,
-          })
-        : req.clone({ withCredentials: true });
+    const authReq = user?.token
+      ? req.clone({
+          setHeaders: { 'x-session-token': user.token },
+          withCredentials: true,
+        })
+      : req.clone({ withCredentials: true });
 
     return next.handle(authReq).pipe(
       catchError((err: HttpErrorResponse) => {

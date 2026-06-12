@@ -46,7 +46,8 @@ interface NetworkInformationLike extends EventTarget {
           <div class="flex items-center gap-2.5">
             <span class="relative flex h-2.5 w-2.5">
               @if (networkStatus === 'ONLINE') {
-                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-40"></span>
+                <span
+                  class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-40"></span>
               }
               <span
                 class="relative inline-flex h-2.5 w-2.5 rounded-full"
@@ -69,7 +70,11 @@ interface NetworkInformationLike extends EventTarget {
             <div class="mt-2 flex items-end justify-between gap-2">
               <p
                 class="font-mono text-xl font-bold"
-                [class]="networkStatus === 'ONLINE' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                [class]="
+                  networkStatus === 'ONLINE'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400'
+                ">
                 {{ networkStatus }}
               </p>
               <span class="mb-0.5 font-mono text-[10px] text-muted-foreground">HTTP</span>
@@ -80,7 +85,8 @@ interface NetworkInformationLike extends EventTarget {
             <p class="font-mono text-[10px] uppercase text-muted-foreground">API Latency</p>
             <div class="mt-2 flex items-end justify-between gap-2">
               <p class="font-mono text-xl font-bold text-foreground">
-                {{ latencyMs === null ? '--' : latencyMs }}<span class="ml-1 text-xs font-medium text-muted-foreground">ms</span>
+                {{ latencyMs === null ? '--' : latencyMs
+                }}<span class="ml-1 text-xs font-medium text-muted-foreground">ms</span>
               </p>
               <span class="mb-0.5 font-mono text-[10px]" [class]="qualityClass">{{ qualityLabel }}</span>
             </div>
@@ -126,7 +132,13 @@ interface NetworkInformationLike extends EventTarget {
               <div class="grid grid-cols-[70px_58px_minmax(0,1fr)] gap-3 border-b border-white/5 py-1 last:border-0">
                 <span class="text-slate-600">{{ formatLogTime(entry.timestamp) }}</span>
                 <span
-                  [class]="entry.status === 'ONLINE' ? 'text-emerald-400' : entry.status === 'OFFLINE' ? 'text-rose-400' : 'text-amber-400'">
+                  [class]="
+                    entry.status === 'ONLINE'
+                      ? 'text-emerald-400'
+                      : entry.status === 'OFFLINE'
+                        ? 'text-rose-400'
+                        : 'text-amber-400'
+                  ">
                   {{ entry.status }}
                 </span>
                 <span class="min-w-0 break-words text-slate-300">
@@ -140,7 +152,9 @@ interface NetworkInformationLike extends EventTarget {
                 </span>
               </div>
             } @empty {
-              <div class="flex h-full items-center justify-center text-slate-600">Waiting for first network probe...</div>
+              <div class="flex h-full items-center justify-center text-slate-600">
+                Waiting for first network probe...
+              </div>
             }
           </div>
         </div>
@@ -148,7 +162,9 @@ interface NetworkInformationLike extends EventTarget {
         <div class="overflow-hidden rounded-lg border border-border bg-card">
           <div class="border-b border-border px-4 py-3">
             <p class="font-mono text-xs font-semibold text-foreground">LATENCY HISTORY</p>
-            <p class="mt-0.5 font-mono text-[10px] text-muted-foreground">Last {{ latencyHistory.length }} successful probes</p>
+            <p class="mt-0.5 font-mono text-[10px] text-muted-foreground">
+              Last {{ latencyHistory.length }} successful probes
+            </p>
           </div>
 
           <div class="p-4">
@@ -209,11 +225,15 @@ interface NetworkInformationLike extends EventTarget {
             <tbody class="divide-y divide-border/60">
               @for (log of auditLogs; track log.id) {
                 <tr class="hover:bg-muted/25">
-                  <td class="whitespace-nowrap px-4 py-2.5 text-muted-foreground">{{ formatLogTime(log.created_at) }}</td>
+                  <td class="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
+                    {{ formatLogTime(log.created_at) }}
+                  </td>
                   <td class="px-4 py-2.5">
                     <span [class]="methodClass(log.action)">{{ getMethod(log.action) }}</span>
                   </td>
-                  <td class="max-w-[360px] truncate px-4 py-2.5 text-foreground" [title]="log.action">{{ log.action }}</td>
+                  <td class="max-w-[360px] truncate px-4 py-2.5 text-foreground" [title]="log.action">
+                    {{ log.action }}
+                  </td>
                   <td class="px-4 py-2.5 text-muted-foreground">{{ log.resource_type || 'system' }}</td>
                   <td class="whitespace-nowrap px-4 py-2.5 text-muted-foreground">{{ firstIp(log.ip_address) }}</td>
                 </tr>
