@@ -258,9 +258,11 @@ export class AdminService {
   // ── USERS ──
   // getUsers unused — getUsersWithWallets is used instead
   getUsersWithWallets(limit = 100) {
+    // Exclude admin/superadmin — they live in n9_users (admin registry); their
+    // users-row is only a session/MFA anchor and must NOT appear among members.
     return this.get<any>(
       'users',
-      `select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,last_login_ip,last_login_geo,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`,
+      `role=not.in.(admin,superadmin)&select=id,username,display_name,email,phone,country,role,registration_status,login_status,account_status,kyc_status,referral_code,bank_name,bank_account_number,bank_account_name,created_at,approved_at,last_login_ip,last_login_geo,wallet(balance_main,balance_bonus)&order=created_at.desc&limit=${limit}`,
     );
   }
   // getUser unused — queries by UUID
