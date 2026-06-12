@@ -734,4 +734,14 @@ if __name__ == '__main__':
     threading.Thread(target=run_flask, daemon=True).start()
     threading.Thread(target=king_engine_loop, daemon=True).start()
     print('Bot started.')
-    bot.polling(none_stop=True)
+    # Telegram is OFF by default. A dead/invalid token must NEVER crash the
+    # Flask /status server or the backup settlement engine (both daemon threads).
+    if os.environ.get('ENABLE_TELEGRAM', '').strip().lower() in ('1', 'true', 'yes', 'on'):
+        try:
+            bot.polling(none_stop=True)
+        except Exception as e:
+            print(f'[TELEGRAM] polling failed — staying up for Flask+engine: {e}', file=sys.stderr)
+            threading.Event().wait()
+    else:
+        print('[TELEGRAM] disabled (set ENABLE_TELEGRAM=1 to enable)', file=sys.stderr)
+        threading.Event().wait()  # keep process alive for Flask + engine
