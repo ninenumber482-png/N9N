@@ -79,7 +79,7 @@ Notes:     Angular dashboard will auto-refresh every 5s
 ```
 Endpoint:  POST /rest/v1/rpc/engine_settle
 Request:   {
-  "p_api_key": "362745",
+  "p_api_key": "<MONITOR_API_KEY>",
   "p_code": "202606060030",
   "p_d1": 5, "p_d2": 7, "p_d3": 3
 }
@@ -110,8 +110,8 @@ Status:        🟢 ALL PASS
 
 ### API Key Authentication ✅
 ```
-Engine API Key:  362745 (validated in platform_config)
-Monitor API Key: 362745 (X-API-KEY header)
+Engine API Key:  <MONITOR_API_KEY> (validated in platform_config)
+Monitor API Key: <MONITOR_API_KEY> (X-API-KEY header)
 Status:          🟢 SECURE - Keys validated successfully
 ```
 

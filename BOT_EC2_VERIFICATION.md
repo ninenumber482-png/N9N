@@ -33,7 +33,7 @@
 
 **Direct Flask Endpoint:**
 ```bash
-curl -H "X-API-KEY: 362745" http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status
+curl -H "X-API-KEY: <MONITOR_API_KEY>" http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status
 Response: {"cpu": 0.0, "ram": 38.1}
 ```
 ✅ Status: RESPONDING
@@ -57,7 +57,7 @@ ADMIN_IDS = (from environment variable)
 
 ### **API Configuration**
 ```python
-API_KEY = os.environ.get('MONITOR_API_KEY', '362745')
+API_KEY = os.environ.get('MONITOR_API_KEY', '<MONITOR_API_KEY>')
 SUPABASE_URL = 'https://dqsmpdetiqsqfnidekik.supabase.co'
 SUPABASE_KEY = 'eyJhbGci...' (anon key)
 ```
@@ -75,19 +75,19 @@ SESSION_SECS = 300  # 5 minutes
 ### **Bot Configuration**
 ```python
 # bot_monitor.py line 8
-API_KEY = os.environ.get('MONITOR_API_KEY', '362745')
+API_KEY = os.environ.get('MONITOR_API_KEY', '<MONITOR_API_KEY>')
 ```
 
 ### **Database Configuration**
 ```sql
 SELECT value FROM platform_config WHERE key = 'engine_api_key';
-Result: '362745'
+Result: '<MONITOR_API_KEY>'
 ```
 
 ### **Verification**
 ```
-Bot API_KEY:      362745
-Database API Key: 362745
+Bot API_KEY:      <MONITOR_API_KEY>
+Database API Key: <MONITOR_API_KEY>
 Match:            ✅ CONFIRMED
 ```
 
@@ -143,7 +143,7 @@ Session          Digits  Total  Big/Small  Odd/Even  Timestamp
                       │
                       ▼
           supabase_rpc('engine_settle', {
-            'p_api_key': '362745',
+            'p_api_key': '<MONITOR_API_KEY>',
             'p_code': '202606051800',
             'p_d1': 5, 'p_d2': 5, 'p_d3': 5
           })
@@ -172,7 +172,7 @@ Session          Digits  Total  Big/Small  Odd/Even  Timestamp
 ```python
 # Lines 136-141
 supabase_rpc('engine_settle', {
-    'p_api_key': API_KEY,  # 362745
+    'p_api_key': API_KEY,  # <MONITOR_API_KEY>
     'p_code': code,
     'p_d1': digits[0], 
     'p_d2': digits[1], 
@@ -181,7 +181,7 @@ supabase_rpc('engine_settle', {
 ```
 
 ✅ **Uses:** `engine_settle` RPC  
-✅ **API Key:** `362745` (from constant)  
+✅ **API Key:** `<MONITOR_API_KEY>` (from constant)  
 ✅ **Implementation:** Correct
 
 **Database RPC (engine_settle_rpc.sql):**
@@ -250,11 +250,11 @@ let resultMs = Math.ceil(nowUtcMs / SESSION_DURATION_MS) * SESSION_DURATION_MS;
 ### **API Key Management**
 
 **Locations:**
-1. Bot: `API_KEY = '362745'`
-2. Database: `platform_config.engine_api_key = '362745'`
-3. Worker: `API_KEY = '362745'` (server-monitor.js)
+1. Bot: `API_KEY = '<MONITOR_API_KEY>'`
+2. Database: `platform_config.engine_api_key = '<MONITOR_API_KEY>'`
+3. Worker: `API_KEY = '<MONITOR_API_KEY>'` (server-monitor.js)
 
-✅ **All Match:** 362745
+✅ **All Match:** <MONITOR_API_KEY>
 
 **Access Control:**
 - Bot → Engine RPC: API key validated ✅
@@ -280,7 +280,7 @@ let resultMs = Math.ceil(nowUtcMs / SESSION_DURATION_MS) * SESSION_DURATION_MS;
 **Request:**
 ```bash
 curl -X POST .../rpc/engine_settle \
-  -d '{"p_api_key":"362745","p_code":"202606061800","p_d1":3,"p_d2":5,"p_d3":7}'
+  -d '{"p_api_key":"<MONITOR_API_KEY>","p_code":"202606061800","p_d1":3,"p_d2":5,"p_d3":7}'
 ```
 
 **Response:**
@@ -329,7 +329,7 @@ curl https://server-monitor.ninenumber482.workers.dev
 
 | Item | Bot | Database | Frontend | Status |
 |------|-----|----------|----------|--------|
-| **API Key** | 362745 | 362745 | N/A | ✅ MATCH |
+| **API Key** | <MONITOR_API_KEY> | <MONITOR_API_KEY> | N/A | ✅ MATCH |
 | **Session Duration** | 300s | N/A | 300,000ms | ✅ MATCH |
 | **Supabase URL** | dqsmpdetiqsqfnidekik.supabase.co | — | Same | ✅ MATCH |
 | **Supabase Key** | eyJhbGci... | — | Same | ✅ MATCH |
@@ -383,7 +383,7 @@ All critical components verified and operational:
 
 1. ✅ **EC2 Server:** Healthy (CPU 0%, RAM 38.1%)
 2. ✅ **Bot Code:** Using correct `engine_settle` RPC
-3. ✅ **API Keys:** Synchronized across all systems (362745)
+3. ✅ **API Keys:** Synchronized across all systems (<MONITOR_API_KEY>)
 4. ✅ **Session Timing:** Consistent (300s / 300,000ms)
 5. ✅ **Engine Activity:** Settling every 5 minutes
 6. ✅ **Database:** All configs match bot expectations

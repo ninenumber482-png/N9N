@@ -72,7 +72,7 @@ Status: ✅ CONNECTED
 Test: Engine Settle RPC
 Endpoint: POST /rest/v1/rpc/engine_settle
 Request: {
-  "p_api_key": "362745",
+  "p_api_key": "<MONITOR_API_KEY>",
   "p_code": "202606061800",
   "p_d1": 3, "p_d2": 5, "p_d3": 7
 }
@@ -135,8 +135,8 @@ Engine Settle:   <500ms  🟢 Good
 ## 🔐 SECURITY VERIFICATION
 
 ### **API Keys ✅**
-- Engine API Key: Validated (362745)
-- Monitor API Key: Validated (362745)
+- Engine API Key: Validated (<MONITOR_API_KEY>)
+- Monitor API Key: Validated (<MONITOR_API_KEY>)
 - Session tokens: Expiry detection active
 
 ### **CORS Policies ✅**

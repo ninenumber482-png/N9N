@@ -151,7 +151,7 @@ export class SystemComponent implements OnInit, OnDestroy {
 **Configuration:**
 ```javascript
 const EC2_URL = 'http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status';
-const API_KEY = '362745';
+const API_KEY = '<MONITOR_API_KEY>';
 ```
 
 **Request Flow:**
@@ -232,7 +232,7 @@ def flask_status():
 ### Authentication Flow
 ```
 Angular → Cloudflare Worker → EC2
-         (no auth)             (X-API-KEY: 362745)
+         (no auth)             (X-API-KEY: <MONITOR_API_KEY>)
 ```
 
 **Why This Architecture?**
@@ -285,7 +285,7 @@ npm run build
 **4. Verify EC2 Bot Running**
 ```bash
 sudo systemctl status bot_monitor
-curl localhost:5000/status -H "X-API-KEY: 362745"
+curl localhost:5000/status -H "X-API-KEY: <MONITOR_API_KEY>"
 ```
 
 ---
@@ -327,7 +327,7 @@ curl localhost:5000/status -H "X-API-KEY: 362745"
 
 **1. Test EC2 Endpoint Directly**
 ```bash
-curl -H "X-API-KEY: 362745" \
+curl -H "X-API-KEY: <MONITOR_API_KEY>" \
   http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status
 ```
 
@@ -424,7 +424,7 @@ sudo netstat -tlnp | grep 5000
 **Check 3: API Key Correct?**
 ```bash
 # Test with correct key
-curl -H "X-API-KEY: 362745" http://localhost:5000/status
+curl -H "X-API-KEY: <MONITOR_API_KEY>" http://localhost:5000/status
 
 # Test with wrong key (should fail)
 curl -H "X-API-KEY: wrong" http://localhost:5000/status
@@ -583,7 +583,7 @@ sudo systemctl restart bot_monitor
 curl -H "X-API-KEY: NEW_KEY" http://localhost:5000/status
 
 # Should fail with old key
-curl -H "X-API-KEY: 362745" http://localhost:5000/status
+curl -H "X-API-KEY: <MONITOR_API_KEY>" http://localhost:5000/status
 ```
 
 ---

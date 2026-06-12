@@ -52,7 +52,7 @@ curl -X POST "$SUPABASE_URL/rest/v1/rpc/engine_settle" \
   -H "apikey: $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "p_api_key": "362745",
+    "p_api_key": "<MONITOR_API_KEY>",
     "p_code": "202606051550",
     "p_d1": 5,
     "p_d2": 7,
@@ -457,7 +457,7 @@ curl -X POST "$SUPABASE_URL/rest/v1/rpc/engine_settle" \
   -H "apikey: $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "p_api_key": "362745",
+    "p_api_key": "<MONITOR_API_KEY>",
     "p_code": "202606051600",
     "p_d1": 3, "p_d2": 7, "p_d3": 5
   }'

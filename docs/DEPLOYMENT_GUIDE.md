@@ -59,7 +59,7 @@ curl https://server-monitor.ninenumber482.workers.dev
 ### Configuration
 - **URL:** `https://server-monitor.ninenumber482.workers.dev`
 - **EC2 Target:** `http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status`
-- **API Key:** `362745` (same as bot engine)
+- **API Key:** `<MONITOR_API_KEY>` (same as bot engine)
 - **CORS:** Allows `https://admin.mynumber9.uk`
 
 ---
@@ -73,7 +73,7 @@ curl https://server-monitor.ninenumber482.workers.dev
 ```python
 # bot_monitor.py (line 136-141)
 supabase_rpc('engine_settle', {
-    'p_api_key': API_KEY,  # 362745
+    'p_api_key': API_KEY,  # <MONITOR_API_KEY>
     'p_code': code,
     'p_d1': digits[0], 'p_d2': digits[1], 'p_d3': digits[2],
 })
@@ -172,7 +172,7 @@ curl -X POST https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/rpc/engine_settle 
   -H "apikey: $SUPABASE_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "p_api_key": "362745",
+    "p_api_key": "<MONITOR_API_KEY>",
     "p_code": "202606051550",
     "p_d1": 5, "p_d2": 7, "p_d3": 3
   }'
@@ -185,8 +185,8 @@ curl -X POST https://dqsmpdetiqsqfnidekik.supabase.co/rest/v1/rpc/engine_settle 
 ### API Key Management
 
 **Current Keys:**
-- Engine API Key: `362745` (stored in `platform_config.engine_api_key`)
-- Bot Monitor API Key: `362745` (same, in `bot_monitor.py`)
+- Engine API Key: `<MONITOR_API_KEY>` (stored in `platform_config.engine_api_key`)
+- Bot Monitor API Key: `<MONITOR_API_KEY>` (same, in `bot_monitor.py`)
 - Telegram Bot Token: `(env TELEGRAM_BOT_TOKEN)`
 
 **Rotation Procedure:**
@@ -267,7 +267,7 @@ sudo journalctl -u bot_monitor -f
 ```bash
 # Test EC2 endpoint directly
 curl http://ec2-107-22-51-206.compute-1.amazonaws.com:5000/status \
-  -H "X-API-KEY: 362745"
+  -H "X-API-KEY: <MONITOR_API_KEY>"
 
 # Check Cloudflare Worker
 curl https://server-monitor.ninenumber482.workers.dev

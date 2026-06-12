@@ -146,7 +146,7 @@ curl -X POST "$SUPABASE_URL/rest/v1/rpc/engine_settle" \
   -H "apikey: $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "p_api_key": "362745",
+    "p_api_key": "<MONITOR_API_KEY>",
     "p_code": "202606051800",
     "p_d1": 5, "p_d2": 7, "p_d3": 3
   }'
@@ -170,7 +170,7 @@ SELECT * FROM daily_reconciliation(CURRENT_DATE);
 
 ## 🔐 SECURITY CHECKLIST
 
-- [x] API keys validated (engine: 362745)
+- [x] API keys validated (engine: <MONITOR_API_KEY>)
 - [x] RLS policies active on all tables
 - [x] CORS strict (admin.mynumber9.uk only)
 - [x] Session token expiry detection enabled
