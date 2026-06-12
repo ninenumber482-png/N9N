@@ -24,6 +24,8 @@ export class HealthChimeService {
   private audioCtx: AudioContext | null = null;
   private timer?: ReturnType<typeof setInterval>;
   private gestureBound = false;
+  private chimeBuffer: AudioBuffer | null = null;
+  private chimeLoading = false;
 
   enabled = true;
   intervalMin = 10;
@@ -65,6 +67,7 @@ export class HealthChimeService {
       try {
         if (!this.audioCtx) this.audioCtx = new AudioContext();
         void this.audioCtx.resume();
+        void this.loadChime();
       } catch {
         /* ignore */
       }
@@ -147,6 +150,37 @@ export class HealthChimeService {
     osc.stop(start + dur);
   }
 
+  /** Lazy-load the real airport-chime MP3 into an AudioBuffer (once). */
+  private async loadChime(): Promise<void> {
+    if (this.chimeBuffer || this.chimeLoading || typeof fetch === 'undefined') return;
+    const ctx = this.ctx();
+    if (!ctx) return;
+    this.chimeLoading = true;
+    try {
+      const url = new URL('assets/sounds/airport-chime.mp3', document.baseURI).href;
+      const buf = await (await fetch(url)).arrayBuffer();
+      this.chimeBuffer = await ctx.decodeAudioData(buf);
+    } catch {
+      /* asset unavailable — synth fallback will be used */
+    } finally {
+      this.chimeLoading = false;
+    }
+  }
+
+  /** Play the real chime MP3 if decoded. Returns false if not ready. */
+  private playChimeFile(): boolean {
+    const ctx = this.audioCtx;
+    if (!ctx || !this.chimeBuffer) return false;
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    gain.gain.value = 0.9;
+    src.buffer = this.chimeBuffer;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start();
+    return true;
+  }
+
   /** Warm bell: fundamental + soft octave partial + long decay (PA-speaker timbre). */
   private bell(freq: number, start: number, dur: number, vol = 0.12): void {
     const ctx = this.audioCtx;
@@ -170,10 +204,12 @@ export class HealthChimeService {
     }
   }
 
-  /** Airport "attention please" announcement chime — 4 warm bells descending C major. */
+  /** Airport "attention please" chime — real MP3 if decoded, else synth bells (descending C major). */
   private playBoardingCall(): void {
     const ctx = this.ctx();
     if (!ctx) return;
+    if (this.playChimeFile()) return;
+    void this.loadChime(); // prepare for next time
     const t = ctx.currentTime + 0.03;
     this.bell(1047, t + 0.0, 0.9, 0.12); // C6
     this.bell(784, t + 0.48, 0.9, 0.12); // G5
