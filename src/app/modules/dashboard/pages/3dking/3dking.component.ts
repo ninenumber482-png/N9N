@@ -4,6 +4,9 @@ import { CommonModule } from '@angular/common';
 import { AdminService } from 'src/app/core/services/admin.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-header.component';
+import { StatusBadgeComponent } from 'src/app/shared/components/status-badge/status-badge.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 const SESSION_MS = 300_000;
 const LOCK_MS = 60_000; // betting + result-editing close 1 min before draw (kept in sync with king.js)
@@ -141,7 +144,8 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
 @Component({
   selector: 'app-3dking',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule, PageHeaderComponent],
+  imports: [CommonModule, AngularSvgIconModule, PageHeaderComponent, StatusBadgeComponent, ConfirmDialogModule],
+  providers: [ConfirmationService],
   template: `
     <div data-page="3dking" class="space-y-6">
       <app-page-header icon="cube" title="3D King Engine" subtitle="Draw engine and session control" />
@@ -154,7 +158,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
           </div>
           <div>
             <p class="text-muted-foreground uppercase tracking-wider mb-0.5">Phase</p>
-            <p class="text-foreground">{{ currentStatus || '-' }}</p>
+            <app-status-badge [value]="currentStatus || '-'" [severity]="phaseSeverity(currentStatus)" />
           </div>
           <div>
             <p class="text-muted-foreground uppercase tracking-wider mb-0.5">Countdown</p>
@@ -275,7 +279,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                       <div class="inline-flex gap-1">
                         <button
                           type="button"
-                          (click)="overrideCategory(s.code, 'bs', 'BIG')"
+                          (click)="confirmOverride(s.code, 'bs', 'BIG')"
                           title="Force BIG"
                           class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.bs !== 'BIG'"
@@ -287,7 +291,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                         </button>
                         <button
                           type="button"
-                          (click)="overrideCategory(s.code, 'bs', 'SMALL')"
+                          (click)="confirmOverride(s.code, 'bs', 'SMALL')"
                           title="Force SMALL"
                           class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.bs !== 'SMALL'"
@@ -307,7 +311,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                       <div class="inline-flex gap-1">
                         <button
                           type="button"
-                          (click)="overrideCategory(s.code, 'oe', 'ODD')"
+                          (click)="confirmOverride(s.code, 'oe', 'ODD')"
                           title="Force ODD"
                           class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.oe !== 'ODD'"
@@ -319,7 +323,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                         </button>
                         <button
                           type="button"
-                          (click)="overrideCategory(s.code, 'oe', 'EVEN')"
+                          (click)="confirmOverride(s.code, 'oe', 'EVEN')"
                           title="Force EVEN"
                           class="px-1.5 py-0.5 rounded text-[11px] transition-colors"
                           [class.bg-muted]="s.oe !== 'EVEN'"
@@ -362,6 +366,8 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
           </div>
         </div>
       </div>
+
+      <p-confirmdialog />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -370,6 +376,34 @@ export class ThreeDKingComponent implements OnInit, OnDestroy {
   private admin = inject(AdminService);
   private cdr = inject(ChangeDetectorRef);
   private notification = inject(NotificationService);
+  private confirmation = inject(ConfirmationService);
+
+  dispCode(code: string) {
+    return displayCode(code);
+  }
+
+  phaseSeverity(phase: string): 'success' | 'warn' | 'info' | 'secondary' {
+    switch (phase) {
+      case 'OPEN':
+        return 'success';
+      case 'LOCKED':
+        return 'warn';
+      case 'RESULTING':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
+
+  confirmOverride(code: string, axis: 'bs' | 'oe', value: string) {
+    this.confirmation.confirm({
+      message: `Paksa <strong>${value}</strong> untuk sesi <strong>${this.dispCode(code)}</strong>? Ini meng-override hasil undian secara manual.`,
+      header: 'Konfirmasi Override',
+      rejectLabel: 'Batal',
+      acceptLabel: `Paksa ${value}`,
+      accept: () => this.overrideCategory(code, axis, value),
+    });
+  }
 
   sessions: SessionRow[] = [];
   lastResult: number | null = null;
