@@ -55,6 +55,9 @@
             {{ clockTime || '--:--:--' }} <span class="font-normal" style="color: var(--sidebar-muted)">WIB</span>
           </p>
           <p class="truncate text-[10px] text-emerald-400/70">System D · Connected</p>
+          <p class="truncate text-[10px]" style="color: var(--sidebar-muted)" [title]="buildLabel + ' · ' + buildDate">
+            {{ buildLabel }}
+          </p>
         </div>
       }
     </div>

@@ -7,6 +7,7 @@ import { SidebarMenuComponent } from 'src/app/modules/layout/components/sidebar/
 import { AdminService } from 'src/app/core/services/admin.service';
 import { RealtimeService } from 'src/app/core/services/realtime.service';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { environment } from 'src/environments/environment';
 
 const PENDING_NOTIF_KEY = 'n9_pending_notif_seeded';
 
@@ -29,6 +30,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private clockTimer: ReturnType<typeof setInterval> | null = null;
   private txSub: Subscription | null = null;
   clockTime = '';
+  readonly buildLabel = `v${environment.appVersion} · ${environment.buildHash}`;
+  readonly buildDate = environment.buildTime.slice(0, 10);
 
   ngOnInit(): void {
     this.refreshBadges();

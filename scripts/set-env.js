@@ -33,11 +33,27 @@ const serverMonitorUrl =
   currentMonitor ||
   'https://server-monitor.ninenumber482.workers.dev';
 
+// Build version stamp (auto — no manual bump needed)
+const { execSync } = require('child_process');
+const pkgVersion = require('../package.json').version || '0.0.0';
+let buildHash = 'dev';
+try {
+  buildHash = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+    .toString()
+    .trim();
+} catch {
+  buildHash = (process.env.CF_PAGES_COMMIT_SHA || 'dev').slice(0, 7);
+}
+const buildTime = new Date().toISOString();
+
 const content = `export const environment = {
   production: true,
   supabaseUrl: '${supabaseUrl}',
   supabaseKey: '${supabaseKey}',
   serverMonitorUrl: '${serverMonitorUrl}',
+  appVersion: '${pkgVersion}',
+  buildHash: '${buildHash}',
+  buildTime: '${buildTime}',
 };
 `;
 
@@ -45,3 +61,4 @@ writeFileSync(prodPath, content, 'utf-8');
 console.log('[set-env] Generated environment.prod.ts');
 console.log(`  SUPABASE_URL: ${supabaseUrl.slice(0, 20)}...`);
 console.log(`  SUPABASE_KEY: ${supabaseKey.slice(0, 20)}...`);
+console.log(`  VERSION: v${pkgVersion} · ${buildHash} · ${buildTime}`);
