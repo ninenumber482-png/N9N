@@ -236,7 +236,6 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                       class="text-[11px]"
                       [class.text-emerald-400]="s.status === 'NEXT'"
                       [class.font-semibold]="s.status === 'NEXT'"
-                      [class.animate-pulse]="s.status === 'NEXT'"
                       >{{
                         s.status === 'SETTLED'
                           ? 'Settled'
@@ -253,8 +252,7 @@ function rollDigits(bs?: string, oe?: string): { d1: number; d2: number; d3: num
                   <td
                     class="px-3 py-2 text-right font-mono text-[11px]"
                     [class.text-emerald-400]="s.status === 'NEXT'"
-                    [class.font-semibold]="s.status === 'NEXT'"
-                    [class.animate-pulse]="s.status === 'NEXT'">
+                    [class.font-semibold]="s.status === 'NEXT'">
                     {{ fmtTimer(s.countdown) }}
                   </td>
                   <td

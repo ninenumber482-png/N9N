@@ -120,28 +120,6 @@ layer(base);
       transform: translateX(0);
     }
   }
-  @keyframes king-upcoming-flow {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
-  }
-  @keyframes king-upcoming-glow {
-    0%,
-    100% {
-      box-shadow:
-        inset 4px 0 0 #10b981,
-        0 0 0 1px rgb(16 185 129 / 0.28);
-    }
-    50% {
-      box-shadow:
-        inset 4px 0 0 #34d399,
-        0 0 16px 0 rgb(16 185 129 / 0.38),
-        0 0 0 1px rgb(52 211 153 / 0.55);
-    }
-  }
 }
 
 @utility container {
@@ -776,19 +754,12 @@ layer(base);
 /* Bets page — legacy aliases (same as n9-badge) */
 
 /* 3D King — upcoming session rows (NEXT) */
+/* NEXT row — calm static green highlight (no flowing/pulsing animation). */
 .king-upcoming-row {
-  background-image: linear-gradient(
-    90deg,
-    rgb(16 185 129 / 0.16) 0%,
-    rgb(16 185 129 / 0.04) 30%,
-    rgb(16 185 129 / 0.14) 50%,
-    rgb(16 185 129 / 0.04) 70%,
-    rgb(16 185 129 / 0.16) 100%
-  );
-  background-size: 220% 100%;
-  animation:
-    king-upcoming-flow 2.8s linear infinite,
-    king-upcoming-glow 2s ease-in-out infinite;
+  background-color: rgb(16 185 129 / 0.08);
+  box-shadow:
+    inset 4px 0 0 #10b981,
+    inset 0 0 0 1px rgb(16 185 129 / 0.22);
 }
 
 /* ══════════════════════════════════════════════
