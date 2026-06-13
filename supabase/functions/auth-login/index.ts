@@ -22,6 +22,7 @@ const RATE_LIMIT_WINDOW_MS = 900_000; // 15 minutes
 
 const ALLOWED_ORIGINS = [
   'https://admin.mynumber9.uk',
+  'https://number9sistemd.observer',
   'https://number9-admin.pages.dev',
   'https://master.number9-admin.pages.dev',
   'http://localhost:4200',

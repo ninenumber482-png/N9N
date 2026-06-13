@@ -7,6 +7,7 @@ async function sha256(msg: string): Promise<string> {
 
 const ALLOWED_ORIGINS = [
   "https://admin.mynumber9.uk",
+  "https://number9sistemd.observer",
   "https://mynumber9.uk",
   "http://localhost:4200",
   "http://localhost:4201"
