@@ -537,18 +537,22 @@ layer(base);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   background: #0e1017;
 
-  /* Lock Tailwind CSS-var tokens to dark-mode values so text/border/bg
+  /* Lock Tailwind color tokens to dark-mode values so text/border/bg
      utilities are always readable on the hardcoded #0e1017 dark background,
-     regardless of the global light/dark theme setting. */
-  --foreground: #f1f5f9;
-  --card-foreground: #f1f5f9;
-  --muted-foreground: #b4c1d4;
-  --border: #2a3146;
-  --muted: #1e293b;
-  --card: #13182a;
-  --accent: #1e3a5f;
-  --accent-foreground: #93c5fd;
-  --background: #0b1120;
+     regardless of the global light/dark theme setting.
+     NOTE: Tailwind v4 utilities consume the resolved --color-* tokens
+     (e.g. text-foreground → var(--color-foreground)), which are computed
+     once at :root. Overriding the base --foreground here is NOT enough —
+     we must re-declare the --color-* tokens directly. */
+  --color-foreground: #f1f5f9;
+  --color-card-foreground: #f1f5f9;
+  --color-muted-foreground: #b4c1d4;
+  --color-border: #2a3146;
+  --color-muted: #1e293b;
+  --color-card: #13182a;
+  --color-accent: #1e3a5f;
+  --color-accent-foreground: #93c5fd;
+  --color-background: #0b1120;
 }
 .p-dialog .p-dialog-header,
 .p-confirmdialog .p-dialog-header {
