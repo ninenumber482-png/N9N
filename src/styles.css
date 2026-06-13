@@ -525,7 +525,10 @@ layer(base);
 }
 
 /* ── Global branded look for ALL PrimeNG dialogs (match app-confirm-dialog) ──
-   Scoped variants (.n9-logout-dialog, .dashboard-dialog) layer on top. */
+   Scoped variants (.n9-logout-dialog, .dashboard-dialog) layer on top.
+   Force dark-mode Tailwind color tokens inside dialogs — background is always
+   #0e1017 (dark) so text/border vars must resolve to their dark-mode values
+   regardless of the global app theme (light vs dark). */
 .p-dialog,
 .p-confirmdialog {
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -533,6 +536,19 @@ layer(base);
   overflow: hidden;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   background: #0e1017;
+
+  /* Lock Tailwind CSS-var tokens to dark-mode values so text/border/bg
+     utilities are always readable on the hardcoded #0e1017 dark background,
+     regardless of the global light/dark theme setting. */
+  --foreground: #f1f5f9;
+  --card-foreground: #f1f5f9;
+  --muted-foreground: #b4c1d4;
+  --border: #2a3146;
+  --muted: #1e293b;
+  --card: #13182a;
+  --accent: #1e3a5f;
+  --accent-foreground: #93c5fd;
+  --background: #0b1120;
 }
 .p-dialog .p-dialog-header,
 .p-confirmdialog .p-dialog-header {
