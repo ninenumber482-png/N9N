@@ -627,6 +627,9 @@ export class AdminService {
   getRecentAudit(limit = 100) {
     return this.get<any>(`audit_log?resource_type=neq.admin_proxy&order=created_at.desc&limit=${limit}`);
   }
+  getAuditLogsByResourceType(resourceType: string, limit = 20) {
+    return this.get<any>(`audit_log?resource_type=eq.${encodeURIComponent(resourceType)}&order=created_at.desc&limit=${limit}`);
+  }
   async logAction(
     usernameOrId: string,
     action: string,

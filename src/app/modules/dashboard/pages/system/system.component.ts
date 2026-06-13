@@ -343,6 +343,58 @@ interface ConfigEntry {
         }
       </div>
 
+      <!-- Platform Config Audit Log -->
+      <div class="bg-card border border-border rounded-lg overflow-hidden">
+        <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <div>
+            <h3 class="text-sm font-medium text-foreground">Audit Firewall</h3>
+            <p class="text-[11px] text-muted-foreground mt-0.5">Riwayat toggle maintenance & marketplace</p>
+          </div>
+          <button (click)="loadAuditLog()" class="px-2.5 py-1 rounded text-xs text-foreground bg-muted hover:bg-muted/60 transition-colors">
+            Refresh
+          </button>
+        </div>
+        @if (auditLoading) {
+          <p class="text-[11px] text-muted-foreground py-6 text-center">Memuat...</p>
+        } @else if (auditEvents.length === 0) {
+          <p class="text-[11px] text-muted-foreground py-6 text-center">Belum ada riwayat perubahan.</p>
+        } @else {
+          <table class="w-full text-left text-[11px]">
+            <thead>
+              <tr class="border-b border-border bg-muted/10 text-xs uppercase tracking-wider text-muted-foreground">
+                <th class="px-4 py-2.5">Aksi</th>
+                <th class="px-4 py-2.5">Sebelum</th>
+                <th class="px-4 py-2.5">Sesudah</th>
+                <th class="px-4 py-2.5">Waktu</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of auditEvents; track e.id) {
+                <tr class="border-b border-border">
+                  <td class="px-4 py-2.5">
+                    <span
+                      class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                      [class.bg-red-500/10]="e.action.includes('ENABLED') || e.action.includes('CLOSED')"
+                      [class.text-red-400]="e.action.includes('ENABLED') || e.action.includes('CLOSED')"
+                      [class.bg-green-500/10]="e.action.includes('DISABLED') || e.action.includes('OPENED')"
+                      [class.text-green-400]="e.action.includes('DISABLED') || e.action.includes('OPENED')"
+                      [class.bg-muted]="e.action === 'PLATFORM_CONFIG_SET'"
+                      [class.text-muted-foreground]="e.action === 'PLATFORM_CONFIG_SET'">
+                      {{ e.action.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-2.5 font-mono text-muted-foreground">{{ e.old_value || '—' }}</td>
+                  <td class="px-4 py-2.5 font-mono text-foreground">{{ e.new_value }}</td>
+                  <td class="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                    {{ e.created_at | wibDate: 'short' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+
       <p-confirmdialog />
     </div>
   `,
@@ -373,10 +425,14 @@ export class SystemComponent implements OnInit, OnDestroy {
   private consecutiveErrors = 0;
   private maxRetries = 3;
 
+  auditEvents: any[] = [];
+  auditLoading = false;
+
   ngOnInit() {
     this.load();
     this.loadEngineMeta();
     this.pollServer();
+    this.loadAuditLog();
     this.serverPollTimer = setInterval(() => this.pollServer(), 5000);
   }
 
@@ -569,6 +625,19 @@ export class SystemComponent implements OnInit, OnDestroy {
       this.error = (e instanceof Error ? e.message : '') || 'Failed to toggle maintenance';
     }
     this.saving = false;
+    this.cdr.markForCheck();
+  }
+
+  async loadAuditLog() {
+    this.auditLoading = true;
+    this.cdr.markForCheck();
+    try {
+      const rows = await this.admin.getAuditLogsByResourceType('platform_config', 20);
+      this.auditEvents = rows || [];
+    } catch {
+      this.auditEvents = [];
+    }
+    this.auditLoading = false;
     this.cdr.markForCheck();
   }
 

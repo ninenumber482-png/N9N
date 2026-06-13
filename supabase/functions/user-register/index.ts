@@ -69,6 +69,18 @@ Deno.serve(async (req: Request) => {
       if (!supabaseUrl || !serviceRoleKey) return json({ error: 'Server misconfiguration' }, 500, req)
       const supabase = createClient(supabaseUrl, serviceRoleKey)
 
+      // ── Maintenance firewall — blokir registrasi baru saat maintenance ──
+      const { data: maintRow } = await supabase
+        .from('platform_config').select('value').eq('key', 'maintenance_mode').maybeSingle();
+      if (maintRow?.value === 'true') {
+        const { data: msgRow } = await supabase
+          .from('platform_config').select('value').eq('key', 'maintenance_msg').maybeSingle();
+        return json({
+          error: 'MAINTENANCE_MODE',
+          message: msgRow?.value || 'Platform sedang maintenance. Coba lagi nanti.',
+        }, 503, req);
+      }
+
       // ── Rate limiting for registrations ──
       if (!data.validateOnly && data.step !== 2 && data.username) {
         const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';

@@ -153,6 +153,27 @@ Deno.serve(async (req) => {
     const ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('host') || '';
     const uname = username.trim().toLowerCase();
 
+    // ── Maintenance firewall — cek SEBELUM rate limit agar tidak konsumsi slot ──
+    const { data: maintRow } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .maybeSingle();
+    if (maintRow?.value === 'true') {
+      const { data: msgRow } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'maintenance_msg')
+        .maybeSingle();
+      return new Response(
+        JSON.stringify({
+          error: 'MAINTENANCE_MODE',
+          message: msgRow?.value || 'Platform sedang maintenance. Coba lagi nanti.',
+        }),
+        { status: 503, headers: corsHeaders(req) },
+      );
+    }
+
     // ── Rate limiting ──
     const rl = await checkRateLimit(supabase, uname, ip_address);
     if (!rl.allowed) {
