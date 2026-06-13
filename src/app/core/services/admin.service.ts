@@ -778,6 +778,12 @@ export class AdminService {
     return Array.isArray(rows) ? rows.length : 0;
   }
 
+  // ── GATEWAY ACTIVATIONS (live deposit reconciliation) ──
+  getActiveGateways() {
+    const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    return this.proxy<any[]>('GET', `/gateway_activations?activated_at=gte.${cutoff}&order=activated_at.desc`);
+  }
+
   // ── POPUP BANNERS ──
   getPopupBanners(limit = 50) {
     return this.get<any>(`popup_banners?order=created_at.desc&limit=${limit}`);
