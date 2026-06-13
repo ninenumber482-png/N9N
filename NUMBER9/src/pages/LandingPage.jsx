@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TRUST, VALUES, STATS } from '../config/landing';
-import { supabase } from '../utils/supabase';
+import { useStore } from '../store/useStore';
 import { useI18n } from '../i18n';
 import CsWidget from '../components/ui/CsWidget';
+import MaintenancePage from './MaintenancePage';
 
 // Neutral inline SVG icons (heroicons outline paths) — used by trust badges,
 // values, and stats so the whole landing uses crisp icons (no pasted PNGs).
@@ -28,29 +28,10 @@ const ICONS = {
 
 export default function LandingPage() {
   const { t, lang, setLang } = useI18n();
-  const [maintenance, setMaintenance] = useState(false);
-  const [maintenanceMsg, setMaintenanceMsg] = useState('');
+  const systemStatus = useStore(s => s.systemStatus);
 
-  useEffect(() => {
-    if (!supabase) return;
-    supabase.rpc('get_public_config').then(({ data }) => {
-      if (!data) return;
-      const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
-      if (cfg.maintenance_mode === 'true') {
-        setMaintenance(true);
-        setMaintenanceMsg(cfg.maintenance_msg || '');
-      }
-    }).catch(() => {});
-  }, []);
-
-  if (maintenance) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#050607] px-6 text-center">
-        <div className="text-6xl mb-6">🔧</div>
-        <h1 className="text-2xl font-bold text-white mb-3">Under Maintenance</h1>
-        <p className="text-zinc-400 max-w-md text-sm">{maintenanceMsg || 'Please check back later.'}</p>
-      </div>
-    );
+  if (systemStatus?.platformMaintenance) {
+    return <MaintenancePage message={systemStatus?.platformMsg} />;
   }
 
   return (

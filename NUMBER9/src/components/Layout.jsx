@@ -7,6 +7,7 @@ import ConfirmDialog from "./ui/ConfirmDialog";
 import SystemNotification from "./ui/SystemNotification";
 import CsWidget from "./ui/CsWidget";
 import ModalOverlay from "./ui/ModalOverlay";
+import MaintenancePage from "../pages/MaintenancePage";
 
 function useLayoutBalance() {
   const availableBalance = useStore((s) => s.availableBalance);
@@ -66,15 +67,7 @@ export default function Layout({ children }) {
 
   // Maintenance mode — lock all pages
   if (maintenance) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0c12] px-6 text-center">
-        <div className="text-6xl mb-6">🔧</div>
-        <h1 className="text-2xl font-bold text-white mb-3">Under Maintenance</h1>
-        <p className="text-zinc-400 max-w-md text-sm">
-          {maintenanceMsg || 'The platform is currently undergoing scheduled maintenance. Please check back later.'}
-        </p>
-      </div>
-    );
+    return <MaintenancePage message={maintenanceMsg} />;
   }
 
   return (

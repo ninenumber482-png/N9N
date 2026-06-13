@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore'
-import { supabase } from '../utils/supabase'
 import LoginForm from '../components/LoginForm'
 import { useI18n } from '../i18n'
 import ModalOverlay from '../components/ui/ModalOverlay';
 import CsWidget from '../components/ui/CsWidget';
+import MaintenancePage from './MaintenancePage';
 
 export default function LoginPage() {
   const auth = useStore(s => s.auth)
   const login = useStore(s => s.login)
+  const systemStatus = useStore(s => s.systemStatus)
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -17,30 +18,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [pendingModal, setPendingModal] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [maintenance, setMaintenance] = useState(false)
-  const [maintenanceMsg, setMaintenanceMsg] = useState('')
   const { t } = useI18n()
   const toDashboard = () => `/c/${auth?.id}/dashboard`
 
-  useEffect(() => {
-    if (!supabase) return;
-    supabase.rpc('get_public_config').then(({ data }) => {
-      if (!data) return;
-      const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
-      if (cfg.maintenance_mode === 'true') { setMaintenance(true); setMaintenanceMsg(cfg.maintenance_msg || ''); }
-    }).catch(() => {});
-  }, []);
-
   useEffect(() => { if (auth?.id) navigate(toDashboard(), { replace: true }) }, [auth, navigate, toDashboard])
 
-  if (maintenance) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#050607] px-6 text-center">
-        <div className="text-6xl mb-6">🔧</div>
-        <h1 className="text-2xl font-bold text-white mb-3">Under Maintenance</h1>
-        <p className="text-zinc-400 max-w-md text-sm">{maintenanceMsg || 'Please check back later.'}</p>
-      </div>
-    );
+  if (systemStatus?.platformMaintenance) {
+    return <MaintenancePage message={systemStatus?.platformMsg} />;
   }
 
   const handleLogin = async e => {
