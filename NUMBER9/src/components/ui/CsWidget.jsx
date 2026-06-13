@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../../store/useStore'
 import { fetchCsContact } from '../../utils/csContact'
+import { getTicketUnreadCount } from '../../utils/tickets'
 
 const WaIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -22,8 +24,11 @@ const TgIcon = (props) => (
  */
 export default function CsWidget() {
   const auth = useStore((s) => s.auth)
+  const navigate = useNavigate()
+  const { clientUuid } = useParams()
   const [cs, setCs] = useState(null)
   const [open, setOpen] = useState(false)
+  const [unread, setUnread] = useState(0)
 
   useEffect(() => {
     if (!auth?.id) return // not logged in → render guard below returns null
@@ -32,9 +37,17 @@ export default function CsWidget() {
     return () => { alive = false }
   }, [auth?.id])
 
-  // Backend already gates by token; this is defense-in-depth on the frontend.
+  useEffect(() => {
+    if (!auth?.id) return
+    let alive = true
+    const tick = () => getTicketUnreadCount().then((n) => { if (alive) setUnread(n) })
+    tick()
+    const i = setInterval(tick, 15000)
+    return () => { alive = false; clearInterval(i) }
+  }, [auth?.id])
+
+  // Login-only widget; Live Chat is always available, WA/TG are conditional.
   if (!auth?.id) return null
-  if (!cs?.anyActive) return null
 
   return (
     <>
@@ -44,6 +57,11 @@ export default function CsWidget() {
         className="fixed bottom-[max(5rem,calc(5rem+env(safe-area-inset-bottom)))] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-black shadow-lg shadow-yellow-400/30 hover:bg-yellow-300 hover:shadow-yellow-400/50 hover:scale-110 transition-all duration-200 active:scale-95 lg:bottom-6"
         aria-label="Contact customer service"
       >
+        {unread > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
@@ -55,13 +73,13 @@ export default function CsWidget() {
             {/* Header */}
             <div className="bg-yellow-400 px-4 py-3 flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-black/15 flex items-center justify-center text-black">
-                {cs.avatar
+                {cs?.avatar
                   ? <img src={cs.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
                   : <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-black truncate">{cs.displayName}</p>
+                <p className="text-sm font-bold text-black truncate">{cs?.displayName || 'Customer Service'}</p>
                 <p className="text-[10px] text-black/60">Online</p>
               </div>
               <button onClick={() => setOpen(false)} className="text-black/50 hover:text-black transition-colors" aria-label="Close">
@@ -72,10 +90,17 @@ export default function CsWidget() {
             {/* Body */}
             <div className="p-4 space-y-2.5">
               <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] px-3 py-2.5 mb-1">
-                <p className="text-xs text-zinc-300 leading-relaxed">{cs.welcome}</p>
+                <p className="text-xs text-zinc-300 leading-relaxed">{cs?.welcome || 'Hello! How can we help you today?'}</p>
               </div>
 
-              {cs.tgOk && (
+              <button
+                onClick={() => { setOpen(false); navigate(`/c/${clientUuid || auth.id}/support`) }}
+                className="flex items-center justify-center gap-2 w-full rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black text-sm font-bold py-3 transition-colors active:scale-[0.98]"
+              >
+                💬 Live Chat
+              </button>
+
+              {cs?.tgOk && (
                 <a
                   href={cs.tgHref}
                   target="_blank"
@@ -86,7 +111,7 @@ export default function CsWidget() {
                 </a>
               )}
 
-              {cs.waOk && (
+              {cs?.waOk && (
                 <a
                   href={cs.waHref}
                   target="_blank"
