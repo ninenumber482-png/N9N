@@ -122,15 +122,40 @@ function App() {
     }
     const syncConfig = async () => {
       try {
-        const { data } = await supabase.rpc('get_public_config');
-        const cfg = data ? Object.fromEntries(data.map(r => [r.key, r.value])) : {};
+        const { data, error } = await supabase.rpc('get_public_config');
+        if (error || !data) {
+          // RPC error — fail-closed: if maintenance was on before, keep it on
+          const lastKnown = sessionStorage.getItem('n9_maint');
+          if (lastKnown === 'true') {
+            useStore.getState().setSystemStatus({
+              kingStatus: 'OPEN', kingStatusMsg: '',
+              platformMaintenance: true,
+              platformMsg: sessionStorage.getItem('n9_maint_msg') || '',
+            });
+          }
+          useStore.getState().setConfigReady(true);
+          return;
+        }
+        const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
+        const maint = cfg.maintenance_mode === 'true';
+        sessionStorage.setItem('n9_maint', String(maint));
+        sessionStorage.setItem('n9_maint_msg', cfg.maintenance_msg || '');
         useStore.getState().setSystemStatus({
           kingStatus: cfg.king_marketplace || 'OPEN',
           kingStatusMsg: cfg.king_marketplace_msg || '',
-          platformMaintenance: cfg.maintenance_mode === 'true',
+          platformMaintenance: maint,
           platformMsg: cfg.maintenance_msg || '',
         });
-      } catch { /* silent — gagal fetch, biarkan platform terbuka */ }
+      } catch {
+        const lastKnown = sessionStorage.getItem('n9_maint');
+        if (lastKnown === 'true') {
+          useStore.getState().setSystemStatus({
+            kingStatus: 'OPEN', kingStatusMsg: '',
+            platformMaintenance: true,
+            platformMsg: sessionStorage.getItem('n9_maint_msg') || '',
+          });
+        }
+      }
       finally { useStore.getState().setConfigReady(true); }
     };
     syncConfig();

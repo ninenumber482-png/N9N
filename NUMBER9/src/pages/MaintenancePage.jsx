@@ -3,19 +3,57 @@ import { useEffect } from 'react';
 const DIGITS = ['9', '3', '1', '7', '9', '5', '2', '8', '9', '4', '6', '9'];
 
 export default function MaintenancePage({ message }) {
-  // Block right-click, text-select, and common escape shortcuts
   useEffect(() => {
+    // Freeze body scroll + overflow
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Block right-click + text-select
     const block = e => e.preventDefault();
+
+    // Block DevTools shortcuts, copy/paste, print, save, reload, navigation
     const blockKey = e => {
-      if (e.key === 'F12' || (e.ctrlKey && ['u','s','a','c'].includes(e.key.toLowerCase()))) e.preventDefault();
+      const k = e.key?.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (
+        e.key === 'F12' || e.key === 'F5' ||
+        (ctrl && e.shiftKey && ['i','j','c','k'].includes(k)) ||
+        (ctrl && ['u','s','a','c','p','r'].includes(k)) ||
+        (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))
+      ) e.preventDefault();
     };
+
+    // Block drag to prevent content inspection
+    const blockDrag = e => e.preventDefault();
+
+    // Block browser back/forward via popstate
+    const blockNav = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.history.pushState(null, '', window.location.href);
+
+    // Override history API to trap SPA navigation
+    const origPush    = window.history.pushState.bind(window.history);
+    const origReplace = window.history.replaceState.bind(window.history);
+    window.history.pushState    = (s, t, u) => origPush(s, t, window.location.href);
+    window.history.replaceState = (s, t, u) => origReplace(s, t, window.location.href);
+
     document.addEventListener('contextmenu', block);
     document.addEventListener('keydown', blockKey);
     document.addEventListener('selectstart', block);
+    document.addEventListener('dragstart', blockDrag);
+    window.addEventListener('popstate', blockNav);
+
     return () => {
+      document.body.style.overflow = prevOverflow;
       document.removeEventListener('contextmenu', block);
       document.removeEventListener('keydown', blockKey);
       document.removeEventListener('selectstart', block);
+      document.removeEventListener('dragstart', blockDrag);
+      window.removeEventListener('popstate', blockNav);
+      // Restore history API
+      window.history.pushState    = origPush;
+      window.history.replaceState = origReplace;
     };
   }, []);
 
