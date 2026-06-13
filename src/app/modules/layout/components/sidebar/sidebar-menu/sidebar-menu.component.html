@@ -61,7 +61,7 @@
                     <span class="truncate text-xs font-medium">{{ item.label }}</span>
                     <svg
                       class="h-2.5 w-2.5 flex-shrink-0 transition-transform duration-200"
-                      [class.rotate-180]="item.expanded"
+                      [class.rotate-180]="item.expanded || item.active"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

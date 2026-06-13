@@ -1,6 +1,6 @@
 <div
   class="max-h-0 overflow-hidden pt-1 transition-all duration-500 ltr:pl-2.5 rtl:pr-2.5"
-  [ngClass]="{ 'max-h-screen': submenu.expanded }">
+  [ngClass]="{ 'max-h-screen': submenu.expanded || submenu.active }">
   <ul
     class="border-border text-muted-foreground flex flex-col border-dashed ltr:border-l ltr:pl-2 rtl:border-r rtl:pr-2">
     @for (sub of submenu.children; track sub) {
@@ -33,7 +33,7 @@
               {{ sub.label }}
             </a>
             <button class="text-foreground/50 flex cursor-pointer items-center justify-end transition-all duration-500">
-              @if (!sub.expanded) {
+              @if (!(sub.expanded || sub.active)) {
                 <svg-icon src="assets/icons/heroicons/outline/plus.svg" svgClass="h-4 w-4"> </svg-icon>
               } @else {
                 <svg-icon src="assets/icons/heroicons/outline/minus.svg" svgClass="h-4 w-4"> </svg-icon>

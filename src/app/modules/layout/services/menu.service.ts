@@ -122,13 +122,18 @@ export class MenuService implements OnDestroy {
 
   private expandItems(items: SubMenuItem[]): SubMenuItem[] {
     return items.map((item) => {
-      const active = !!item.route && this.isActive(item.route);
+      const selfActive = !!item.route && this.isActive(item.route);
       const children = item.children ? this.expandItems(item.children) : undefined;
-      const childActive = children?.some((c) => c.active || c.expanded) ?? false;
+      // `active` bubbles up: an item is active if its own route OR any
+      // descendant route is active (drives highlight + transient auto-open).
+      const childActive = children?.some((c) => c.active) ?? false;
       return {
         ...item,
-        active,
-        expanded: item.children?.length ? active || childActive || item.expanded : false,
+        active: selfActive || childActive,
+        // Same rule as groups: `expanded` only holds the user's manual intent.
+        // Never bake the active-route auto-open into it, or submenus stay open
+        // forever after navigating away. Display opens on `expanded || active`.
+        expanded: item.expanded ?? false,
         children,
       };
     });
