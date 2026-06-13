@@ -8,35 +8,9 @@ const _warn = (msg, e) => {
   if (import.meta.env.DEV) console.warn('[wallet]', msg, e);
 };
 
-/* ---------- platform accounts ---------- */
-export async function fetchPlatformAccounts() {
-  try {
-    if (!supabase) return [];
-    const { data, error } = await supabase
-      .from('platform_accounts')
-      .select('*')
-      .eq('status', 'ACTIVE')
-      .order('created_at');
-
-    if (error) {
-      _warn('fetchPlatformAccounts error', error);
-      return [];
-    }
-    if (!data || data.length === 0) return [];
-
-    return data.map((a) => ({
-      id: a.id,
-      type: a.type === 'BANK' ? 'BANK_TRANSFER' : a.type === 'EWALLET' ? 'E_WALLET' : a.type,
-      label: a.provider_name,
-      name: a.account_holder,
-      number: a.account_number,
-      note: a.instructions || '',
-    }));
-  } catch (e) {
-    _warn('fetchPlatformAccounts exception', e);
-  }
-  return [];
-}
+/* platform_accounts (bank details) are admin-only — the user app no longer
+   reads them. Bank account numbers must never reach the frontend. Deposit shows
+   a generic instruction instead; see WalletPage DepositTab. */
 
 /* ---------- wallet balance ---------- */
 export async function fetchWalletBalance(_userId) {

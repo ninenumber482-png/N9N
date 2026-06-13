@@ -4,7 +4,6 @@ import { useStore } from '../store/useStore'
 import LoginForm from '../components/LoginForm'
 import { useI18n } from '../i18n'
 import ModalOverlay from '../components/ui/ModalOverlay';
-import CsWidget from '../components/ui/CsWidget';
 import MaintenancePage from './MaintenancePage';
 
 export default function LoginPage() {
@@ -95,7 +94,6 @@ export default function LoginPage() {
           </div>
         </ModalOverlay>
       )}
-      <CsWidget />
     </>
   )
 }

@@ -13,8 +13,6 @@ export const configSlice = (set, get) => ({
   _hydrated: false,
   _setHydrated: (v) => set({ _hydrated: v }),
 
-  _accountsVersion: 0,
-
   isDemoMode: () => get()._demoMode ?? DEMO_MODE,
   setDemoMode: (enabled) => set({ _demoMode: enabled }),
   clearAllData: () => {

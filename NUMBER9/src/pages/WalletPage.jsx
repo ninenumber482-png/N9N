@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import {
   requestDeposit,
-  fetchPlatformAccounts,
   fetchUserTransactions,
   getDepositsAwaitingAdmin,
   getMaxDepositLockRemaining,
@@ -18,7 +17,6 @@ import { supabase } from '../utils/supabase';
 import { Icon } from '../components/icons';
 import SectionHead from '../components/ui/SectionHead';
 import { AmountInput } from '../components/ui/AmountInput';
-import { EmptyState } from '../components/ui/EmptyState';
 import Spinner from '../components/ui/Spinner';
 import Toast from '../components/ui/Toast';
 import PageShell from '../components/ui/PageShell';
@@ -49,7 +47,6 @@ export default function WalletPage() {
   const setLastDepositAt = useStore((s) => s.setLastDepositAt);
 
   const _rtTick = useStore((s) => s._rtTick);
-  const _accountsVersion = useStore((s) => s._accountsVersion);
   const navigate = useNavigate();
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
@@ -108,7 +105,6 @@ export default function WalletPage() {
           setLastDepositAt={setLastDepositAt}
           nowTick={nowTick}
           _rtTick={_rtTick}
-          _accountsVersion={_accountsVersion}
           aliveRef={aliveRef}
           t={t}
           setToast={setToast}
@@ -140,19 +136,15 @@ function DepositTab({
   setLastDepositAt,
   nowTick,
   _rtTick,
-  _accountsVersion,
   aliveRef,
   t,
   setToast,
 }) {
-  const [selected, setSelected] = useState(null);
   const [amount, setAmount] = useState('');
   const [proof, setProof] = useState('');
   const [proofName, setProofName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [accounts, setAccounts] = useState([]);
-  const [accountsLoading, setAccountsLoading] = useState(true);
   const [userTxs, setUserTxs] = useState([]);
 
   useEffect(() => {
@@ -165,56 +157,6 @@ function DepositTab({
   useEffect(() => {
     if (lastDepositAt && nowTick - lastDepositAt >= DEPOSIT_LOCK_MS) setLastDepositAt(null);
   }, [nowTick, lastDepositAt, setLastDepositAt]);
-
-  useEffect(() => {
-    let alive = true;
-    setAccountsLoading(true);
-    (async () => {
-      try {
-        const r = await fetchPlatformAccounts();
-        if (!alive) return;
-        if (Array.isArray(r)) {
-          setAccounts(r);
-        } else {
-          setAccounts([]);
-        }
-      } catch (e) {
-        if (alive) {
-          setAccounts([]);
-        }
-      } finally {
-        if (alive) setAccountsLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-    setAccountsLoading(true);
-    (async () => {
-      try {
-        const r = await fetchPlatformAccounts();
-        if (!alive) return;
-        if (Array.isArray(r)) {
-          setAccounts(r);
-        } else {
-          setAccounts([]);
-        }
-      } catch (e) {
-        if (alive) {
-          setAccounts([]);
-        }
-      } finally {
-        if (alive) setAccountsLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [_accountsVersion]);
 
   const pendingDeposits = useMemo(() => getPendingDeposits(userTxs), [userTxs]);
   const fallbackLockMs =
@@ -245,7 +187,6 @@ function DepositTab({
     if (inFifteenMinLock)
       return setToast({ type: 'err', text: t('deposit.locked_timer', { timer: fmtTimer(lockRemaining) }) });
     if (hasPendingDeposit) return setToast({ type: 'err', text: t('deposit.pending_exists') });
-    if (!selected) return setToast({ type: 'err', text: t('deposit.select_method') });
     const amt = Number(amount);
     if (!amt || amt <= 0) return setToast({ type: 'err', text: t('deposit.enter_amount') });
     if (!proof) return setToast({ type: 'err', text: t('deposit.upload_proof') });
@@ -256,9 +197,10 @@ function DepositTab({
           username: auth.username,
           userUuid: auth.id,
           amount: amt,
-          method: selected.label,
+          // Account details are never exposed to the user; method is a generic
+          // label. Admin reconciles via proof + the externally-arranged account.
+          method: t('deposit.manual_method'),
           proof,
-          platformAccountId: selected.id,
         }),
         10000,
       );
@@ -270,7 +212,7 @@ function DepositTab({
         type: 'DEPOSIT',
         status: 'PENDING',
         amount: r.tx?.amount ?? amt,
-        method: selected?.label || '',
+        method: t('deposit.manual_method'),
         requestedAt: r.tx?.requestedAt || new Date().toISOString(),
       };
       setUserTxs((prev) => [optimisticTx, ...prev.filter((tx) => tx.id !== optimisticTx.id)]);
@@ -278,7 +220,6 @@ function DepositTab({
       setAmount('');
       setProof('');
       setProofName('');
-      setSelected(null);
       setTimeout(() => {
         if (aliveRef.current)
           fetchUserTransactions(auth.id)
@@ -335,52 +276,21 @@ function DepositTab({
       )}
 
       <div className={formBlocked ? 'pointer-events-none select-none opacity-45' : ''}>
-        {accountsLoading ? (
-          <Spinner size="sm" />
-        ) : accounts.length === 0 ? (
-          <EmptyState icon="💳" text={t('deposit.no_methods')} subtitle={t('deposit.contact_support')} />
-        ) : (
-          <section className="rounded-xl border border-[#1f2128] bg-[#0c0e14]">
-            <div className="border-b border-[#1f2128] px-4 py-3">
-              <p className="text-sm font-semibold text-white">{t('deposit.select_payment')}</p>
-              <p className="text-xs text-zinc-500">{t('deposit.payment_desc')}</p>
+        {/* Bank account details are NEVER shown to the user (security). Only a
+            generic instruction is displayed; the account is arranged out-of-band. */}
+        <section className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04]">
+          <div className="flex items-start gap-3 p-4">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 text-emerald-400">
+              <Icon.Info size={18} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white">{t('deposit.instructions_title')}</p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-400">{t('deposit.instructions_desc')}</p>
             </div>
-            <div className="grid gap-2 p-4 sm:grid-cols-2">
-              {accounts.map((acc) => {
-                const active = selected?.id === acc.id;
-                return (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    onClick={() => setSelected(active ? null : acc)}
-                    className={`rounded-lg border p-4 text-left transition ${active ? 'border-emerald-400 bg-emerald-400/10' : 'border-[#1f2128] hover:border-zinc-500'}`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{acc.label}</p>
-                        <p className="mt-0.5 text-xs text-zinc-500">{acc.note}</p>
-                      </div>
-                      {active && <Icon.Check size={18} className="text-emerald-400" />}
-                    </div>
-                    {active && (
-                      <div className="mt-4 space-y-2 border-t border-emerald-400/20 pt-4">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-zinc-500">{t('deposit.account_name')}</span>
-                          <span className="font-semibold text-white">{acc.name}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-zinc-500">{t('deposit.account_number')}</span>
-                          <span className="font-mono text-white">{acc.number}</span>
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        )}
+          </div>
+        </section>
 
-        <section className="rounded-xl border border-[#1f2128] bg-[#0c0e14]">
+        <section className="mt-6 rounded-xl border border-[#1f2128] bg-[#0c0e14]">
           <div className="border-b border-[#1f2128] px-4 py-3">
             <p className="text-sm font-semibold text-white">{t('deposit.enter_amount_title')}</p>
             <p className="text-xs text-zinc-500">{t('deposit.enter_amount_desc')}</p>
@@ -444,7 +354,7 @@ function DepositTab({
             )}
             <div className="flex justify-between border-b border-[#1f2128] pb-2">
               <span className="text-zinc-400">{t('deposit.method')}</span>
-              <span className="font-semibold text-white">{selected?.label || '—'}</span>
+              <span className="font-semibold text-white">{t('deposit.manual_method')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-400">{t('deposit.proof')}</span>

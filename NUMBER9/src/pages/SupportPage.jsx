@@ -6,7 +6,7 @@ import SectionHead from '../components/ui/SectionHead'
 import { useI18n } from '../i18n'
 import { supabase } from '../utils/supabase'
 import { useParams } from 'react-router-dom'
-import { setCsConfig as cacheCsConfig, getCsConfig } from '../utils/csConfigCache'
+import { fetchCsContact } from '../utils/csContact'
 
 const inp = 'h-9 w-full rounded border border-[#1f2128] bg-[#0e1117] px-3 text-[12px] text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/60'
 
@@ -29,17 +29,13 @@ export default function SupportPage() {
   const p = (path) => `/c/${clientUuid}${path}`
   const [openFaq, setOpenFaq] = useState(-1)
 
-  const [csConfig, setCsConfig] = useState(() => getCsConfig())
+  const [cs, setCs] = useState(null)
   useEffect(() => {
-    if (csConfig) return
-    supabase.rpc('get_public_config').then(({ data, error }) => {
-      if (error || !data) return
-      const map = {}
-      data.forEach(r => map[r.key] = r.value)
-      cacheCsConfig(map)
-      setCsConfig(map)
-    })
-  }, [csConfig])
+    let alive = true
+    if (!auth?.id) return
+    fetchCsContact().then((c) => { if (alive) setCs(c) }).catch(() => {})
+    return () => { alive = false }
+  }, [auth?.id])
 
   const FAQS = [
     { q: t('support.faq_1_q'), a: t('support.faq_1_a') },
@@ -103,16 +99,29 @@ export default function SupportPage() {
             <p className="text-[13px] font-bold text-white lg:text-base">{t('support.live_chat')}</p>
             <p className="text-[10px] text-zinc-500">{t('support.live_chat_hours')}</p>
           </div>
-          <button
-            onClick={() => {
-              const wa = csConfig?.cs_wa_number?.replace(/[^\d]/g, '')
-              if (!wa) return
-              const msg = encodeURIComponent(csConfig?.cs_welcome_message || 'Hello, I need assistance.')
-              window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener,noreferrer')
-            }}
-            disabled={!csConfig?.cs_wa_number}
-            className="shrink-0 rounded bg-yellow-400 px-3.5 py-2 text-[12px] font-extrabold text-black hover:bg-yellow-300 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 lg:px-5 lg:py-2.5"
-          >{t('support.start_chat')}</button>
+          <div className="flex shrink-0 gap-2">
+            {cs?.tgOk && (
+              <a
+                href={cs.tgHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded bg-sky-500 px-3.5 py-2 text-[12px] font-extrabold text-white hover:bg-sky-400 active:scale-[0.99] lg:px-5 lg:py-2.5"
+              >Telegram</a>
+            )}
+            {cs?.waOk && (
+              <a
+                href={cs.waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded bg-emerald-500 px-3.5 py-2 text-[12px] font-extrabold text-white hover:bg-emerald-400 active:scale-[0.99] lg:px-5 lg:py-2.5"
+              >WhatsApp</a>
+            )}
+            {!cs?.anyActive && (
+              <span className="rounded bg-[#13151c] px-3.5 py-2 text-[12px] font-bold text-zinc-500 lg:px-5 lg:py-2.5">
+                {t('support.cs_unavailable')}
+              </span>
+            )}
+          </div>
         </div>
       </section>
 

@@ -4,7 +4,6 @@ import { useStore } from "../store/useStore";
 import { Icon } from "../components/icons";
 import { useI18n } from "../i18n";
 import ModalOverlay from "../components/ui/ModalOverlay";
-import CsWidget from "../components/ui/CsWidget";
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -237,9 +236,6 @@ export default function RegisterPage() {
           background: 'linear-gradient(to right, #050607 0%, rgba(5,6,7,0.8) 50%, transparent 100%)',
         }}
       />
-
-      {/* CS Widget */}
-      <CsWidget />
 
       {/* Content */}
       <div className="relative z-10 mx-auto w-full max-w-3xl">

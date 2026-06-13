@@ -1,5 +1,6 @@
 import { startHeartbeat, stopHeartbeat } from "../../utils/heartbeat"
 import { LS, REG, LOGIN, readJSON, writeJSON, _warn } from "../helpers"
+import { clearCsContact } from "../../utils/csContact"
 
 export const authSlice = (set, get) => ({
   auth: readJSON(LS.auth, null),
@@ -114,6 +115,7 @@ export const authSlice = (set, get) => ({
     localStorage.removeItem(LS.users)
     localStorage.removeItem(LS.byUuid)
     localStorage.removeItem(LS.byCode)
+    clearCsContact() // purge cached CS links so widget disappears on logout
 
     set({
       auth: null,

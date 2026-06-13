@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Icon } from './icons';
 import { useI18n } from '../i18n';
-import { useState } from 'react';
-import { getCsConfig } from '../utils/csConfigCache';
 
 export default function LoginForm({
   username,
@@ -20,17 +18,7 @@ export default function LoginForm({
   const hasError = !!error;
   const isDisabled = loading || !username || !password;
 
-  const [csHref] = useState(() => {
-    try {
-      const cfg = getCsConfig();
-      if (cfg?.cs_active === 'true' && cfg.cs_wa_number) {
-        const wa = cfg.cs_wa_number.replace(/[^\d]/g, '');
-        const msg = encodeURIComponent(cfg.cs_welcome_message || 'Hello, I need assistance.');
-        return `https://wa.me/${wa}?text=${msg}`;
-      }
-    } catch { /* ignore */ }
-    return null;
-  });
+  // CS contact is login-only — no pre-login WhatsApp/Telegram link here.
 
   return (
     <div className="relative min-h-screen bg-[#050607] px-4 py-10 overflow-hidden">
@@ -152,19 +140,6 @@ export default function LoginForm({
                 >
                   {alternateLink.linkText}
                 </Link>
-              </p>
-            )}
-            {csHref && (
-              <p className="mt-3 text-center text-[11px] text-zinc-600">
-                <a
-                  href={csHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold text-yellow-400/80 hover:text-yellow-400 transition"
-                >
-                  <Icon.Chat size={12} />
-                  {t('auth.contact_support')}
-                </a>
               </p>
             )}
           </div>

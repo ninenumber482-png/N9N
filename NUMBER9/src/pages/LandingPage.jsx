@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { TRUST, VALUES, STATS } from '../config/landing';
 import { useStore } from '../store/useStore';
 import { useI18n } from '../i18n';
-import CsWidget from '../components/ui/CsWidget';
 import MaintenancePage from './MaintenancePage';
 
 // Neutral inline SVG icons (heroicons outline paths) — used by trust badges,
@@ -173,7 +172,6 @@ export default function LandingPage() {
       <footer className="px-4 py-12 border-t border-[#1f2128] text-center text-sm text-zinc-500">
         <p>{t('landing.footer')}</p>
       </footer>
-      <CsWidget />
     </div>
   );
 }

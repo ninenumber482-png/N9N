@@ -170,7 +170,6 @@ function App() {
   // (more reliable than ID comparison for detecting new rows added)
   const lastTxCheckRef = useRef(null);
   const lastBetCheckRef = useRef(null);
-  const lastAccountCheckRef = useRef(null);
 
   // Polling + Realtime hybrid — refresh every 10s, also subscribe to changes
   usePolling(async () => {
@@ -185,33 +184,21 @@ function App() {
       // Refresh bets via king.js cache
       await refreshKingData(auth.id);
 
-      // Check platform accounts (global, no auth needed)
-      const { data: accounts } = await supabase
-        .from('platform_accounts')
-        .select('id, created_at')
-        .eq('status', 'ACTIVE')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
       // Detect NEW data: if the latest timestamp changed, bump the counter
       const latestTxTime = txs?.[0]?.created_at;
       const latestBetTime = listBids()?.[0]?.created_at;
-      const latestAccountTime = accounts?.[0]?.created_at;
 
       const newTxSeen = !!latestTxTime && latestTxTime !== lastTxCheckRef.current;
       const newBetSeen = !!latestBetTime && latestBetTime !== lastBetCheckRef.current;
-      const newAccountSeen = !!latestAccountTime && latestAccountTime !== lastAccountCheckRef.current;
 
       if (newTxSeen) lastTxCheckRef.current = latestTxTime;
       if (newBetSeen) lastBetCheckRef.current = latestBetTime;
-      if (newAccountSeen) lastAccountCheckRef.current = latestAccountTime;
 
       // Always bump _rtTick — catches status changes on existing tx/bet rows where
       // created_at stays the same but updated_at changed (admin approval, settlement).
       useStore.setState(s => ({
         _rtTick: (s._rtTick || 0) + 1,
         _kingVersion: newBetSeen ? (s._kingVersion || 0) + 1 : s._kingVersion,
-        _accountsVersion: newAccountSeen ? (s._accountsVersion || 0) + 1 : s._accountsVersion,
       }));
     } catch (e) {
       // Polling error — silent in production, log in dev
@@ -280,17 +267,8 @@ function App() {
       subs.push(krChannel);
     }
 
-    // Subscribe to platform accounts (global, affects all users)
-    const accountsChannel = supabase
-      .channel('platform_accounts:status=eq.ACTIVE')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'platform_accounts', filter: 'status=eq.ACTIVE' },
-        () => {
-          useStore.setState(s => ({ _accountsVersion: (s._accountsVersion || 0) + 1 }));
-        }
-      )
-      .subscribe();
-    subs.push(accountsChannel);
+    // platform_accounts is no longer read by the user app (bank data is
+    // admin-only); no realtime subscription needed here.
 
     return () => {
       subs.forEach(ch => supabase.removeChannel(ch));
