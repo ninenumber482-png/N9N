@@ -3,10 +3,15 @@ import { useStore } from '../store/useStore'
 import { Icon } from '../components/icons'
 import BackLink from '../components/ui/BackLink'
 import SectionHead from '../components/ui/SectionHead'
+import Toast from '../components/ui/Toast'
+import ModalOverlay from '../components/ui/ModalOverlay'
 import { useI18n } from '../i18n'
-import { supabase } from '../utils/supabase'
 import { useParams } from 'react-router-dom'
 import { fetchCsContact } from '../utils/csContact'
+import { wibDateTime } from '../utils/wib'
+import {
+  listMyTickets, getTicketThread, createTicket, sendTicketMessage, uploadTicketImage,
+} from '../utils/tickets'
 
 const inp = 'h-9 w-full rounded border border-[#1f2128] bg-[#0e1117] px-3 text-[12px] text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/60'
 
@@ -44,43 +49,83 @@ export default function SupportPage() {
     { q: t('support.faq_4_q'), a: t('support.faq_4_a') },
     { q: t('support.faq_5_q'), a: t('support.faq_5_a') },
   ]
-  const [ticketSubject, setTicketSubject] = useState('')
-  const [ticketCategory, setTicketCategory] = useState('DEPOSIT')
-  const [ticketMessage, setTicketMessage] = useState('')
-  const [feedback, setFeedback] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmitTicket = async () => {
-    if (submitting) return
-    if (!ticketSubject.trim() || !ticketMessage.trim()) {
-      setFeedback({ type: 'err', text: t('support.validation') })
-      return
+  // ── ticket chat state ──
+  const [tickets, setTickets] = useState([])
+  const [ticketsLoading, setTicketsLoading] = useState(true)
+  const [openId, setOpenId] = useState(null)       // open thread ticket id
+  const [thread, setThread] = useState(null)       // {ticket, messages}
+  const [reply, setReply] = useState('')
+  const [replyImg, setReplyImg] = useState('')     // base64 preview
+  const [sending, setSending] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [nt, setNt] = useState({ subject: '', category: 'OTHER', message: '', img: '' })
+  const [toast, setToast] = useState(null)
+
+  // initial + 15s list refresh
+  useEffect(() => {
+    if (!auth?.id) return
+    let alive = true
+    const load = () => listMyTickets().then((r) => { if (alive) { setTickets(r); setTicketsLoading(false) } })
+    load()
+    const i = setInterval(load, 15000)
+    return () => { alive = false; clearInterval(i) }
+  }, [auth?.id])
+
+  // open thread + 3.5s poll while open
+  useEffect(() => {
+    if (!openId) return // modal hides via openId; thread is matched by id at render
+    let alive = true
+    const load = () => getTicketThread(openId).then((r) => {
+      if (!alive) return
+      if (r?.error) { setToast({ type: 'err', text: r.error }); setOpenId(null); return }
+      setThread(r)
+    })
+    load()
+    const i = setInterval(load, 3500)
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => { alive = false; clearInterval(i); window.removeEventListener('focus', onFocus) }
+  }, [openId])
+
+  const onPickImg = (e, setter) => {
+    const f = e.target.files?.[0]; if (!f) return
+    const r = new FileReader()
+    r.onload = (ev) => setter(ev.target.result)
+    r.onerror = () => setToast({ type: 'err', text: t('common.file_read_error') })
+    r.readAsDataURL(f)
+  }
+
+  const doCreate = async () => {
+    if (!nt.subject.trim() || !nt.message.trim()) return
+    setSending(true)
+    let imageUrl = null
+    if (nt.img) imageUrl = await uploadTicketImage(nt.img)
+    const r = await createTicket({ subject: nt.subject, category: nt.category, message: nt.message, imageUrl })
+    setSending(false)
+    if (r?.error) return setToast({ type: 'err', text: t('support.ticket_create_failed') })
+    setShowNew(false)
+    setNt({ subject: '', category: 'OTHER', message: '', img: '' })
+    const fresh = await listMyTickets(); setTickets(fresh)
+    setOpenId(r.id)
+  }
+
+  const doSend = async () => {
+    if (!openId || (!reply.trim() && !replyImg)) return
+    setSending(true)
+    let imageUrl = null
+    if (replyImg) imageUrl = await uploadTicketImage(replyImg)
+    const r = await sendTicketMessage(openId, reply, imageUrl)
+    setSending(false)
+    if (r?.error) {
+      const msg = r.error.includes('TICKET_CLOSED') ? t('support.ticket_closed_note')
+        : r.error.includes('RATE_LIMIT') ? t('support.ticket_rate_limit')
+        : r.error.includes('TOO_LONG') ? t('support.ticket_too_long')
+        : t('support.ticket_send_failed')
+      return setToast({ type: 'err', text: msg })
     }
-    if (!auth?.id) {
-      setFeedback({ type: 'err', text: t('common.login_required') })
-      return
-    }
-    setSubmitting(true)
-    try {
-      const { error } = await supabase
-        .from('support_tickets')
-        .insert({
-          user_id: auth.id,
-          subject: ticketSubject.trim(),
-          category: ticketCategory,
-          message: ticketMessage.trim(),
-          status: 'OPEN'
-        })
-      if (error) throw error
-      setFeedback({ type: 'ok', text: t('support.success') })
-      setTicketSubject('')
-      setTicketCategory('DEPOSIT')
-      setTicketMessage('')
-    } catch {
-      setFeedback({ type: 'err', text: t('support.failed') })
-    } finally {
-      setSubmitting(false)
-    }
+    setReply(''); setReplyImg('')
+    getTicketThread(openId).then((x) => { if (!x?.error) setThread(x) })
   }
 
   return (
@@ -101,18 +146,12 @@ export default function SupportPage() {
           </div>
           <div className="flex shrink-0 gap-2">
             {cs?.tgOk && (
-              <a
-                href={cs.tgHref}
-                target="_blank"
-                rel="noopener noreferrer"
+              <a href={cs.tgHref} target="_blank" rel="noopener noreferrer"
                 className="rounded bg-sky-500 px-3.5 py-2 text-[12px] font-extrabold text-white hover:bg-sky-400 active:scale-[0.99] lg:px-5 lg:py-2.5"
               >Telegram</a>
             )}
             {cs?.waOk && (
-              <a
-                href={cs.waHref}
-                target="_blank"
-                rel="noopener noreferrer"
+              <a href={cs.waHref} target="_blank" rel="noopener noreferrer"
                 className="rounded bg-emerald-500 px-3.5 py-2 text-[12px] font-extrabold text-white hover:bg-emerald-400 active:scale-[0.99] lg:px-5 lg:py-2.5"
               >WhatsApp</a>
             )}
@@ -144,36 +183,118 @@ export default function SupportPage() {
           </div>
         </section>
 
+        {/* ── My Tickets ── */}
         <section className="lg:col-span-2">
-          <SectionHead>{t('support.submit_ticket')}</SectionHead>
-          <div className="space-y-1.5 rounded-xl border border-[#1f2128] bg-[#0c0e14] p-2.5 lg:p-3">
-            <Field label={t('support.subject')}><input type="text" placeholder={t('support.subject_placeholder')} className={inp} value={ticketSubject} onChange={e => setTicketSubject(e.target.value)} /></Field>
-            <Field label={t('support.category')}>
-              <select className={inp} value={ticketCategory} onChange={e => setTicketCategory(e.target.value)}>
-                {CATEGORIES.map(c => (
-                  <option key={c.key} value={c.key}>{t(c.i18n)}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t('support.message')}>
-              <textarea className="min-h-20 w-full resize-y rounded border border-[#1f2128] bg-[#0e1117] px-3 py-2 text-[12px] text-white outline-none placeholder:text-zinc-500 focus:border-yellow-400/60" placeholder={t('support.message_placeholder')} value={ticketMessage} onChange={e => setTicketMessage(e.target.value)} />
-            </Field>
-            <button onClick={handleSubmitTicket} disabled={submitting} className="h-9 w-full rounded bg-yellow-400 text-[12px] font-extrabold text-black hover:bg-yellow-300 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">{submitting ? <span className="inline-flex items-center gap-1.5"><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/20 border-t-black" /></span> : t('support.submit')}</button>
-            {feedback && (
-              <p className={`text-[11px] mt-1 ${feedback.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{feedback.text}</p>
-            )}
+          <SectionHead>{t('support.tickets_title')}</SectionHead>
+          <div className="rounded-xl border border-[#1f2128] bg-[#0c0e14]">
+            <div className="flex items-center justify-end border-b border-[#1f2128] px-3 py-2">
+              <button onClick={() => setShowNew(true)}
+                className="rounded bg-yellow-400 px-3 py-1.5 text-[11px] font-extrabold text-black hover:bg-yellow-300">
+                {t('support.new_ticket')}
+              </button>
+            </div>
+            <div className="divide-y divide-[#1f2128]">
+              {ticketsLoading && <div className="px-4 py-6 text-center text-xs text-zinc-500">…</div>}
+              {!ticketsLoading && tickets.length === 0 && (
+                <div className="px-4 py-8 text-center text-xs text-zinc-500">{t('support.no_tickets')}</div>
+              )}
+              {tickets.map((tk) => (
+                <button key={tk.id} onClick={() => setOpenId(tk.id)}
+                  className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-white/[0.02]">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-[12px] font-bold text-white">{tk.subject}</p>
+                      {tk.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-yellow-400" title={t('support.ticket_unread')} />}
+                    </div>
+                    <p className="truncate text-[10px] text-zinc-500">{tk.last_message_preview || ''}</p>
+                  </div>
+                  <span className={`shrink-0 rounded px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${
+                    tk.status === 'CLOSED' ? 'bg-zinc-700/40 text-zinc-400'
+                    : tk.status === 'REPLIED' ? 'bg-emerald-500/15 text-emerald-400'
+                    : 'bg-yellow-400/15 text-yellow-400'}`}>
+                    {t('support.ticket_status_' + (tk.status || 'open').toLowerCase())}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </section>
       </div>
-    </div>
-  )
-}
 
-function Field({ label, children }) {
-  return (
-    <label className="flex flex-col gap-0.5">
-      <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{label}</span>
-      {children}
-    </label>
+      {/* ── Thread modal (only when the loaded thread matches the open id) ── */}
+      {openId && thread?.ticket?.id === openId && (
+        <ModalOverlay open={!!openId} onClose={() => setOpenId(null)} className="items-center justify-center bg-black/70 p-3 backdrop-blur-sm">
+          <div className="flex max-h-[85dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e1017]">
+            <div className="flex items-center justify-between border-b border-[#1f2128] px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-extrabold text-white">{thread.ticket?.subject}</p>
+                <p className="text-[10px] text-zinc-500">{thread.ticket?.category} · {t('support.ticket_status_' + (thread.ticket?.status || 'open').toLowerCase())}</p>
+              </div>
+              <button onClick={() => setOpenId(null)} className="grid h-7 w-7 place-items-center rounded-lg border border-[#1f2128] text-zinc-500 hover:text-white">✕</button>
+            </div>
+            <div className="flex-1 space-y-2 overflow-y-auto p-4">
+              {(thread.messages || []).map((m) => (
+                <div key={m.id} className={`flex ${m.sender_type === 'USER' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${m.sender_type === 'USER' ? 'bg-yellow-400 text-black' : 'bg-[#1f2128] text-zinc-100'}`}>
+                    {m.image_url && <img src={m.image_url} alt="" className="mb-1 max-h-40 rounded-lg" />}
+                    {m.body && <p className="text-[12px] whitespace-pre-wrap break-words">{m.body}</p>}
+                    <p className={`mt-0.5 text-[8px] ${m.sender_type === 'USER' ? 'text-black/50' : 'text-zinc-500'}`}>{wibDateTime(m.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {thread.ticket?.status === 'CLOSED' ? (
+              <div className="border-t border-[#1f2128] px-4 py-3 text-center text-[11px] text-zinc-500">{t('support.ticket_closed_note')}</div>
+            ) : (
+              <div className="border-t border-[#1f2128] p-3">
+                {replyImg && <img src={replyImg} alt="" className="mb-2 max-h-24 rounded-lg" />}
+                <div className="flex items-end gap-2">
+                  <label className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg border border-[#1f2128] text-zinc-400 hover:text-white" title={t('support.ticket_attach')}>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => onPickImg(e, setReplyImg)} />📎
+                  </label>
+                  <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={1}
+                    placeholder={t('support.ticket_reply_ph')}
+                    className="max-h-24 flex-1 resize-none rounded-lg border border-[#1f2128] bg-[#0e1117] px-3 py-2 text-[12px] text-white outline-none focus:border-yellow-400/50" />
+                  <button onClick={doSend} disabled={sending || (!reply.trim() && !replyImg)}
+                    className="h-9 shrink-0 rounded-lg bg-yellow-400 px-4 text-[12px] font-extrabold text-black hover:bg-yellow-300 disabled:opacity-40">
+                    {t('support.ticket_send')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── New Ticket modal ── */}
+      {showNew && (
+        <ModalOverlay open={showNew} onClose={() => setShowNew(false)} className="items-center justify-center bg-black/70 p-3 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-5">
+            <p className="mb-4 text-[14px] font-extrabold text-white">{t('support.ticket_create')}</p>
+            <div className="space-y-3">
+              <input value={nt.subject} onChange={(e) => setNt((pr) => ({ ...pr, subject: e.target.value }))}
+                placeholder={t('support.ticket_subject')} className={inp} />
+              <select value={nt.category} onChange={(e) => setNt((pr) => ({ ...pr, category: e.target.value }))} className={inp}>
+                {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{t(c.i18n)}</option>)}
+              </select>
+              <textarea value={nt.message} onChange={(e) => setNt((pr) => ({ ...pr, message: e.target.value }))} rows={4}
+                placeholder={t('support.ticket_message')} className={inp + ' resize-none !h-auto py-2'} />
+              {nt.img && <img src={nt.img} alt="" className="max-h-28 rounded-lg" />}
+              <label className="inline-flex cursor-pointer items-center gap-2 text-[11px] text-zinc-400 hover:text-white">
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => onPickImg(e, (v) => setNt((pr) => ({ ...pr, img: v })))} />
+                📎 {t('support.ticket_attach')}
+              </label>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setShowNew(false)} className="h-10 flex-1 rounded-lg border border-[#1f2128] text-[12px] font-bold text-zinc-300 hover:text-white">{t('common.cancel')}</button>
+                <button onClick={doCreate} disabled={sending || !nt.subject.trim() || !nt.message.trim()}
+                  className="h-10 flex-1 rounded-lg bg-yellow-400 text-[12px] font-extrabold text-black hover:bg-yellow-300 disabled:opacity-40">{t('support.ticket_create')}</button>
+              </div>
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
+    </div>
   )
 }
