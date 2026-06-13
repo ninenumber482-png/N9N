@@ -179,13 +179,8 @@ function App() {
       // Refresh balances (main = Portfolio, reserved = pending WD, buying power = main - reserved)
       await useStore.getState().fetchBalances();
 
-      // Refresh transactions (check all recent ones, not just 5)
-      const { data: txs } = await supabase
-        .from('transactions')
-        .select('id, type, status, amount, created_at')
-        .eq('user_id', auth.id)
-        .order('created_at', { ascending: false })
-        .limit(50);  // Check more rows to catch batch inserts
+      // Refresh transactions via token-scoped RPC (no direct table access)
+      const { data: txs } = await supabase.rpc('get_my_transactions', { p_limit: 50 });
 
       // Refresh bets via king.js cache
       await refreshKingData(auth.id);

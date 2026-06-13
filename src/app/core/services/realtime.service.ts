@@ -316,48 +316,24 @@ export class RealtimeService implements OnDestroy {
 
   private async _pollTransactions() {
     try {
-      const res = await fetch(
-        `${environment.supabaseUrl}/rest/v1/transactions?select=*,user:users!transactions_user_id_fkey(username,display_name)&order=created_at.desc&limit=50`,
-        { headers: { apikey: environment.supabaseKey, Authorization: `Bearer ${environment.supabaseKey}` } },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        this.transactionsSubject.next(data || []);
-        if (data?.length) this.depositQueueSubject.next({ _poll: true });
-      }
-    } catch {
-      /* polling fallback silent */
-    }
+      const data = await this.admin.getTransactions(undefined, 50);
+      this.transactionsSubject.next(data || []);
+      if (data?.length) this.depositQueueSubject.next({ _poll: true } as Transaction);
+    } catch { /* silent */ }
   }
 
   private async _pollWallets() {
     try {
-      const res = await fetch(
-        `${environment.supabaseUrl}/rest/v1/wallet?select=user_id,balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover,updated_at,user:users!inner(username,display_name,role)&user.role=eq.user&order=updated_at.desc&limit=50`,
-        { headers: { apikey: environment.supabaseKey, Authorization: `Bearer ${environment.supabaseKey}` } },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        this.walletsSubject.next(data || []);
-      }
-    } catch {
-      /* silent */
-    }
+      const data = await this.admin.getWallets(50);
+      this.walletsSubject.next(data || []);
+    } catch { /* silent */ }
   }
 
   private async _pollBets() {
     try {
-      const res = await fetch(
-        `${environment.supabaseUrl}/rest/v1/bets?select=*,user:users!bets_user_id_fkey(username,display_name)&order=created_at.desc&limit=50`,
-        { headers: { apikey: environment.supabaseKey, Authorization: `Bearer ${environment.supabaseKey}` } },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        this.betsSubject.next(data || []);
-      }
-    } catch {
-      /* silent */
-    }
+      const data = await this.admin.getBets(50);
+      this.betsSubject.next(data || []);
+    } catch { /* silent */ }
   }
 
   private async _pollKyc() {
@@ -420,6 +396,12 @@ export class RealtimeService implements OnDestroy {
   // ── Handlers ──
 
   private async handleTransactionChange(payload: RealtimePostgresChangesPayload<Transaction>) {
+    const hasData = payload.eventType === 'DELETE' || (payload.new && Object.keys(payload.new).length > 0);
+    if (!hasData) {
+      // Empty payload: anon lacks SELECT — refresh via admin-proxy instead
+      await this._pollTransactions();
+      return;
+    }
     const current = this.transactionsSubject.value;
     if (payload.eventType === 'DELETE') {
       this.transactionsSubject.next(this.capArray(current.filter((t) => t.id !== payload.old.id)));
@@ -458,6 +440,8 @@ export class RealtimeService implements OnDestroy {
   }
 
   private async handleWalletChange(payload: RealtimePostgresChangesPayload<Wallet>) {
+    const hasData = payload.eventType === 'DELETE' || (payload.new && Object.keys(payload.new).length > 0);
+    if (!hasData) { await this._pollWallets(); return; }
     const current = this.walletsSubject.value;
     if (payload.eventType === 'DELETE') {
       this.walletsSubject.next(this.capArray(current.filter((w) => w.id !== payload.old.id)));
@@ -476,6 +460,8 @@ export class RealtimeService implements OnDestroy {
   }
 
   private async handleBetChange(payload: RealtimePostgresChangesPayload<Bet>) {
+    const hasData = payload.eventType === 'DELETE' || (payload.new && Object.keys(payload.new).length > 0);
+    if (!hasData) { await this._pollBets(); return; }
     const current = this.betsSubject.value;
     if (payload.eventType === 'DELETE') {
       this.betsSubject.next(this.capArray(current.filter((b) => b.id !== payload.old.id)));

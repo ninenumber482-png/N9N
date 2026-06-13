@@ -336,21 +336,23 @@ Deno.serve(async (req) => {
   const contentRange = proxyRes.headers.get('content-range');
   if (contentRange) responseHeaders['content-range'] = contentRange;
 
-  // Audit log (fire-and-forget)
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('host') || '';
-  supabase
-    .from('audit_log')
-    .insert({
-      admin_id: sessionUserId,
-      action: `${method} ${path.slice(0, 80)}`,
-      resource_type: 'admin_proxy',
-      resource_id: sessionId || 'cookie-fallback',
-      ip_address: ip,
-      created_at: new Date().toISOString(),
-    })
-    .then(({ error }) => {
-      if (error) console.warn('[admin-proxy] audit log failed:', error.message);
-    });
+  // Audit log: only mutating operations (skip GETs to prevent log bloat)
+  if (method !== 'GET') {
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('host') || '';
+    supabase
+      .from('audit_log')
+      .insert({
+        admin_id: sessionUserId,
+        action: `${method} ${path.slice(0, 80)}`,
+        resource_type: 'admin_proxy',
+        resource_id: sessionId || 'cookie-fallback',
+        ip_address: ip,
+        created_at: new Date().toISOString(),
+      })
+      .then(({ error }) => {
+        if (error) console.warn('[admin-proxy] audit log failed:', error.message);
+      });
+  }
 
   return new Response(proxyRes.body, {
     status: proxyRes.status,

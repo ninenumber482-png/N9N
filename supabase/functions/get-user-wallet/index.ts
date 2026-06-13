@@ -47,27 +47,24 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('N9_SERVICE_ROLE_KEY');
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !serviceKey) {
       return new Response(JSON.stringify({ error: "Missing configuration" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders(req) },
       });
     }
 
-    const userToken = req.headers.get("x-user-token");
-
-    // Query wallet table for the user
+    // Query wallet table using service_role (not anon) — anon SELECT revoked
     const response = await fetch(
       `${supabaseUrl}/rest/v1/wallet?user_id=eq.${encodeURIComponent(userId)}&select=balance_main,balance_bonus,total_deposited,total_withdrawn,total_turnover`,
       {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          ...(userToken ? { 'x-user-token': userToken } : {}),
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
         },
       }
     );

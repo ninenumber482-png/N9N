@@ -177,17 +177,11 @@ export const userSlice = (set, get) => ({
   },
 
   fetchDownlines: async () => {
-    const authData = readJSON(LS.auth, null)
-    if (!authData?.id) return []
     try {
       if (!supabase) return []
-      const { data, error } = await supabase
-        .from('users')
-        .select('id,username,display_name,account_status,registration_status,created_at')
-        .eq('referred_by_user', authData.id)
-        .order('created_at', { ascending: false })
-      if (error) { return [] }
-      return (data || []).map(u => ({
+      const { data, error } = await supabase.rpc('get_my_referrals')
+      if (error) return []
+      return (Array.isArray(data) ? data : []).map(u => ({
         uuid: u.id,
         username: u.username,
         displayName: u.display_name,
