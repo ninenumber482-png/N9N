@@ -155,6 +155,27 @@ interface PageEvent {
           styleClass="!text-sm !w-44" />
       </app-filter-bar>
 
+      @if (activeGateways.length > 0) {
+        <div class="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/5 p-3">
+          <p class="mb-2 flex items-center gap-2 text-xs font-bold text-rose-500">
+            <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500"></span>
+            Sedang Aktivasi Gateway ({{ activeGateways.length }})
+          </p>
+          <div class="flex flex-wrap gap-2">
+            @for (g of activeGateways; track g.user_id) {
+              <span class="bg-card border-border inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-[11px]">
+                <span class="font-semibold text-foreground">{{ g.username || '—' }}</span>
+                <span class="text-muted-foreground">· {{ g.account_label || '—' }}</span>
+                @if (g.amount) {
+                  <span class="font-mono text-emerald-600">· {{ g.amount | number: '1.0-0' }} P</span>
+                }
+                <span class="text-muted-foreground">· {{ gatewayAgo(g.activated_at) }}</span>
+              </span>
+            }
+          </div>
+        </div>
+      }
+
       @if (depError) {
         <div class="bg-card border-border rounded-lg border p-5 text-xs text-muted-foreground">
           <p class="font-medium text-foreground">Gagal memuat deposit</p>
@@ -739,6 +760,8 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
   depPageSize = 20;
   depLoading = false;
   depError = '';
+  activeGateways: { user_id: string; username: string; account_label: string | null; amount: number | null; activated_at: string }[] = [];
+  private gatewayPoll?: ReturnType<typeof setInterval>;
   depProcessing = false;
   depDetail: DepositTx | null = null;
   depDetailVisible = false;
@@ -797,6 +820,8 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
     this.loadWithdrawals();
     this.loadTurnover();
     this.loadManual();
+    this.loadActiveGateways();
+    this.gatewayPoll = setInterval(() => this.loadActiveGateways(), 10000);
     this.realtime.transactions$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.loadDeposits();
       this.loadWithdrawals();
@@ -806,6 +831,22 @@ export class WalletAdminComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.gatewayPoll) clearInterval(this.gatewayPoll);
+  }
+
+  async loadActiveGateways() {
+    try {
+      this.activeGateways = (await this.admin.getActiveGateways()) || [];
+    } catch {
+      // non-critical live widget — keep last data on transient error
+    }
+    this.cdr.markForCheck();
+  }
+
+  gatewayAgo(iso: string): string {
+    const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    if (s < 60) return `${s} dtk lalu`;
+    return `${Math.floor(s / 60)} mnt lalu`;
   }
 
   openDepDetail(tx: DepositTx) {
