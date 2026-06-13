@@ -14,6 +14,7 @@ import {
   fetchUserBank,
 } from '../store/wallet';
 import { supabase } from '../utils/supabase';
+import { fetchDepositAccount } from '../utils/depositAccount';
 import { Icon } from '../components/icons';
 import SectionHead from '../components/ui/SectionHead';
 import { AmountInput } from '../components/ui/AmountInput';
@@ -146,6 +147,34 @@ function DepositTab({
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [userTxs, setUserTxs] = useState([]);
+  // Destination account is revealed ONLY on explicit "Check / Load System" click,
+  // fetched via the login-gated RPC — never on page load, never in storage.
+  const [revealing, setRevealing] = useState(false);
+  const [account, setAccount] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const revealAccount = async () => {
+    setRevealing(true);
+    setAccount(null);
+    const started = Date.now();
+    const r = await fetchDepositAccount();
+    // brief "verifying" feel
+    await new Promise((res) => setTimeout(res, Math.max(0, 600 - (Date.now() - started))));
+    setRevealing(false);
+    if (r?.error) {
+      const msg = String(r.error).includes('NO_SESSION') ? t('deposit.reveal_session')
+        : String(r.error).includes('MAINTENANCE') ? t('deposit.reveal_maintenance')
+        : String(r.error).includes('NO_ACCOUNT') ? t('deposit.reveal_no_account')
+        : t('deposit.reveal_failed');
+      return setToast({ type: 'err', text: msg });
+    }
+    setAccount(r);
+  };
+
+  const copyNumber = async () => {
+    if (!account?.account_number) return;
+    try { await navigator.clipboard.writeText(account.account_number); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     if (!auth?.id) return;
@@ -276,16 +305,55 @@ function DepositTab({
       )}
 
       <div className={formBlocked ? 'pointer-events-none select-none opacity-45' : ''}>
-        {/* Bank account details are NEVER shown to the user (security). Only a
-            generic instruction is displayed; the account is arranged out-of-band. */}
+        {/* Destination account is gated: never on page load / never to anon.
+            Revealed only after the logged-in user clicks "Check / Load System",
+            fetched via the login-gated get_deposit_account RPC. */}
         <section className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04]">
           <div className="flex items-start gap-3 p-4">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 text-emerald-400">
               <Icon.Info size={18} />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white">{t('deposit.instructions_title')}</p>
               <p className="mt-1 text-xs leading-relaxed text-zinc-400">{t('deposit.instructions_desc')}</p>
+
+              {!account && (
+                <button
+                  type="button"
+                  onClick={revealAccount}
+                  disabled={revealing}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-[12px] font-extrabold text-white transition hover:bg-emerald-400 disabled:opacity-50">
+                  {revealing && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+                  {revealing ? t('deposit.checking') : t('deposit.check_button')}
+                </button>
+              )}
+
+              {account && (
+                <div className="mt-3 space-y-2 rounded-lg border border-emerald-400/30 bg-[#0c0e14] p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">{t('deposit.account_revealed')}</p>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500">{t('deposit.account_bank')}</span>
+                    <span className="font-semibold text-white">{account.provider_name}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500">{t('deposit.account_name')}</span>
+                    <span className="font-semibold text-white">{account.account_holder}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-zinc-500">{t('deposit.account_number')}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-white">{account.account_number}</span>
+                      <button type="button" onClick={copyNumber}
+                        className="rounded border border-emerald-400/40 px-2 py-0.5 text-[10px] font-bold text-emerald-400 hover:bg-emerald-400/10">
+                        {copied ? t('deposit.copied') : t('deposit.copy')}
+                      </button>
+                    </span>
+                  </div>
+                  {account.instructions && (
+                    <p className="border-t border-[#1f2128] pt-2 text-[11px] leading-relaxed text-zinc-400">{account.instructions}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
