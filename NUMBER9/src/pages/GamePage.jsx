@@ -471,8 +471,8 @@ export default function GamePage() {
 
       {/* ── Stake Modal ── */}
       {stakeOpen && (
-        <ModalOverlay open={stakeOpen} onClose={() => setStakeOpen(false)} className="items-center justify-center bg-black/60 p-3 sm:p-4">
-          <div className="flex max-h-[90dvh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-[#1f2128] bg-[#0c0e14]">
+        <ModalOverlay open={stakeOpen} onClose={() => setStakeOpen(false)} className="items-center justify-center bg-black/70 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90dvh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e1017]">
             {/* Top accent */}
             <div className="h-1 w-full shrink-0 bg-linear-to-r from-yellow-400 via-yellow-400/40 to-transparent" />
             {/* Header */}
@@ -584,8 +584,8 @@ export default function GamePage() {
 
       {/* ── Win / Loss Modal ── */}
       {resultModal && (
-        <ModalOverlay open={!!resultModal} onClose={() => setResultModal(null)} className="items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-xs overflow-hidden rounded-2xl border bg-[#0c0e14]"
+        <ModalOverlay open={!!resultModal} onClose={() => setResultModal(null)} className="items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xs overflow-hidden rounded-2xl border bg-[#0e1017]"
             role="document"
             style={{ borderColor: resultModal.win ? "rgb(52 211 153 / 0.3)" : "rgb(248 113 113 / 0.3)" }}>
             {/* Top accent bar */}
@@ -625,8 +625,8 @@ export default function GamePage() {
 
       {/* ── Approval Status Modal ── */}
       {approvalStatus && (
-        <ModalOverlay open={!!approvalStatus} onClose={() => setApprovalStatus(null)} className="items-center justify-center bg-black/70 p-4">
-          <div className={`w-full max-w-sm overflow-hidden rounded-2xl border bg-[#0c0e14] ${approvalStatus.ok ? "border-emerald-400/30" : "border-red-400/30"
+        <ModalOverlay open={!!approvalStatus} onClose={() => setApprovalStatus(null)} className="items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className={`w-full max-w-sm overflow-hidden rounded-2xl border bg-[#0e1017] ${approvalStatus.ok ? "border-emerald-400/30" : "border-red-400/30"
             }`}>
             {/* Top accent bar */}
             <div className={`h-1 w-full ${approvalStatus.ok ? "bg-emerald-400" : "bg-red-400"}`} />
@@ -680,8 +680,8 @@ export default function GamePage() {
 
       {/* ── Confirm Modal ── */}
       {confirm && !approvalStatus && (
-        <ModalOverlay open={confirm && !approvalStatus} onClose={() => setConfirm(false)} className="items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#1f2128] bg-[#0c0e14]"
+        <ModalOverlay open={confirm && !approvalStatus} onClose={() => setConfirm(false)} className="items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e1017]"
             role="document">
             <div className="border-b border-[#1f2128] px-5 py-3">
               <p id="confirm-title" className="text-[13px] font-extrabold text-white">{t('game.confirm_order')}</p>

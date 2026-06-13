@@ -374,9 +374,11 @@ interface SecurityItem {
         [modal]="true"
         [dismissableMask]="true"
         [style]="{ width: '32rem' }"
-        header="Alert detail"
         appendTo="body"
         styleClass="dashboard-dialog">
+        <ng-template pTemplate="header">
+          <span class="text-sm font-bold text-foreground">Alert Detail</span>
+        </ng-template>
         @if (detailAlert) {
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">

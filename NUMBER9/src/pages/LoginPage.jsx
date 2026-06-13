@@ -79,8 +79,8 @@ export default function LoginPage() {
       />
 
       {pendingModal && (
-        <ModalOverlay open={!!pendingModal} onClose={() => setPendingModal(null)} className="items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-sm rounded-xl border border-[#1f2128] bg-[#13151c] p-6 text-center">
+        <ModalOverlay open={!!pendingModal} onClose={() => setPendingModal(null)} className="items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-6 text-center">
             <h3 className="text-lg font-extrabold text-white">{t('auth.registration_pending')}</h3>
             <p className="mt-2 text-sm leading-relaxed text-zinc-400">
               {t('auth.account_pending', { name: pendingModal })}

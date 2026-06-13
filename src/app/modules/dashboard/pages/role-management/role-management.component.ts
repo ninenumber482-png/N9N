@@ -151,7 +151,6 @@ interface AdminUser {
       <p-confirmdialog />
 
       <p-dialog
-        header="Batas Akses Halaman"
         [(visible)]="permDialogOpen"
         [modal]="true"
         [style]="{ width: '560px', maxWidth: '95vw' }"
@@ -160,6 +159,9 @@ interface AdminUser {
         [draggable]="false"
         [resizable]="false"
         [closable]="true">
+        <ng-template pTemplate="header">
+          <span class="text-sm font-bold text-foreground">Batas Akses Halaman</span>
+        </ng-template>
         @if (permTarget) {
           <p class="text-muted-foreground mb-3 text-xs">
             Centang halaman yang boleh diakses <strong>{{ permTarget.username }}</strong

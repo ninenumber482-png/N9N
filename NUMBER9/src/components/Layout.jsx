@@ -212,8 +212,8 @@ export default function Layout({ children }) {
 
       {/* MOBILE MORE MENU — overflow pages that don't fit in bottom nav */}
       {showMoreMenu && (
-        <ModalOverlay open={showMoreMenu} onClose={() => setShowMoreMenu(false)} className="items-end justify-center bg-black/60 p-0">
-          <div className="w-full max-h-[80dvh] overflow-y-auto rounded-t-2xl border-t border-[#1f2128] bg-[#0c0e14] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <ModalOverlay open={showMoreMenu} onClose={() => setShowMoreMenu(false)} className="items-end justify-center bg-black/70 p-0 backdrop-blur-sm">
+          <div className="w-full max-h-[80dvh] overflow-y-auto rounded-t-2xl border-t border-white/[0.06] bg-[#0e1017] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <div className="h-1 w-full bg-linear-to-r from-yellow-400/40 via-transparent to-transparent" />
             <div className="flex items-center justify-between border-b border-[#1f2128] px-5 py-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400">{t('common.more')}</p>

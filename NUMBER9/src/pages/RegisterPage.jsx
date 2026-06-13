@@ -504,70 +504,74 @@ export default function RegisterPage() {
       {/* ===== Thank You modal (after step 1) ===== */}
       {showThankYou && (
         <ModalOverlay open={showThankYou} onClose={() => setShowThankYou(false)} className="items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-yellow-400 text-black">
-              <Icon.Check size={24} />
-            </span>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-400">
-                {t('register.step1_complete')}
-              </p>
-              <h2 className="text-lg font-extrabold text-white">{t('register.thank_you')}</h2>
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-6">
+            <div className="flex items-center gap-3">
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-yellow-400 text-black">
+                <Icon.Check size={24} />
+              </span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-400">
+                  {t('register.step1_complete')}
+                </p>
+                <h2 className="text-lg font-extrabold text-white">{t('register.thank_you')}</h2>
+              </div>
             </div>
+            <p className="mt-4 text-[12px] leading-relaxed text-zinc-300">
+              {t('register.step1_desc')}
+            </p>
+            <button onClick={proceedToStep2} data-no-loading
+              className="mt-5 h-10 w-full rounded-lg bg-yellow-400 text-sm font-extrabold text-black hover:bg-yellow-300">
+              {t('register.continue_bank')}
+            </button>
           </div>
-          <p className="mt-4 text-[12px] leading-relaxed text-zinc-300">
-            {t('register.step1_desc')}
-          </p>
-          <button onClick={proceedToStep2} data-no-loading
-            className="mt-5 h-10 w-full rounded-lg bg-yellow-400 text-sm font-extrabold text-black hover:bg-yellow-300">
-            {t('register.continue_bank')}
-          </button>
         </ModalOverlay>
       )}
 
       {/* ===== Pending Verification modal (after submit) ===== */}
       {ok && (
         <ModalOverlay open={!!ok} onClose={() => setOk(null)} className="items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-yellow-400 text-black">
-              <Icon.Check size={24} />
-            </span>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-400">
-                {t('register.pending_verification')}
-              </p>
-              <h2 className="text-lg font-extrabold text-white">{t('register.registration_submitted')}</h2>
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.06] bg-[#0e1017] p-6">
+            <div className="flex items-center gap-3">
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-yellow-400 text-black">
+                <Icon.Check size={24} />
+              </span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-400">
+                  {t('register.pending_verification')}
+                </p>
+                <h2 className="text-lg font-extrabold text-white">{t('register.registration_submitted')}</h2>
+              </div>
             </div>
-          </div>
-          <p className="mt-4 text-[12px] leading-relaxed text-zinc-300">
-            {t('register.registration_done', { user: "" })}
-          </p>
-          <ul className="mt-3 space-y-1 text-[12px] text-zinc-400">
-            <li>
-              <span className="font-bold text-zinc-300">{t('register.registration_label')}</span>{" "}
-              <span className="text-yellow-400">PENDING_VERIFICATION</span>
-            </li>
-            <li>
-              <span className="font-bold text-zinc-300">{t('register.login_label')}</span>{" "}
-              <span className="text-yellow-400">LOCKED</span>
-            </li>
-            <li>
-              <span className="font-bold text-zinc-300">{t('register.uuid_label')}</span>{" "}
-              <span className="font-mono text-[10px] text-zinc-200">{ok}</span>
-            </li>
-          </ul>
-          <p className="mt-4 rounded-lg border border-[#1f2128] bg-[#13151c] px-3 py-2.5 text-[11px] leading-relaxed text-zinc-400">
-            {t('register.code_pending')}
-          </p>
-          <div className="mt-5 flex gap-2">
-            <Link to="/login"
-              className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-yellow-400 text-sm font-extrabold text-black hover:bg-yellow-300">
-              {t('auth.back_to_login')}
-            </Link>
-            <Link to="/"
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-[#1f2128] bg-[#13151c] px-4 text-sm font-semibold text-zinc-300 hover:bg-[#1a1d24]">
-              {t('common.home')}
-            </Link>
+            <p className="mt-4 text-[12px] leading-relaxed text-zinc-300">
+              {t('register.registration_done', { user: "" })}
+            </p>
+            <ul className="mt-3 space-y-1 text-[12px] text-zinc-400">
+              <li>
+                <span className="font-bold text-zinc-300">{t('register.registration_label')}</span>{" "}
+                <span className="text-yellow-400">PENDING_VERIFICATION</span>
+              </li>
+              <li>
+                <span className="font-bold text-zinc-300">{t('register.login_label')}</span>{" "}
+                <span className="text-yellow-400">LOCKED</span>
+              </li>
+              <li>
+                <span className="font-bold text-zinc-300">{t('register.uuid_label')}</span>{" "}
+                <span className="font-mono text-[10px] text-zinc-200">{ok}</span>
+              </li>
+            </ul>
+            <p className="mt-4 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-zinc-400">
+              {t('register.code_pending')}
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Link to="/login"
+                className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-yellow-400 text-sm font-extrabold text-black hover:bg-yellow-300">
+                {t('auth.back_to_login')}
+              </Link>
+              <Link to="/"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.03] px-4 text-sm font-semibold text-zinc-300 hover:bg-white/[0.06]">
+                {t('common.home')}
+              </Link>
+            </div>
           </div>
         </ModalOverlay>
       )}
