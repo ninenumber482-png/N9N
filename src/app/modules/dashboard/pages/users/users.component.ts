@@ -542,7 +542,7 @@ interface BetRow {
                       </table>
                     </div>
                   } @else {
-                    <p class="text-muted-foreground py-8 text-center text-sm">No transactions found.</p>
+                    <p class="py-12 text-center text-sm text-muted-foreground">No transactions found.</p>
                   }
                 }
 
@@ -587,7 +587,7 @@ interface BetRow {
                       </table>
                     </div>
                   } @else {
-                    <p class="text-muted-foreground py-8 text-center text-sm">No bets found.</p>
+                    <p class="py-12 text-center text-sm text-muted-foreground">No bets found.</p>
                   }
                 }
 
@@ -628,7 +628,7 @@ interface BetRow {
                       </table>
                     </div>
                   } @else {
-                    <p class="text-muted-foreground py-8 text-center text-sm">No sessions found.</p>
+                    <p class="py-12 text-center text-sm text-muted-foreground">No sessions found.</p>
                   }
                 }
 
@@ -655,7 +655,7 @@ interface BetRow {
                       }
                     </div>
                   } @else {
-                    <p class="text-muted-foreground py-8 text-center text-sm">No KYC documents found.</p>
+                    <p class="py-12 text-center text-sm text-muted-foreground">No KYC documents found.</p>
                   }
                 }
 

@@ -43,7 +43,7 @@ interface WalletData {
         <app-refresh-button [loading]="loading" (clicked)="load()" />
       </app-page-header>
 
-      <app-filter-bar [search]="search" (searchChange)="search = $event" placeholder="Search user..." />
+      <app-filter-bar [search]="search" (searchChange)="onSearchChange($event)" placeholder="Search user..." />
 
       <app-loading-error [loading]="loading" [error]="error" (retry)="load()" />
 
@@ -151,6 +151,12 @@ export class TurnoverComponent implements OnInit {
     const { page, pageSize } = PaginationHelper.onPageChange(event, this.pageSize);
     this.currentPage = page;
     this.pageSize = pageSize;
+    this.cdr.markForCheck();
+  }
+
+  onSearchChange(value: string) {
+    this.search = value;
+    this.currentPage = 1;
     this.cdr.markForCheck();
   }
 

@@ -96,6 +96,30 @@ function App() {
     useStore.setState({ _hydrated: true });
   }, []);
 
+  // Sync platform_config → systemStatus (king_marketplace, maintenance_mode)
+  useEffect(() => {
+    if (!supabase) return;
+    const syncConfig = async () => {
+      try {
+        const { data } = await supabase.rpc('get_public_config');
+        if (!data) return;
+        const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
+        useStore.getState().setSystemStatus({
+          kingStatus: cfg.king_marketplace || 'OPEN',
+          kingStatusMsg: cfg.king_marketplace_msg || '',
+          platformMaintenance: cfg.maintenance_mode === 'true',
+          platformMsg: cfg.maintenance_msg || '',
+        });
+      } catch { /* silent */ }
+    };
+    syncConfig();
+    const ch = supabase
+      .channel('platform_config:sys')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'platform_config' }, syncConfig)
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, []);
+
   // Track last-seen timestamps to detect new transactions/accounts
   // (more reliable than ID comparison for detecting new rows added)
   const lastTxCheckRef = useRef(null);

@@ -9,6 +9,8 @@ import { PageHeaderComponent } from 'src/app/shared/components/page-header/page-
 import { LoadingErrorComponent } from 'src/app/shared/components/loading-error/loading-error.component';
 import { RefreshButtonComponent } from 'src/app/shared/components/refresh-button/refresh-button.component';
 import { PaginationHelper } from 'src/app/shared/utils/pagination.helper';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 interface SessionData {
   id: string;
@@ -41,8 +43,11 @@ interface OnlineUser {
     PageHeaderComponent,
     LoadingErrorComponent,
     RefreshButtonComponent,
+    ConfirmDialogModule,
   ],
+  providers: [ConfirmationService],
   template: `
+    <p-confirmdialog />
     <div data-page="session-monitor" class="space-y-6">
       <app-page-header icon="eye" title="Session Monitor" subtitle="Active user sessions and login activity">
         <app-refresh-button [loading]="loading" (clicked)="load()" />
@@ -122,9 +127,9 @@ interface OnlineUser {
                   <td class="max-sm:px-1.5 max-sm:py-1.5 sm:px-5 sm:py-3.5">
                     @if (!s.logged_out_at && !isExpired(s.expires_at)) {
                       <button
-                        (click)="killSession(s.id)"
+                        (click)="confirmKill(s.id)"
                         [disabled]="killing === s.id"
-                        class="text-[11px] font-medium text-muted-foreground hover:text-foreground transition">
+                        class="text-[11px] font-medium text-rose-500 hover:text-rose-700 transition">
                         {{ killing === s.id ? '...' : 'Kill' }}
                       </button>
                     }
@@ -151,6 +156,7 @@ interface OnlineUser {
 export class SessionMonitorComponent implements OnInit, OnDestroy {
   private admin = inject(AdminService);
   private cdr = inject(ChangeDetectorRef);
+  private confirmation = inject(ConfirmationService);
 
   sessions: SessionData[] = [];
   online: OnlineUser[] = [];
@@ -201,6 +207,18 @@ export class SessionMonitorComponent implements OnInit, OnDestroy {
 
   isExpired(expiresAt: string) {
     return new Date(expiresAt).getTime() < Date.now();
+  }
+
+  confirmKill(id: string) {
+    this.confirmation.confirm({
+      message: 'Paksa logout sesi ini? User akan langsung keluar.',
+      header: 'Kill Session',
+      icon: 'none',
+      rejectLabel: 'Batal',
+      acceptLabel: 'Kill',
+      accept: () => this.killSession(id),
+      reject: () => {},
+    });
   }
 
   async killSession(id: string) {

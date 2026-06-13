@@ -631,6 +631,7 @@ export class WalletsComponent implements OnInit, OnDestroy {
       this.adjResult = result;
       this.adjSuccess = true;
       if (result?.new_balance !== undefined) w.balance_main = result.new_balance;
+      setTimeout(() => { this.adjSuccess = false; this.adjResult = null; this.cdr.markForCheck(); }, 4000);
       this.notification.success(
         'Saldo diubah',
         `${w.user?.username || w.user_id}: ${signedAmount > 0 ? '+' : ''}${signedAmount}`,

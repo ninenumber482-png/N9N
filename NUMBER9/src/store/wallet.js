@@ -177,6 +177,8 @@ export async function requestDeposit(params) {
     };
   } catch (e) {
     const msg = e?.message || 'Network error';
+    if (msg.includes('MAINTENANCE_MODE'))
+      return { ok: false, error: 'Platform sedang maintenance. Deposit tidak dapat diproses.' };
     if (msg.includes('23505') || msg.includes('DEPOSIT_ALREADY_PENDING'))
       return { ok: false, error: 'Anda masih punya deposit pending. Tunggu konfirmasi admin.' };
     if (msg.includes('UNAUTHORIZED') || msg.includes('Sesi habis'))
@@ -221,6 +223,8 @@ export async function requestWithdraw(params) {
     return { ok: true, tx: { id: data?.id, amount: amt, status: 'PENDING', requestedAt: data?.created_at } };
   } catch (e) {
     const msg = e?.message || 'Network error';
+    if (msg.includes('MAINTENANCE_MODE'))
+      return { ok: false, error: 'Platform sedang maintenance. Withdrawal tidak dapat diproses.' };
     if (msg.includes('23505')) return { ok: false, error: 'Withdrawal already pending (duplicate)' };
     if (msg.includes('INSUFFICIENT_BALANCE')) return { ok: false, error: 'Saldo utama tidak mencukupi.' };
     if (msg.includes('TURNOVER_NOT_MET')) return { ok: false, error: 'Turnover belum terpenuhi.' };

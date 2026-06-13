@@ -288,9 +288,14 @@ export async function placeBid({ sessionCode, selections, stake, userId = _userI
       try { useStore.setState(s => ({ _kingVersion: (s._kingVersion || 0) + 1 })); } catch { /* ignore */ }
       return { ok: true, count: selections.length };
     } catch (err) {
-      return { ok: false, error: err?.message || "Bet failed. Please try again." };
+      const msg = err?.message || '';
+      if (msg.includes('MARKETPLACE_CLOSED'))
+        return { ok: false, error: 'Marketplace sedang ditutup. Tunggu sesi berikutnya.' };
+      if (msg.includes('MAINTENANCE_MODE'))
+        return { ok: false, error: 'Platform sedang maintenance. Coba lagi nanti.' };
+      return { ok: false, error: msg || 'Bet gagal. Coba lagi.' };
     }
   }
 
-  return { ok: false, error: "Backend unavailable. Cannot place bet." };
+  return { ok: false, error: 'Backend unavailable. Cannot place bet.' };
 }

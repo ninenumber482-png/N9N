@@ -174,6 +174,7 @@ interface KycDocument {
             (click)="$event.stopPropagation()" />
           <button
             (click)="previewImage = null"
+            aria-label="Tutup preview"
             class="absolute top-4 right-4 text-white text-2xl font-bold hover:opacity-70">
             &times;
           </button>
@@ -189,6 +190,7 @@ interface KycDocument {
               <h2 class="text-sm font-bold text-foreground">Tolak KYC</h2>
               <button
                 (click)="closeRejectModal()"
+                aria-label="Tutup"
                 class="text-muted-foreground hover:text-foreground text-lg font-bold">
                 &times;
               </button>

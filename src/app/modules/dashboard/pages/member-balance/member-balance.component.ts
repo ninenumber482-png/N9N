@@ -230,6 +230,7 @@ export class MemberBalanceComponent implements OnDestroy {
       this.walletBalance = result.new_balance;
       this.amount = 0;
       this.reason = '';
+      setTimeout(() => { this.success = false; this.adjustResult = null; this.cdr.markForCheck(); }, 4000);
       this.notification.success(
         'Saldo diubah',
         `${this.foundUser!.username}: ${signedAmount > 0 ? '+' : ''}${signedAmount}`,

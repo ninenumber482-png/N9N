@@ -18,7 +18,7 @@ import { FilterBarComponent } from 'src/app/shared/components/filter-bar/filter-
       <div class="bg-card border-border page-accent-card rounded-lg p-5" style="border-top: 3px solid #EC4899;">
         <app-filter-bar
           [search]="searchUsername"
-          (searchChange)="searchUsername = $event"
+          (searchChange)="searchUsername = $event; cdr.markForCheck()"
           (searchSubmit)="searchUser()"
           placeholder="Cari username member...">
           <button
@@ -176,6 +176,7 @@ export class MemberPasswordComponent implements OnDestroy {
       this.newPassword = '';
       this.confirmPassword = '';
       this.notification.success('Password direset', `Password ${this.foundUser!.username} berhasil direset.`);
+      setTimeout(() => { this.success = false; this.cdr.markForCheck(); }, 4000);
     } catch (e) {
       this.passwordError = e instanceof AdminRpcError ? e.message : 'Gagal mereset password.';
     }

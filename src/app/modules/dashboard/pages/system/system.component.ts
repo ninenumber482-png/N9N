@@ -231,7 +231,7 @@ interface ConfigEntry {
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="text-center py-10 text-muted-foreground">No configuration</td>
+                  <td colspan="4" class="text-center py-12 text-sm text-muted-foreground">No configuration</td>
                 </tr>
               }
             </tbody>
