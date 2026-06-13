@@ -287,6 +287,15 @@ export class CsContactComponent implements OnInit {
 
   async save() {
     this.saving = true;
+    // Validate Telegram link format so a malformed link can never ship to users.
+    const tg = (this.form.telegram_link || '').trim();
+    if (this.form.telegram_active && tg && !/^https:\/\/(t\.me|telegram\.me)\/.+/i.test(tg)) {
+      this.notification.error('Link Telegram tidak valid', 'Gunakan format https://t.me/username');
+      this.saving = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.form.telegram_link = tg;
     try {
       const admin = this.auth.getCurrentUser();
       const entries = [
