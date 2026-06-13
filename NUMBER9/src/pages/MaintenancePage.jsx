@@ -1,13 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 const DIGITS = ['9', '3', '1', '7', '9', '5', '2', '8', '9', '4', '6', '9'];
 
 export default function MaintenancePage({ message }) {
-  const [tick, setTick] = useState(0);
-
+  // Block right-click, text-select, and common escape shortcuts
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1200);
-    return () => clearInterval(id);
+    const block = e => e.preventDefault();
+    const blockKey = e => {
+      if (e.key === 'F12' || (e.ctrlKey && ['u','s','a','c'].includes(e.key.toLowerCase()))) e.preventDefault();
+    };
+    document.addEventListener('contextmenu', block);
+    document.addEventListener('keydown', blockKey);
+    document.addEventListener('selectstart', block);
+    return () => {
+      document.removeEventListener('contextmenu', block);
+      document.removeEventListener('keydown', blockKey);
+      document.removeEventListener('selectstart', block);
+    };
   }, []);
 
   return (
@@ -29,11 +38,11 @@ export default function MaintenancePage({ message }) {
         ))}
       </div>
 
-      {/* Center card */}
-      <div style={styles.card}>
+      {/* Center content — flat, no card box */}
+      <div style={styles.wrap}>
         {/* Status pill */}
         <div style={styles.statusRow}>
-          <span style={{ ...styles.dot, animationDelay: `${tick * 0}s` }} />
+          <span style={styles.dot} />
           <span style={styles.statusText}>SISTEM OFFLINE</span>
         </div>
 
@@ -43,6 +52,7 @@ export default function MaintenancePage({ message }) {
           alt="NUMBER9"
           style={styles.logo}
           onError={e => { e.target.style.display = 'none'; }}
+          draggable="false"
         />
 
         {/* Headline */}
@@ -55,56 +65,41 @@ export default function MaintenancePage({ message }) {
           <div style={styles.dividerLine} />
         </div>
 
-        {/* Message */}
+        {/* Message — strip any time estimates */}
         <p style={styles.message}>
-          {message || 'Platform sedang dalam pemeliharaan terjadwal.\nLayanan akan kembali segera.'}
+          {message
+            ? message
+                .replace(/[Kk]embali dalam[^.!?\n]*/g, '')
+                .replace(/(\d+|beberapa|sebentar)\s*(menit|jam|hari|minutes?|hours?)[^.!?\n]*/gi, '')
+                .replace(/\.\s*\./g, '.').replace(/\s{2,}/g, ' ').trim()
+            : 'Platform sedang dalam pemeliharaan.\nLayanan akan segera kembali.'}
         </p>
 
         {/* Info grid */}
         <div style={styles.infoGrid}>
-          <div style={styles.infoItem}>
-            <span style={styles.infoLabel}>STATUS</span>
-            <span style={styles.infoValue}>MAINTENANCE</span>
-          </div>
-          <div style={styles.infoItem}>
-            <span style={styles.infoLabel}>AKSES</span>
-            <span style={styles.infoValue}>TERKUNCI</span>
-          </div>
-          <div style={styles.infoItem}>
-            <span style={styles.infoLabel}>DATA</span>
-            <span style={styles.infoValue}>AMAN</span>
-          </div>
+          {[['STATUS','MAINTENANCE'],['AKSES','TERKUNCI'],['DATA','AMAN']].map(([label, val]) => (
+            <div key={label} style={styles.infoItem}>
+              <span style={styles.infoLabel}>{label}</span>
+              <span style={styles.infoValue}>{val}</span>
+            </div>
+          ))}
         </div>
-
-        {/* Footer note */}
-        <p style={styles.footer}>
-          Halaman ini akan otomatis membuka kembali saat maintenance selesai.
-        </p>
       </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
-
-        @keyframes scanline {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100vh); }
-        }
         @keyframes floatDrift {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33% { transform: translateY(-18px) rotate(2deg); }
-          66% { transform: translateY(10px) rotate(-1deg); }
+          0%,100% { transform: translateY(0) rotate(0deg); }
+          33%      { transform: translateY(-16px) rotate(2deg); }
+          66%      { transform: translateY(9px) rotate(-1deg); }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
-          50% { opacity: 0.5; box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+          0%,100% { opacity:1; }
+          50%      { opacity:0.4; }
         }
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
+          from { opacity:0; transform:translateY(20px); }
+          to   { opacity:1; transform:translateY(0); }
         }
       `}</style>
     </div>
@@ -122,11 +117,13 @@ const styles = {
     fontFamily: "'DM Mono', monospace",
     overflow: 'hidden',
     zIndex: 9999,
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   scanlines: {
     position: 'absolute',
     inset: 0,
-    backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px)',
+    backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 4px)',
     pointerEvents: 'none',
     zIndex: 1,
   },
@@ -144,123 +141,106 @@ const styles = {
     animation: 'floatDrift 8s ease-in-out infinite',
     userSelect: 'none',
   },
-  card: {
+  // flat — no card border, no box-shadow, no background panel
+  wrap: {
     position: 'relative',
     zIndex: 10,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '1rem',
-    padding: '2rem 2rem',
-    maxWidth: '440px',
-    width: '90%',
-    border: '1px solid rgba(245,158,11,0.15)',
-    background: 'linear-gradient(145deg, rgba(10,10,12,0.98) 0%, rgba(18,14,8,0.98) 100%)',
-    boxShadow: '0 0 80px rgba(245,158,11,0.06), inset 0 1px 0 rgba(245,158,11,0.08)',
-    animation: 'fadeUp 0.7s ease both',
-    backdropFilter: 'blur(20px)',
-    borderRadius: '2px',
+    gap: '0.85rem',
+    maxWidth: '400px',
+    width: '88%',
+    animation: 'fadeUp 0.6s ease both',
   },
   statusRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.45rem',
   },
   dot: {
     display: 'inline-block',
-    width: '8px',
-    height: '8px',
+    width: '7px',
+    height: '7px',
     borderRadius: '50%',
     background: '#f59e0b',
     animation: 'pulse 1.8s ease-in-out infinite',
   },
   statusText: {
-    fontSize: '0.65rem',
+    fontSize: '0.6rem',
     fontWeight: 500,
-    letterSpacing: '0.25em',
+    letterSpacing: '0.28em',
     color: '#f59e0b',
   },
   logo: {
-    height: '40px',
+    height: '38px',
     width: 'auto',
-    opacity: 1,
-    animation: 'fadeUp 0.7s 0.1s ease both',
+    draggable: false,
+    animation: 'fadeUp 0.6s 0.1s ease both',
   },
   headline: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: 'clamp(3rem, 10vw, 5rem)',
-    lineHeight: 0.9,
+    lineHeight: 0.88,
     letterSpacing: '0.04em',
     textAlign: 'center',
-    color: '#ffffff',
     margin: 0,
-    backgroundImage: 'linear-gradient(135deg, #fff 40%, rgba(245,158,11,0.6) 100%)',
+    backgroundImage: 'linear-gradient(135deg, #fff 40%, rgba(245,158,11,0.55) 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
-    animation: 'fadeUp 0.7s 0.2s ease both',
+    animation: 'fadeUp 0.6s 0.15s ease both',
   },
   divider: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '0.6rem',
     width: '100%',
-    animation: 'fadeUp 0.7s 0.3s ease both',
   },
   dividerLine: {
     flex: 1,
     height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent)',
+    background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.25), transparent)',
   },
   dividerGlyph: {
-    fontSize: '0.5rem',
+    fontSize: '0.45rem',
     color: '#f59e0b',
-    opacity: 0.5,
+    opacity: 0.45,
   },
   message: {
-    fontSize: '0.8rem',
-    lineHeight: 1.7,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: '0.75rem',
+    lineHeight: 1.75,
+    color: 'rgba(255,255,255,0.4)',
     textAlign: 'center',
     whiteSpace: 'pre-line',
     margin: 0,
-    animation: 'fadeUp 0.7s 0.4s ease both',
   },
   infoGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '1px',
     width: '100%',
-    background: 'rgba(245,158,11,0.08)',
-    border: '1px solid rgba(245,158,11,0.08)',
-    animation: 'fadeUp 0.7s 0.5s ease both',
+    background: 'rgba(245,158,11,0.07)',
+    border: '1px solid rgba(245,158,11,0.07)',
+    marginTop: '0.25rem',
   },
   infoItem: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '0.25rem',
-    padding: '0.6rem 0.5rem',
-    background: 'rgba(5,6,7,0.8)',
+    gap: '0.2rem',
+    padding: '0.55rem 0.4rem',
+    background: 'rgba(5,6,7,0.9)',
   },
   infoLabel: {
-    fontSize: '0.55rem',
+    fontSize: '0.5rem',
     letterSpacing: '0.2em',
-    color: 'rgba(255,255,255,0.3)',
+    color: 'rgba(255,255,255,0.25)',
   },
   infoValue: {
-    fontSize: '0.65rem',
+    fontSize: '0.6rem',
     fontWeight: 500,
     letterSpacing: '0.1em',
     color: '#f59e0b',
-  },
-  footer: {
-    fontSize: '0.65rem',
-    color: 'rgba(255,255,255,0.2)',
-    textAlign: 'center',
-    letterSpacing: '0.05em',
-    margin: 0,
-    lineHeight: 1.6,
-    animation: 'fadeUp 0.7s 0.6s ease both',
   },
 };
