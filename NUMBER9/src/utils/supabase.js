@@ -20,6 +20,13 @@ if (supabaseUrl && supabaseKey) {
         headers['apikey'] = supabaseKey;
       }
 
+      // Force application/json for POST requests to RPC — prevents browser defaulting
+      // to text/plain;charset=UTF-8 when Supabase client omits Content-Type, which
+      // causes PostgREST to reject the call as "unnamed text parameter".
+      if (options.method === 'POST' && !headers['content-type'] && !headers['Content-Type']) {
+        headers['content-type'] = 'application/json';
+      }
+
       // Add session token for authenticated requests (x-user-token is required by submit_deposit/submit_withdrawal RPC)
       try {
         const authRaw = localStorage.getItem('n9_auth');
