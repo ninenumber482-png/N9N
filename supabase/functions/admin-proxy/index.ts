@@ -270,6 +270,8 @@ Deno.serve(async (req) => {
     '/engine_status',
     '/popup_banners',
     '/n9_users',
+    '/support_tickets',
+    '/ticket_messages',
   ];
 
   // Explicit RPC allowlist — no wildcard
