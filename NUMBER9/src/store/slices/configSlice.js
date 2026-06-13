@@ -5,6 +5,8 @@ const APP_KEYS = ['n9_auth', 'n9_users', 'n9_users_by_uuid', 'n9_users_by_code',
 export const configSlice = (set, get) => ({
   systemStatus: { kingStatus: 'OPEN', platformMaintenance: false, kingStatusMsg: '', platformMsg: '' },
   setSystemStatus: (status) => set({ systemStatus: status }),
+  configReady: false,
+  setConfigReady: (v) => set({ configReady: v }),
 
   systemNotification: null,
   clearSystemNotification: () => set({ systemNotification: null }),

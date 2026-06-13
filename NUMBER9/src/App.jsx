@@ -7,6 +7,7 @@ import { supabase } from "./utils/supabase";
 import { refreshKingData, listBids } from "./store/king";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PopupBanner from "./components/ui/PopupBanner";
+import MaintenancePage from "./pages/MaintenancePage";
 import { I18nProvider } from "./i18n";
 import Layout from "./components/Layout";
 import LandingPage from "./pages/LandingPage";
@@ -55,6 +56,22 @@ function PageFallback() {
 
 function AppContent() {
   const auth = useStore(s => s.auth);
+  const configReady = useStore(s => s.configReady);
+  const systemStatus = useStore(s => s.systemStatus);
+
+  // Layer 1: gate sebelum semua routing — tunggu config load, lalu lock jika maintenance
+  if (!configReady) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#050607', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+        <span style={{ display: 'inline-block', width: '28px', height: '28px', borderRadius: '50%', border: '2px solid #f59e0b', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (systemStatus.platformMaintenance) {
+    return <MaintenancePage message={systemStatus.platformMsg} />;
+  }
 
   return (
     <>
@@ -97,20 +114,24 @@ function App() {
   }, []);
 
   // Sync platform_config → systemStatus (king_marketplace, maintenance_mode)
+  // configReady = false sampai fetch pertama selesai — mencegah flash konten sebelum status diketahui
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      useStore.getState().setConfigReady(true);
+      return;
+    }
     const syncConfig = async () => {
       try {
         const { data } = await supabase.rpc('get_public_config');
-        if (!data) return;
-        const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
+        const cfg = data ? Object.fromEntries(data.map(r => [r.key, r.value])) : {};
         useStore.getState().setSystemStatus({
           kingStatus: cfg.king_marketplace || 'OPEN',
           kingStatusMsg: cfg.king_marketplace_msg || '',
           platformMaintenance: cfg.maintenance_mode === 'true',
           platformMsg: cfg.maintenance_msg || '',
         });
-      } catch { /* silent */ }
+      } catch { /* silent — gagal fetch, biarkan platform terbuka */ }
+      finally { useStore.getState().setConfigReady(true); }
     };
     syncConfig();
     const ch = supabase
