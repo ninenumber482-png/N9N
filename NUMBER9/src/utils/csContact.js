@@ -18,14 +18,17 @@ const TTL = 60 * 1000;
 function normalize(cfg) {
   if (!cfg || cfg.error) return { waOk: false, tgOk: false, anyActive: false };
   const masterOff = cfg.cs_active === 'false';
-  const waOk = !masterOff && cfg.cs_wa_active === 'true' && !!cfg.cs_wa_number;
-  const tgOk = !masterOff && cfg.cs_telegram_active === 'true' && !!cfg.cs_telegram_link;
-
   const welcome = cfg.cs_welcome_message || 'Hello, I need assistance.';
+
+  // WhatsApp: digits-only number, guard against malformed/too-short values.
   const waNumber = (cfg.cs_wa_number || '').replace(/[^\d]/g, '');
+  const waOk = !masterOff && cfg.cs_wa_active === 'true' && waNumber.length >= 8;
   const waHref = waOk ? `https://wa.me/${waNumber}?text=${encodeURIComponent(welcome)}` : null;
-  // Telegram link must be a full URL set by admin (e.g. https://t.me/xxx) — never hardcoded here.
-  const tgHref = tgOk ? cfg.cs_telegram_link : null;
+
+  // Telegram link must be a full t.me URL set by admin — never hardcoded here.
+  const tgLink = cfg.cs_telegram_link || '';
+  const tgOk = !masterOff && cfg.cs_telegram_active === 'true' && /^https:\/\/(t\.me|telegram\.me)\/.+/i.test(tgLink);
+  const tgHref = tgOk ? tgLink : null;
 
   return {
     anyActive: waOk || tgOk,
