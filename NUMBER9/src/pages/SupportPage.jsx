@@ -118,9 +118,9 @@ export default function SupportPage() {
     const r = await sendTicketMessage(openId, reply, imageUrl)
     setSending(false)
     if (r?.error) {
+      // Note: RPC truncates over-length bodies (no TOO_LONG raise) — no branch needed.
       const msg = r.error.includes('TICKET_CLOSED') ? t('support.ticket_closed_note')
         : r.error.includes('RATE_LIMIT') ? t('support.ticket_rate_limit')
-        : r.error.includes('TOO_LONG') ? t('support.ticket_too_long')
         : t('support.ticket_send_failed')
       return setToast({ type: 'err', text: msg })
     }

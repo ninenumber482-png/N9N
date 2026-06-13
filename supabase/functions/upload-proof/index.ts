@@ -32,7 +32,7 @@ const ALLOWED_MIME: Record<string, string> = {
   "application/pdf": "pdf",
 };
 const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_KINDS = new Set(["deposit", "kyc"]);
+const ALLOWED_KINDS = new Set(["deposit", "kyc", "ticket"]);
 
 Deno.serve(async (req) => {
   const o = req.headers.get("origin") || "";
