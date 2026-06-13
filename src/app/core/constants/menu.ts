@@ -44,6 +44,7 @@ export class Menu {
       separator: true,
       items: [
         { icon: 'assets/icons/heroicons/outline/identification.svg', label: 'KYC Verification', route: '/kyc' },
+        { icon: 'assets/icons/heroicons/outline/bell.svg', label: 'Support Tickets', route: '/tickets' },
         { icon: 'assets/icons/heroicons/outline/gift.svg', label: 'Referrals', route: '/referrals' },
       ],
     },

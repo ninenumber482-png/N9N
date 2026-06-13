@@ -21,6 +21,7 @@ const PAGE_ORDER = [
   { route: '/gaming', label: 'Gaming Overview' },
   // Members
   { route: '/kyc', label: 'KYC Verification' },
+  { route: '/tickets', label: 'Support Tickets' },
   { route: '/referrals', label: 'Referrals' },
   // Compliance
   { route: '/audit', label: 'Audit Log' },

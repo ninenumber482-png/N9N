@@ -21,6 +21,7 @@ import { SystemComponent } from 'src/app/modules/dashboard/pages/system/system.c
 import { IpWhitelistComponent } from 'src/app/modules/dashboard/pages/ip-whitelist/ip-whitelist.component';
 import { PopupBannerComponent } from 'src/app/modules/dashboard/pages/popup-banner/popup-banner.component';
 import { RoleManagementComponent } from 'src/app/modules/dashboard/pages/role-management/role-management.component';
+import { TicketsComponent } from 'src/app/modules/dashboard/pages/tickets/tickets.component';
 import { NotFoundComponent } from 'src/app/shared/components/not-found/not-found.component';
 
 const routes: Routes = [
@@ -46,6 +47,7 @@ const routes: Routes = [
       { path: 'manual', component: WalletAdminComponent, canActivate: [RoleGuard], data: { requiredRole: 'admin' } },
       { path: 'bets', component: BetsComponent },
       { path: 'kyc', component: KycComponent },
+      { path: 'tickets', component: TicketsComponent },
       { path: 'audit', component: AuditComponent },
       { path: 'referrals', component: ReferralsComponent },
       { path: '3dking', component: ThreeDKingComponent },

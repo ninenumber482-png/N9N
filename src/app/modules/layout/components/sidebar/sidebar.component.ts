@@ -63,7 +63,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   private async refreshBadges() {
     try {
-      const [pendingKyc, pendingBets, pendingDeposits, pendingWithdrawals] = await Promise.all([
+      const [pendingKyc, pendingBets, pendingDeposits, pendingWithdrawals, openTickets] = await Promise.all([
         this.admin
           .rpc('count_kyc_by_status', { p_status: 'PENDING' })
           .then((r) => Number(r) || 0)
@@ -71,12 +71,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.admin.count('bets', 'status=eq.PENDING', true).catch(() => 0),
         this.admin.countPending('DEPOSIT', true).catch(() => 0),
         this.admin.countPending('WITHDRAWAL', true).catch(() => 0),
+        this.admin.getOpenTicketCount().catch(() => 0),
       ]);
       this.menuService.updateBadges({
         '/kyc': pendingKyc,
         '/bets': pendingBets,
         '/deposits': pendingDeposits,
         '/withdrawals': pendingWithdrawals,
+        '/tickets': openTickets,
       });
       this.cdr.markForCheck();
     } catch {
