@@ -19,7 +19,7 @@
         @if (menu.collapsible !== false) {
           <svg
             class="h-2.5 w-2.5 text-sidebar-muted transition-transform duration-200"
-            [class.rotate-180]="menu.expanded"
+            [class.rotate-180]="menu.expanded || menu.active"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -33,7 +33,7 @@
     </div>
 
     <!-- Items -->
-    @if (menu.expanded || menu.collapsible === false || !menuService.showSideBar) {
+    @if (menu.expanded || menu.active || menu.collapsible === false || !menuService.showSideBar) {
       <ul class="mt-0.5 flex flex-col gap-px" [class.sidebar-group-items]="menu.accent">
         @for (item of menu.items; track item.route ?? item.label) {
           <li>

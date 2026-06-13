@@ -12,10 +12,30 @@ import { isPageAllowed } from 'src/app/core/constants/admin-features';
 export class MenuService implements OnDestroy {
   private router = inject(Router);
 
-  private _showSidebar = signal(true);
+  private static readonly SIDEBAR_KEY = 'n9_sidebar_open';
+
+  private _showSidebar = signal(MenuService.loadSidebarState());
   private _showMobileMenu = signal(false);
   private _pagesMenu = signal<MenuItem[]>([]);
   private _subscription = new Subscription();
+
+  /** Persisted rail-collapse state so the sidebar width survives reloads. */
+  private static loadSidebarState(): boolean {
+    try {
+      const v = localStorage.getItem(MenuService.SIDEBAR_KEY);
+      return v === null ? true : v === '1';
+    } catch {
+      return true;
+    }
+  }
+
+  private persistSidebarState(value: boolean): void {
+    try {
+      localStorage.setItem(MenuService.SIDEBAR_KEY, value ? '1' : '0');
+    } catch {
+      /* storage unavailable — non-critical */
+    }
+  }
 
   constructor() {
     /** Set dynamic menu — Finance & Marketplace always expanded; filtered by per-page permissions */
@@ -54,13 +74,14 @@ export class MenuService implements OnDestroy {
 
   set showSideBar(value: boolean) {
     this._showSidebar.set(value);
+    this.persistSidebarState(value);
   }
   set showMobileMenu(value: boolean) {
     this._showMobileMenu.set(value);
   }
 
   public toggleSidebar() {
-    this._showSidebar.set(!this._showSidebar());
+    this.showSideBar = !this._showSidebar();
   }
 
   public toggleMenu(menu: SubMenuItem) {
@@ -125,7 +146,13 @@ export class MenuService implements OnDestroy {
           ...menu,
           items,
           active: activeGroup,
-          expanded: activeGroup || menu.collapsible === false ? true : menu.expanded,
+          // Keep `active` (transient: show the current page's group) SEPARATE
+          // from `expanded` (the user's manual open/close intent). Baking the
+          // active-route auto-expand into `expanded` made groups stay open
+          // forever after navigating away → the open/closed composition drifted.
+          // Non-collapsible groups are always open; everything else preserves
+          // whatever the user last set (or its constructor default).
+          expanded: menu.collapsible === false ? true : menu.expanded,
         };
       }),
     );
