@@ -750,6 +750,34 @@ export class AdminService {
     return this.insertRow('platform_config', data);
   }
 
+  // ── SUPPORT TICKETS ──
+  getTickets(query = 'order=last_message_at.desc.nullslast&limit=100') {
+    return this.proxy<any[]>('GET', `/support_tickets?${query}`);
+  }
+  getTicketMessages(ticketId: string) {
+    return this.proxy<any[]>('GET', `/ticket_messages?ticket_id=eq.${ticketId}&order=created_at.asc`);
+  }
+  async replyTicket(ticketId: string, body: string, imageUrl: string | null, adminId: string | null) {
+    await this.proxy('POST', '/ticket_messages', {
+      ticket_id: ticketId, sender_type: 'ADMIN', sender_id: adminId || null,
+      body: body || '', image_url: imageUrl,
+    });
+    await this.proxy('PATCH', `/support_tickets?id=eq.${ticketId}`, {
+      status: 'REPLIED', last_sender: 'ADMIN',
+      last_message_at: new Date().toISOString(), admin_last_read_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+  setTicketStatus(ticketId: string, status: 'OPEN' | 'REPLIED' | 'CLOSED') {
+    return this.proxy('PATCH', `/support_tickets?id=eq.${ticketId}`, {
+      status, updated_at: new Date().toISOString(),
+    });
+  }
+  async getOpenTicketCount(): Promise<number> {
+    const rows = await this.proxy<any[]>('GET', '/support_tickets?status=neq.CLOSED&select=id');
+    return Array.isArray(rows) ? rows.length : 0;
+  }
+
   // ── POPUP BANNERS ──
   getPopupBanners(limit = 50) {
     return this.get<any>(`popup_banners?order=created_at.desc&limit=${limit}`);
