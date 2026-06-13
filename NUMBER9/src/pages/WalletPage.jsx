@@ -157,7 +157,7 @@ function DepositTab({
     setRevealing(true);
     setAccount(null);
     const started = Date.now();
-    const r = await fetchDepositAccount();
+    const r = await fetchDepositAccount(amount);
     // brief "verifying" feel
     await new Promise((res) => setTimeout(res, Math.max(0, 600 - (Date.now() - started))));
     setRevealing(false);

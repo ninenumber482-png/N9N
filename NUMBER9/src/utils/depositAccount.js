@@ -7,10 +7,11 @@ import { supabase } from './supabase';
  * persisted to storage (memory-only in the calling component).
  * Returns { provider_name, account_holder, account_number, instructions } or { error }.
  */
-export async function fetchDepositAccount() {
+export async function fetchDepositAccount(amount = null) {
   try {
     if (!supabase) return { error: 'NETWORK' };
-    const { data, error } = await supabase.rpc('get_deposit_account');
+    const p_amount = Number(amount) > 0 ? Number(amount) : null;
+    const { data, error } = await supabase.rpc('get_deposit_account', { p_amount });
     if (error) return { error: error.message || 'LOAD_FAILED' };
     return data || { error: 'LOAD_FAILED' };
   } catch {
