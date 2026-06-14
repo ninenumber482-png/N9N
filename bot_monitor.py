@@ -721,15 +721,21 @@ def on_callback(call):
 def run_flask():
     import socket
     port = int(os.environ.get('FLASK_PORT', 5000))
+    # Secure-by-default: bind to localhost so the Flask /status server is NOT
+    # publicly exposed (Shodan can't index it). Only set FLASK_HOST=0.0.0.0 if a
+    # REMOTE caller genuinely needs /status — and if so, LOCK the AWS Security
+    # Group to that caller's IP only (never 0.0.0.0/0). Prod should run behind
+    # gunicorn + nginx, not Werkzeug's dev server.
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('0.0.0.0', port))
+        sock.bind((host, port))
         sock.close()
     except OSError as e:
         print(f'Port {port} unavailable: {e}')
         return
-    app.run(host='0.0.0.0', port=port, threaded=True, processes=1)
+    app.run(host=host, port=port, threaded=True, processes=1)
 
 if __name__ == '__main__':
     threading.Thread(target=run_flask, daemon=True).start()
