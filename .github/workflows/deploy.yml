@@ -2,7 +2,7 @@ name: NUMBER9 Deploy
 
 on:
   push:
-    branches: [main, master]
+    branches: [main] # deploy from the single trunk only (master kept as a synced mirror) — avoids double CD runs
   workflow_dispatch:
 
 jobs:
