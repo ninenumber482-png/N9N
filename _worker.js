@@ -1,6 +1,8 @@
 // Subnet prefix: semua IP 203.144.92.x diizinkan (ISP dynamic IP hemo)
 const ALLOWED_SUBNETS_DEFAULT = ['203.144.92.', '10.18.204.', '140.213.202.'];
-const ALLOWED_IPS_DEFAULT = '203.144.92.42,203.144.92.170,203.144.92.253,203.144.92.160,203.144.92.32,203.144.79.245';
+// 107.22.51.206 = exit IP VPN WireGuard EC2 (admin akses lewat VPN, IP stabil)
+const ALLOWED_IPS_DEFAULT =
+  '203.144.92.42,203.144.92.170,203.144.92.253,203.144.92.160,203.144.92.32,203.144.79.245,107.22.51.206';
 
 const whitelistCache = new Map();
 const CACHE_TTL = 30_000;
