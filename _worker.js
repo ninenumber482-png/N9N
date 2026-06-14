@@ -70,9 +70,16 @@ function blockedPathResponse() {
   });
 }
 
+// Fallback ke nilai publik kalau binding env belum di-set di Cloudflare Pages.
+// anon key MEMANG publik (sama dengan yang dipakai kedua SPA + deploy.yml) — bukan secret.
+// Tanpa fallback ini, worker gagal baca tabel gateway_whitelist → cuma daftar IP statis
+// yang lolos, jadi halaman admin "IP Whitelist" + form Emergency gak ngefek.
+const SUPABASE_URL_DEFAULT = 'https://dqsmpdetiqsqfnidekik.supabase.co';
+const SUPABASE_ANON_KEY_DEFAULT =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxc21wZGV0aXFzcWZuaWRla2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjUyOTMsImV4cCI6MjA5NTY0MTI5M30.e429MImfeQcj3_DMbxkYHKD_5GS0ZwYD8QyZTaD0Lv0';
 function getSupabaseEnv(env) {
-  const url = env.SUPABASE_URL;
-  const key = env.SUPABASE_ANON_KEY;
+  const url = env.SUPABASE_URL || SUPABASE_URL_DEFAULT;
+  const key = env.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY_DEFAULT;
   if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY env binding');
   return { url, key };
 }
